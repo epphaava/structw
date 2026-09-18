@@ -100,10 +100,10 @@ prefix:max "◁" => lb
 
 def la (l : Lang α) : Lang α := λ w =>
   match w with
-  | Sum.inr (Sum.inr (0, 0, zs)) =>
+  | Sum.inr (Sum.inr (0, m, zs)) =>
     match zs with
-    | [] => l (Sum.inr (Sum.inr (0, 0, [])))
-    | z :: zs => l (Sum.inr (Sum.inl (0, (z, zs), [])))
+    | [] => l (Sum.inr (Sum.inr (m, 0, [])))
+    | z :: zs => l (Sum.inr (Sum.inl (m, (z, zs), [])))
   | _ => False
 prefix:max "▷" => la
 
