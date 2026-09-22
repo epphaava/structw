@@ -8,8 +8,6 @@ def toList (l : NEList α) := l.fst :: l.snd
 
 -- Definition 3.1.1 (Structured words).
 
-def Part (α : Type) := Nat ⊕ NEList α
-
 
 def Word (α : Type) :=
   NEList α × List α × List α ⊕
@@ -27,29 +25,9 @@ def Word.word_to_list {α} : Word α → List α := λ w =>
 export Word (word_to_list)
 
 
-structure Word' (α : Type) where
-  lookbehind : Part α
-  match_part : Part α
-  lookahead : List α
-
-def Word'.word_to_list' {α} : Word' α → List α := λ w =>
-  match w.lookbehind with
-  | Sum.inl _ =>
-    match w.match_part with
-    | Sum.inl _ => w.lookahead
-    | Sum.inr (hd, tl) =>  hd :: tl ++ w.lookahead
-  | Sum.inr (hd, tl) =>
-    match w.match_part with
-    | Sum.inl _ =>  hd :: tl ++ w.lookahead
-    | Sum.inr (hd, tl) =>  hd :: tl ++ hd :: tl ++ w.lookahead
-
-export Word' (word_to_list')
-
-
 -- Languages over structured words --------------------------
 
 def Lang (α : Type) : Type := Word α → Prop
-def Lang' (α : Type) : Type := Word' α → Prop
 
 
 -- Subset and equality relations on Lang -------------------

@@ -47,7 +47,7 @@ theorem complement_top (L : Lang α) : (L // T) ≐ ∅ := by intro w; simp [top
 theorem concat_distrib_union_left (p q r : Lang α) : p • (q ∪ r) ≐ (p • q) ∪ (p • r) := by
   intro w
   match w with
-  | Sum.inl ((hd, tl), v) =>
+  | Sum.inl ((x, xs), ys, zs) =>
     constructor
     . intro ⟨x, y, hx, hy, hc⟩
       cases hy with
@@ -57,7 +57,7 @@ theorem concat_distrib_union_left (p q r : Lang α) : p • (q ∪ r) ≐ (p •
       cases h with
       | inl h => obtain ⟨x, y, hx, hy, hc⟩ := h; exact ⟨x, y, hx, Or.inl hy, hc⟩
       | inr h => obtain ⟨x, y, hx, hy, hc⟩ := h; exact ⟨x, y, hx, Or.inr hy, hc⟩
-  | Sum.inr (n, v) =>
+  | Sum.inr (Sum.inl (n, (y, ys), zs)) =>
     constructor
     . intro ⟨x, y, hx, hy, ⟨n', x_sub, y_sub⟩⟩
       cases hy with
@@ -67,31 +67,56 @@ theorem concat_distrib_union_left (p q r : Lang α) : p • (q ∪ r) ≐ (p •
       cases h with
       | inl h => obtain ⟨x, y, hx, hy, hc⟩ := h; exact ⟨x, y, hx, Or.inl hy, hc⟩
       | inr h => obtain ⟨x, y, hx, hy, hc⟩ := h; exact ⟨x, y, hx, Or.inr hy, hc⟩
+  | Sum.inr (Sum.inr (n, m, zs)) =>
+    constructor
+    . intro ⟨w₁, w₂, hp, hqr, n₁, n₂, m₁, hn, hw₁, hw₂⟩
+      cases hqr with
+      | inl hq => left; exact ⟨w₁, w₂, hp, hq, n₁, n₂, m₁, hn, hw₁, hw₂⟩
+      | inr hr => right; exact ⟨w₁, w₂, hp, hr, n₁, n₂, m₁, hn, hw₁, hw₂⟩
+    . intro h
+      cases h with
+      | inl h => obtain ⟨w₁, w₂, hp, hq, n₁, n₂, m₁', hn, hw₁, hw₂⟩ := h; refine ⟨w₁, w₂, hp, Or.inl hq, n₁, n₂, m₁', hn, hw₁, hw₂⟩
+      | inr h => obtain ⟨w₁, w₂, hp, hr, n₁, n₂, m₁', hn, hw₁, hw₂⟩ := h; refine ⟨w₁, w₂, hp, Or.inr hr, n₁, n₂, m₁', hn, hw₁, hw₂⟩
 
 -- Equation (3.13)
 theorem concat_distrib_union_right (p q r : Lang α) : (p ∪ q) • r ≐ (p • r) ∪ (q • r) := by
   intro w
   match w with
-  | Sum.inl ((hd, tl), v) =>
+  | Sum.inl ((x, xs), ys, zs) =>
     constructor
-    . intro ⟨x, y, hx, hy, hc⟩
-      cases hx with
-      | inl hx => left; exact ⟨x, y, hx, hy, hc⟩
-      | inr hx => right; exact ⟨x, y, hx, hy, hc⟩
+    . intro ⟨w₁, w₂, hpq, hr, hc⟩
+      cases hpq with
+      | inl hp => left; refine ⟨w₁, w₂, hp, hr, hc⟩
+      | inr hq => right; exact ⟨w₁, w₂, hq, hr, hc⟩
     . intro h
       cases h with
-      | inl h => obtain ⟨x, y, hx, hy, hc⟩ := h; exact ⟨x, y, Or.inl hx, hy, hc⟩
-      | inr h => obtain ⟨x, y, hx, hy, hc⟩ := h; exact ⟨x, y, Or.inr hx, hy, hc⟩
-  | Sum.inr (n, v) =>
+      | inl h => obtain ⟨w₁, w₂, hp, hr, hc⟩ := h; exact ⟨w₁, w₂, Or.inl hp, hr, hc⟩
+      | inr h => obtain ⟨w₁, w₂, hq, hr, hc⟩ := h; exact ⟨w₁, w₂, Or.inr hq, hr, hc⟩
+  | Sum.inr (Sum.inl (n, (y, ys), zs)) =>
     constructor
-    . intro ⟨x, y, hx, hy, ⟨n', x_sub, y_sub⟩⟩
-      cases hx with
-      | inl hx => left; exact ⟨x, y, hx, hy, ⟨n', x_sub, y_sub⟩⟩
-      | inr hx => right; exact ⟨x, y, hx, hy, ⟨n', x_sub, y_sub⟩⟩
+    . intro ⟨w₁, w₂, hpq, hr, pref, suff, hys, h⟩
+      cases hpq with
+      | inl hp =>
+        left;
+        cases h with
+        | inl h =>   exact ⟨w₁, w₂, hp, hr, pref, suff, hys, Or.inl ⟨h.1, h.2⟩⟩
+        | inr h =>
+          sorry
+      | inr hq => right; exact ⟨x, y, hx, hy, ⟨n', x_sub, y_sub⟩⟩
     . intro h
       cases h with
-      | inl h => obtain ⟨x, y, hx, hy, hc⟩ := h; exact ⟨x, y, Or.inl hx, hy, hc⟩
-      | inr h => obtain ⟨x, y, hx, hy, hc⟩ := h; exact ⟨x, y, Or.inr hx, hy, hc⟩
+      | inl h => obtain ⟨x, y, hx, hy, hc⟩ := h; exact ⟨x, y, hx, Or.inl hy, hc⟩
+      | inr h => obtain ⟨x, y, hx, hy, hc⟩ := h; exact ⟨x, y, hx, Or.inr hy, hc⟩
+  | Sum.inr (Sum.inr (n, m, zs)) =>
+    constructor
+    . intro ⟨w₁, w₂, hp, hqr, n₁, n₂, m₁, hn, hw₁, hw₂⟩
+      cases hqr with
+      | inl hq => left; exact ⟨w₁, w₂, hp, hq, n₁, n₂, m₁, hn, hw₁, hw₂⟩
+      | inr hr => right; exact ⟨w₁, w₂, hp, hr, n₁, n₂, m₁, hn, hw₁, hw₂⟩
+    . intro h
+      cases h with
+      | inl h => obtain ⟨w₁, w₂, hp, hq, n₁, n₂, m₁', hn, hw₁, hw₂⟩ := h; refine ⟨w₁, w₂, hp, Or.inl hq, n₁, n₂, m₁', hn, hw₁, hw₂⟩
+      | inr h => obtain ⟨w₁, w₂, hp, hr, n₁, n₂, m₁', hn, hw₁, hw₂⟩ := h; refine ⟨w₁, w₂, hp, Or.inr hr, n₁, n₂, m₁', hn, hw₁, hw₂⟩
 
 -- Equation (3.14)
 theorem empty_concat_left (L : Lang α) : ∅ • L ≐ ∅ := by

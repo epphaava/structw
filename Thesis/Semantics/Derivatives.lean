@@ -27,7 +27,7 @@ def der {α} (a : α) (l : Lang α) : Lang α := λ w =>
 -- Lookahead derivative
 def derLA (a : α) (l : Lang α) : Lang α := λ w =>
   match w with
-  | Sum.inr (Sum.inr (n, .succ m, zs)) => l (Sum.inr (Sum.inr (n, m, a :: zs)))
+  | Sum.inr (Sum.inr (.succ n, .succ m, zs)) => l (Sum.inr (Sum.inr (n, m, a :: zs)))
   | _ => False
 
 -- Definition 3.2.3 (Iterated derivatives).

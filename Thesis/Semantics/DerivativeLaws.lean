@@ -24,7 +24,7 @@ theorem der_unit (a : α) : der a I ≐ ∅ := by
   | Sum.inr (Sum.inl (n, (y, ys), zs)) => cases n <;> simp [der, unit, empty]
   | Sum.inr (Sum.inr (n, m, zs)) => cases n <;> cases m <;> simp [der, unit, empty]
 
-theorem der_top (a : α): (der a T) ≐ (matchStep T // LAStep T) := by
+theorem der_top (a : α): (der a T) ≐ (▹ₘ T // ▹ₗ T) := by
   intro w
   match w with
   | Sum.inl (xs, ys, zs) => simp [der, complement, matchStep]
@@ -32,19 +32,25 @@ theorem der_top (a : α): (der a T) ≐ (matchStep T // LAStep T) := by
   | Sum.inr (Sum.inr (n, m, zs)) => cases n <;> cases m <;> simp [der, matchStep, LAStep, complement, top]
 
 
-theorem der_symb_match (a b: α) (h : a = b) : der b (#a) ≐ (matchStep I // LAStep I) := by
+theorem der_symb_match (a b: α) (h : a = b) : der b (#a) ≐ (▹ₘ I // ▹ₗ T) := by
   intro w
   match w with
-  | Sum.inl (xs, ys, zs) => simp [der, complement, LAStep, matchStep]
-  | Sum.inr (Sum.inl (n, (y, ys), zs)) => cases n <;> simp [der, matchStep, LAStep, complement, symb, unit]
-  | Sum.inr (Sum.inr (n, m, zs)) => cases n <;> cases m <;> simp [der, symb, complement, matchStep, unit, LAStep, h]
+  | Sum.inl (xs, ys, zs) => simp [complement, der, matchStep, LAStep]
+  | Sum.inr (Sum.inl (n, (y, ys), zs)) => cases n <;> simp [complement, der, matchStep, LAStep, symb, unit]
+  | Sum.inr (Sum.inr (n, m, zs)) =>
+    cases n with
+    | zero => cases m <;> simp [complement, der, matchStep, LAStep]
+    | succ n => cases n <;> cases m <;> simp [complement, der, matchStep, LAStep, symb, unit, h , top]
 
 theorem der_symb_no_match (a b: α) (h : ¬ (a = b)) : der b (#a) ≐ ∅ := by
   intro w
   match w with
   | Sum.inl (xs, ys, zs) => simp [der, empty]
   | Sum.inr (Sum.inl (n, (y, ys), zs)) => cases n <;> simp [der, symb, empty]
-  | Sum.inr (Sum.inr (n, m, zs)) => cases n <;> cases m <;> simp [der, symb, empty, h]
+  | Sum.inr (Sum.inr (n, m, zs)) =>
+    cases n with
+    | zero => cases m <;> simp [der, empty]
+    | succ n => cases n <;> cases m <;> simp [der, symb, empty, h]
 
 theorem der_union (a : α) (k l : Lang α): der a (k ∪ l) ≐ (der a k) ∪ (der a l) := by
   intro w
@@ -90,12 +96,11 @@ theorem der_concat (a : α) (k l : Lang α) :
           obtain ⟨_, _, _⟩ := h; subst w₁; left
           cases pref with
           | nil =>
-            simp at hys; subst suff; exact ⟨Sum.inr (Sum.inr (n.succ, 0, y :: ys ++ zs)), Sum.inr (Sum.inl (0, (y, ys), zs)), hk, hl, [], ys, rfl, Or.inr ⟨n.succ, 0, 0, rfl, rfl, rfl⟩⟩
+            simp at hys; subst suff; exact ⟨Sum.inr (Sum.inr (n.succ, 0, y :: ys ++ zs)), Sum.inr (Sum.inl (0, (y, ys), zs)), hk, hl, [], ys, rfl, Or.inr ⟨0, rfl, rfl⟩⟩
           | cons u us =>
             simp at hys; rw [hys.1.symm, hys.2.symm]; exact ⟨Sum.inr (Sum.inl (.succ n, (u, us), suff ++ zs)), Sum.inl ((u, us), suff, zs), hk, hl, us, suff, rfl, Or.inl ⟨ rfl, rfl⟩⟩
         | inr h =>
-          obtain ⟨n₁, n₂, m₁, hn, _, _⟩ := h; subst w₁ w₂ n; right
-          exact ⟨Sum.inr (Sum.inr (n₁, m₁.succ, y :: ys ++ zs)), Sum.inr (Sum.inl (n₂.succ, (y, ys), zs)), hk, hl, [], ys, rfl, Or.inr ⟨n₁, n₂.succ, m₁.succ, rfl, rfl, rfl⟩⟩
+          obtain ⟨k, _, _⟩ := h; subst w₁ w₂; right; exact ⟨Sum.inr (Sum.inr (n.succ, k.succ, y :: ys ++ zs)), Sum.inr (Sum.inl (k.succ, (y, ys), zs)), hk, hl, [], ys, rfl, Or.inr ⟨k.succ, rfl, rfl⟩⟩
     . intro h
       cases n with
       | zero =>
@@ -104,12 +109,12 @@ theorem der_concat (a : α) (k l : Lang α) :
           obtain ⟨w₁, _, hk, _, _, _, _, h⟩ := h;
           cases h with
           | inl h => obtain ⟨_, _⟩ := h; subst w₁; simp [der] at hk
-          | inr h => obtain ⟨_, _, _, hn, _, _⟩ := h; subst w₁; simp at hn; simp [hn, der] at hk
+          | inr h => obtain ⟨_, _, _, _, _⟩ := h; subst w₁; simp [der] at hk
         | inr h =>
           obtain ⟨w₁, w₂, hk, hl, pref, suff, hys, h⟩ := h
           cases h with
           | inl h => obtain ⟨_, _⟩ := h; subst w₁; simp [derLA] at hk
-          | inr h => obtain ⟨_, _, _, hn, _, _⟩ := h; subst w₂; simp at hn; simp [hn, der] at hl
+          | inr h => obtain ⟨_, _, _, _⟩ := h; subst w₁; simp [derLA] at hk
       | succ n =>
         cases h with
         | inl h =>
@@ -118,36 +123,19 @@ theorem der_concat (a : α) (k l : Lang α) :
           | inl h =>
             obtain ⟨_, _⟩ := h; subst w₁ w₂ ys; exact ⟨Sum.inr (Sum.inl (n, (a, y :: pref), suff ++ zs)), Sum.inl ((a, y :: pref), suff, zs), hk, hl, y :: pref, suff, rfl, Or.inl ⟨rfl, rfl⟩⟩
           | inr h =>
-            obtain ⟨n₁, n₂, m₁, hn, _, _⟩ := h; subst w₁ w₂;
-            cases m₁ with
-            | zero =>
-              cases n₁ with
-              | zero => simp [der] at hk
-              | succ n₁ =>
-                cases n₂ with
-                | zero => simp at hn; subst n₁; exact ⟨Sum.inr (Sum.inl (n, (a, []), y :: (ys ++ zs))), Sum.inl ((a, []), y :: ys, zs), hk, hl, [], y :: ys, rfl, Or.inl ⟨rfl, rfl⟩⟩
-                | succ n₂ => simp [derLB] at hl
-            | succ m₁ => simp [der] at hk
+            obtain ⟨k, _, _⟩ := h; subst w₁ w₂;
+            cases k with
+            | zero => exact ⟨Sum.inr (Sum.inl (n, (a, []), y :: (ys ++ zs))), Sum.inl ((a, []), y :: ys, zs), hk, hl, [], y :: ys, rfl, Or.inl ⟨rfl, rfl⟩⟩
+            | succ k => simp [derLB] at hl
         | inr h =>
           obtain ⟨w₁, w₂, hk, hl, pref, suff, hys, h⟩ := h;
           cases h with
           | inl h => simp [h, derLA] at hk
           | inr h =>
-            obtain ⟨n₁, n₂, m₁, hn, _, _⟩ := h; subst w₁ w₂
-            cases m₁ with
-            | zero => simp [derLA] at hk
-            | succ m₁ =>
-              cases n₁ with
-              | zero =>
-                cases n₂ with
-                | zero => simp [der] at hl
-                | succ n₂ => simp at hn; subst n₂; exact ⟨Sum.inr (Sum.inr (0, m₁, a :: y :: ys ++ zs)), Sum.inr (Sum.inl (n, (a, y :: ys), zs)), hk, hl, y :: ys, [], by simp, Or.inr ⟨0, n, m₁, by simp, rfl, rfl⟩⟩
-              | succ n₁ =>
-                cases n₂ with
-                | zero => simp [der] at hl
-                | succ n₂ =>
-                  refine ⟨Sum.inr (Sum.inr (n₁ + 1, m₁, a :: y :: ys ++ zs)), Sum.inr (Sum.inl (n₂, (a, y :: ys), zs)), hk, hl, y :: pref, suff, by simp [hys], Or.inr ⟨n₁.succ, n₂, m₁, ?_,rfl, rfl⟩⟩
-                  sorry
+            obtain ⟨k, _, _⟩ := h; subst w₁ w₂
+            cases k with
+            | zero => simp [der] at hl
+            | succ k => exact ⟨Sum.inr (Sum.inr (n, k, a :: y :: ys ++ zs)), Sum.inr (Sum.inl (k, (a, y :: ys), zs)), hk, hl, y :: pref, suff, by simp [hys], Or.inr ⟨k, rfl, rfl⟩⟩
   | Sum.inr (Sum.inr (n, m, zs)) =>
     cases m with
     | zero =>
@@ -158,49 +146,34 @@ theorem der_concat (a : α) (k l : Lang α) :
         | succ n =>
           obtain ⟨w₁, w₂, hk, hl, pref, suff, hys, h⟩ := h; simp at hys; obtain ⟨_, _⟩ := hys; subst pref suff
           cases h with
-          | inl h => obtain ⟨_, _⟩ := h ; subst w₁ w₂; left; exact ⟨Sum.inr (Sum.inr (n.succ, 0, [] ++ zs)), Sum.inr (Sum.inr (0, 0, zs)), hk, hl, n.succ, 0, 0, rfl, rfl, rfl⟩
-          | inr h =>
-            obtain ⟨n₁, n₂, m₁, hn, _, _⟩ := h; subst w₁ w₂ n; right; exact ⟨Sum.inr (Sum.inr (n₁, m₁.succ, zs)), Sum.inr (Sum.inr (n₂.succ, 0, zs)), hk, hl, n₁, n₂.succ, m₁.succ, rfl, by simp, rfl⟩
+          | inl h => obtain ⟨_, _⟩ := h ; subst w₁ w₂; left; exact ⟨Sum.inr (Sum.inr (n.succ, 0, [] ++ zs)), Sum.inr (Sum.inr (0, 0, zs)), hk, hl, 0, rfl, rfl⟩
+          | inr h => obtain ⟨k, _, _⟩ := h; subst w₁ w₂; right; exact ⟨Sum.inr (Sum.inr (n.succ, k.succ, zs)), Sum.inr (Sum.inr (k.succ, 0, zs)), hk, hl, k.succ, rfl, rfl⟩
       . intro h
         cases n with
         | zero =>
           cases h with
-          | inl h => obtain ⟨w₁, _, hk, _, n₁, _, _, hn, _, _⟩ := h; simp at hn; obtain ⟨_, _⟩ := hn; subst w₁ n₁; simp [der] at hk
-          | inr h =>
-            obtain ⟨w₁, w₂, hk, hl, n₁, n₂, m₁, hn, _, _⟩ := h; simp at hn; obtain ⟨_, _⟩ := hn; subst w₁ w₂ n₁ n₂;
-            cases m₁ with
-            | zero => simp [derLA] at hk
-            | succ m₁ => simp [der] at hl
+          | inl h => obtain ⟨w₁, _, hk, _, _, _, _⟩ := h; subst w₁; simp [der] at hk
+          | inr h => obtain ⟨w₁, _, hk, _, _, _, _⟩ := h; subst w₁; simp [derLA] at hk
         | succ n =>
           cases h with
           | inl h =>
-            obtain ⟨w₁, w₂, hk, hl, n₁, n₂, m₁, hn, _, _⟩ := h; subst w₁ w₂;
-            cases m₁ with
-            | zero =>
-              cases n₁ with
-              | zero => simp [der] at hk
-              | succ n₁ =>
-                cases n₂ with
-                | zero => simp at hn; subst n₁; exact ⟨Sum.inr (Sum.inl (n, (a, []), zs)), Sum.inl ((a, []), [], zs), hk, hl, [], [], rfl, Or.inl ⟨rfl, rfl⟩⟩
-                | succ n₂ => simp [derLB] at hl
-            | succ m₁ => simp [der] at hk
+            obtain ⟨w₁, w₂, hk, hl, k, _, _⟩ := h; subst w₁ w₂;
+            cases k with
+            | zero => exact ⟨Sum.inr (Sum.inl (n, (a, []), zs)), Sum.inl ((a, []), [], zs), hk, hl, [], [], rfl, Or.inl ⟨rfl, rfl⟩⟩
+            | succ n₂ => simp [der] at hk
           | inr h =>
-            obtain ⟨w₁, w₂, hk, hl, n₁, n₂, m₁, hn, _, _⟩ := h; subst w₁ w₂;
-            cases m₁ with
+            obtain ⟨w₁, w₂, hk, hl, k, _, _⟩ := h; subst w₁ w₂;
+            cases k with
             | zero => simp [derLA] at hk
-            | succ m₁ =>
-              cases n₂ with
-              | zero => simp [der] at hl
-              | succ n₂ =>
-                refine ⟨Sum.inr (Sum.inr (n₁, m₁, a :: zs)), Sum.inr (Sum.inl (n₂, (a, []), zs)), by simp [derLA] at hk; exact hk, hl, [], [], rfl, Or.inr ⟨n₁, n₂, m₁, ?_, rfl, rfl⟩⟩
-                sorry
+            | succ k => exact ⟨Sum.inr (Sum.inr (n, k, a :: zs)), Sum.inr (Sum.inl (k, (a, []), zs)), by simp [derLA] at hk; exact hk, hl, [], [], rfl, Or.inr ⟨k, rfl, rfl⟩⟩
     | succ m =>
       constructor
       . simp [der]
       . intro h
         cases h with
-        | inl h => obtain ⟨w₁, _, hk, _, _, _, _, _, _, _⟩ := h; subst w₁; simp [Nat.add_comm, der] at hk
-        | inr h => obtain ⟨_, w₂, _, hl, _, _, _, _, _, _⟩ := h; subst w₂; simp [der] at hl
+        | inl h => obtain ⟨_, w₂, _, hl, _, _, _⟩ := h; subst w₂; simp [derLB] at hl
+        | inr h => obtain ⟨_, w₂, _, hl, _, _, _⟩ := h; subst w₂; simp [der] at hl
+
 /-
 theorem der_star (a : α) (l : Lang α) : der a (l*) ≐ (der a l) • (l*) := by
   intro w
@@ -338,155 +311,3 @@ theorem der_LAStep (a : α) (l : Lang α) : der a (LAStep l) ≐ ∅ := by
   | Sum.inl (xs, ys, zs) => simp [der, empty]
   | Sum.inr (Sum.inl (n, (y, ys), zs)) => cases n <;> simp [der, LAStep, empty]
   | Sum.inr (Sum.inr (n, m, zs)) => cases n <;> cases m <;> simp [der, LAStep, empty]
-
-
--- ========= DERLA ============
-theorem derLA_empty (a : α) : derLA a ∅ ≐ ∅ := by
-  intro w
-  cases w with
-  | inl w => cases w with | mk u v => cases u with | mk hd tl => simp [derLA, empty]
-  | inr w =>
-    match w with
-    | Sum.inl (_, _, _) => simp [derLA, empty]
-    | Sum.inr (n, m, zs) => cases m <;> simp [derLA, empty]
-
-theorem derLA_unit (a : α) : derLA a I ≐ LAStep I := by
-  intro w
-  cases w with
-  | inl w => cases w with | mk u v => cases u with | mk hd tl => simp [LAStep, derLA]
-  | inr w =>
-    match w with
-    | Sum.inl (_, _, _) => simp [derLA, LAStep]
-    | Sum.inr (n, m, zs) => cases m <;> simp [derLA, LAStep, unit]
-
-theorem derLA_top (a : α) : derLA a T ≐ LAStep T := by
-  intro w
-  cases w with
-  | inl w => cases w with | mk u v => cases u with | mk hd tl => simp [derLA, LAStep]
-  | inr w =>
-    match w with
-    | Sum.inl (_, _, _) => simp [derLA, LAStep]
-    | Sum.inr (n, m, zs) => cases m <;> simp [derLA, LAStep, top]
-
-theorem derLA_symb (a b : α) : derLA b (#a) ≐ ∅ := by
-  intro w
-  cases w with
-  | inl w => cases w with | mk u v => cases u with | mk hd tl => simp [empty, derLA]
-  | inr w =>
-    match w with
-    | Sum.inl (_, _, _) => simp [derLA, empty]
-    | Sum.inr (n, m, zs) => cases m <;> simp [derLA, empty, symb]
-
-theorem derLA_union (a : α) (k l : Lang α) : derLA a (k ∪ l) ≐ derLA a k ∪ derLA a l := by
-  intro w
-  cases w with
-  | inl w => cases w with | mk u v => cases u with | mk hd tl => simp [union, derLA]
-  | inr w =>
-    match w with
-    | Sum.inl (_, _, _) => simp [union, derLA]
-    | Sum.inr (n, m, zs) => cases m <;> simp [union, derLA]
-
-theorem derLA_intersection (a : α) (k l : Lang α): derLA a (k ∩ l) ≐ (derLA a k) ∩ (derLA a l) := by
-  intro w
-  cases w with
-  | inl w => cases w with | mk u v => cases u with | mk hd tl => simp [derLA, intersection]
-  | inr w =>
-    match w with
-    | Sum.inl (_, _, _) => simp [derLA, intersection]
-    | Sum.inr (n, m, zs) => cases m <;> simp [derLA, intersection]
-
-theorem derLA_complement (a : α) (k l : Lang α): derLA a (k // l) ≐ ((derLA a k) // (derLA a l)) := by
-  intro w
-  cases w with
-  | inl w => cases w with | mk u v => cases u with | mk hd tl => simp [derLA, complement]
-  | inr w =>
-    match w with
-    | Sum.inl (_, _, _) => simp [derLA, complement]
-    | Sum.inr (n, m, zs) => cases m <;> simp [derLA, complement]
-
-theorem derLA_concat (a : α) (k l : Lang α) : derLA a (k • l) ≐ derLA a k • derLA a l := by
-  intro w
-  match w with
-  | Sum.inl ((x, xs), ys, zs) =>
-    constructor
-    . intro h; simp [derLA] at h
-    . intro h; obtain ⟨w₁, _, hk, _, _, _, _, _, _⟩ := h; subst w₁; simp [derLA] at hk
-  | Sum.inr (Sum.inl (n, (y, ys), zs)) =>
-    constructor
-    . intro h; simp [derLA] at h
-    . intro h; obtain ⟨w₁, w₂, hk, hl, _, _, _, h⟩ := h;
-      cases h with
-      | inl h => obtain ⟨_, _⟩ := h; subst w₁; simp [derLA] at hk
-      | inr h => obtain ⟨_, _, _, _, _, _⟩ := h; subst w₂; simp [derLA] at hl
-  | Sum.inr (Sum.inr (n, m, zs)) =>
-    constructor
-    . intro h
-      cases m with
-      | zero => simp [derLA] at h
-      | succ m =>
-        obtain ⟨w₁, w₂, hk, hl, n₁, n₂, m₁, _, _, _⟩ := h; subst w₁ w₂ n
-        refine ⟨Sum.inr (Sum.inr (n₁, (m + m₁).succ , zs)), Sum.inr (Sum.inr (n₂, m.succ, zs)), hk, hl, n₁, n₂, m₁, rfl, ?_, rfl⟩
-        sorry
-    . intro h
-      obtain ⟨w₁, w₂, hk, hl, n₁, n₂, m₁', _, _, _⟩ := h; subst w₁ w₂ n
-      cases m with
-      | zero => simp [derLA] at hl
-      | succ m =>
-        refine ⟨Sum.inr (Sum.inr (n₁, m + m₁', a :: zs)), Sum.inr (Sum.inr (n₂, m, a :: zs)), ?_, hl, n₁, n₂, m₁', rfl, rfl, rfl⟩
-        sorry
-/-
-theorem derLA_star (a : α) (l : Lang α) : derLA a (l*) ≐ ▹I ∪ derLA a l := by
-  intro w
-  match w with
-  | Sum.inl w => simp [derLA, union, step]
-  | Sum.inr (n, v) =>
-    cases n with
-    | zero => simp [derLA, union, step]
-    | succ n =>
-      constructor
-      · intro h
-        left
-        refine ⟨n, rfl, ?_⟩
-        trivial
-      · intro _
-        exact star_help.inUnit (l := l) n (a :: v)
- -/
-
-theorem derLA_la (a : α) (l : Lang α) : derLA a (la l) ≐ la (der a l) := by
-  intro w
-  cases w with
-  | inl w =>
-    cases w with | mk u v =>
-      cases u with | mk hd tl => simp [derLA, la]
-  | inr w =>
-    match w with
-    | Sum.inl (_, _, _) => simp [derLA, la]
-    | Sum.inr (n, m, zs) =>
-      cases m with
-      | zero =>  cases n <;> cases zs <;> simp [derLA, la, der]
-      | succ m => cases n <;> cases zs <;> simp [derLA, la, der]
-
-theorem derLA_matchStep (a : α) (l : Lang α) : derLA a (matchStep l) ≐ matchStep (derLA a l) := by
-  intro w
-  cases w with
-  | inl w =>
-    cases w with | mk u v =>
-      cases u with | mk hd tl => simp [matchStep, derLA]
-  | inr w =>
-    match w with
-    | Sum.inl (n, ys, zs) => cases n <;> simp [derLA, matchStep]
-    | Sum.inr (n, m, zs) => cases m <;> cases n <;> cases zs <;> simp [derLA, matchStep]
-
-theorem derLA_LAStep (a : α) (l : Lang α) : derLA a (LAStep l) ≐ LAStep (derLA a l) := by
-  intro w
-  cases w with
-  | inl w =>
-    cases w with | mk u v =>
-      cases u with | mk hd tl => simp [derLA, LAStep]
-  | inr w =>
-    match w with
-    | Sum.inl (n, ys, zs) => cases n <;> simp [derLA, LAStep]
-    | Sum.inr (n, m, zs) =>
-      cases m with
-      | zero => cases n <;> cases zs <;> simp [derLA,LAStep]
-      | succ m => cases m <;> cases n <;> cases zs <;> simp [derLA,LAStep]

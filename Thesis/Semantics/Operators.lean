@@ -20,16 +20,16 @@ def wc {α} (u v w : Word α) : Prop :=
         u = Sum.inr (Sum.inl (n, (y, pref), suff ++ zs)) ∧
         v = Sum.inl ((y, pref), suff, zs)
         ∨
-        ∃ m k l, m + k = n ∧
-        u = Sum.inr (Sum.inr (m, l, y :: ys ++ zs)) ∧
+        ∃ k,
+        u = Sum.inr (Sum.inr (n, k, y :: ys ++ zs)) ∧
         v = Sum.inr (Sum.inl (k, (y, ys), zs))
 
       )
 
   | Sum.inr (Sum.inr (n, m, zs)) =>
-    ∃ n₁ n₂ m₁', n₁ + n₂ = n ∧
-    u = Sum.inr (Sum.inr (n₁, m + m₁', zs)) ∧
-    v = Sum.inr (Sum.inr (n₂, m, zs))
+    ∃ k,
+    u = Sum.inr (Sum.inr (n, k, zs)) ∧
+    v = Sum.inr (Sum.inr (k, m, zs))
 
 -- Definition 3.3.2 (Language operators).
 def empty {α} : Lang α := λ _ => False
@@ -39,14 +39,8 @@ def unit : Lang α := λ w =>
   match w with
   | Sum.inl (_, ys, _) => ys = []
   | Sum.inr (Sum.inl _) => False
-  | Sum.inr (Sum.inr _) => True
+  | Sum.inr (Sum.inr (n, m, _)) => n = m
 notation "I" => unit
-
-/- -- helper operator for unit
-def unit_n (n : Nat) : Lang α := λ u =>
-  match u with
-  | Sum.inr (n', _) => n = n'
-  | _ => False -/
 
 def top : Lang α := λ _ => True
 notation "T" => top
@@ -54,10 +48,8 @@ notation "T" => top
 def symb {α} (a : α) : Lang α := λ w =>
   match w with
   | Sum.inl (_, ys, _) => ys = [a]
-  | Sum.inr w =>
-    match w with
-    | Sum.inl (_, (y, []), _) => a = y
-    | _ => False
+  | Sum.inr (Sum.inl (0, (y, []), _)) => a = y
+  | _ => False
 prefix:max "#" => symb
 
 def union (k l : Lang α) : Lang α := λ u =>
@@ -76,19 +68,20 @@ def concat {α} (k l : Lang α) : Lang α := λ w =>
   ∃ x y, k x ∧ l y ∧ wc x y w
 infixr:60 " • " => concat
 
-/- -- helper operator for star
+-- helper operator for star
 inductive star_help {α} (l : Lang α) : Word α → Prop
-| inUnit : ∀ n y, star_help l (Sum.inr (n, y))
+| inUnit : ∀ n m zs, star_help l (Sum.inr (Sum.inr (n, m, zs)))
 | inConcat :
-  ∀ x y w,
-  l x →
-  star_help l y →
-  wc x y w →
+  ∀ w₁ w₂ w,
+  l w₁ →
+  star_help l w₂ →
+  wc w₁ w₂ w →
   star_help l w
- -/
-/- def star (l : Lang α) : Lang α :=
+
+
+def star (l : Lang α) : Lang α :=
   star_help l
-postfix:max "*" => star -/
+postfix:max "*" => star
 
 def lb (l : Lang α) : Lang α := λ w =>
   match w with
@@ -100,7 +93,8 @@ prefix:max "◁" => lb
 
 def la (l : Lang α) : Lang α := λ w =>
   match w with
-  | Sum.inr (Sum.inr (0, m, zs)) =>
+  | Sum.inr (Sum.inr (n, m, zs)) =>
+    n = m ∧
     match zs with
     | [] => l (Sum.inr (Sum.inr (m, 0, [])))
     | z :: zs => l (Sum.inr (Sum.inl (m, (z, zs), [])))
@@ -112,13 +106,20 @@ def matchStep (l : Lang α) : Lang α := λ w =>
   | Sum.inr (Sum.inl (.succ n, ys, zs)) => l (Sum.inr (Sum.inl (n, ys, zs)))
   | Sum.inr (Sum.inr (.succ n, m, ys)) => l (Sum.inr (Sum.inr (n, m, ys)))
   | _ => False
---prefix:max "▹" => matchStep
+prefix:max "▹ₘ" => matchStep
 
 def LAStep (l : Lang α) : Lang α := λ w =>
   match w with
-  | Sum.inr (Sum.inr (n, .succ m, ys)) => l (Sum.inr (Sum.inr (n, m, ys)))
+  | Sum.inr (Sum.inr (.succ n, .succ m, ys)) => l (Sum.inr (Sum.inr (n, m, ys)))
   | _ => False
---prefix:max "▹" => LAStep
+prefix:max "▹ₗ" => LAStep
+
+def step (l : Lang α) : Lang α := λ w =>
+  match w with
+  | Sum.inr (Sum.inl (.succ n, ys, zs)) => l (Sum.inr (Sum.inl (n, ys, zs)))
+  | Sum.inr (Sum.inr (.succ n, .succ m, ys)) => l (Sum.inr (Sum.inr (n, m, ys)))
+  | _ => False
+prefix:max "▹" => step
 
 
 end Operators
