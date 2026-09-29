@@ -8,19 +8,36 @@ def toList (l : NEList α) := l.fst :: l.snd
 
 -- Definition 3.1.1 (Structured words).
 
+structure Left α where
+ lb : NEList α
+ main : List α
+ la : List α
 
-def Word (α : Type) :=
-  NEList α × List α × List α ⊕
-  Nat × NEList α × List α ⊕
-  Nat × Nat × List α
+structure Middle α where
+ matchCount : Nat
+ main : NEList α
+ la : List α
 
-def Word.word_to_list {α} : Word α → List α := λ w =>
-  match w with
-  | Sum.inl (xs, ys, zs) => toList xs ++ ys ++ zs
-  | Sum.inr w =>
-    match w with
-    | Sum.inl (_, ys, zs) => toList ys ++ zs
-    | Sum.inr (_, _, zs) => zs
+structure Right α where
+ matchCount : Nat
+ laCount : Nat
+ order : matchCount ≥ laCount
+ la : List α
+
+inductive Word1 α where
+| left (w : Left α ) : Word1 α
+| middle (w : Middle α) : Word1 α
+| right (w : Right α) : Word1 α
+
+inductive Word (α : Type) where
+  | left  (lb : NEList α) (main : List α) (la : List α)
+  | middle (matchCount : Nat) (main : NEList α) (la : List α)
+  | right (matchCount : Nat) (laCount : Nat) (la : List α)
+
+def Word.word_to_list {α} : Word α → List α
+  | .left lb main la => toList lb ++ main ++ la
+  | .middle _ main la => toList main ++ la
+  | .right _ _ la => la
 
 export Word (word_to_list)
 

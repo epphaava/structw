@@ -12,87 +12,79 @@ open Operators
 theorem derLA_empty (a : α) : derLA a ∅ ≐ ∅ := by
   intro w
   match w with
-  | Sum.inl (xs, ys, zs) => simp [derLA, empty]
-  | Sum.inr (Sum.inl (n, (y, ys), zs)) => cases n <;> simp [derLA, empty]
-  | Sum.inr (Sum.inr (n, m, zs)) => cases n <;> cases m <;> simp [derLA, empty]
+  | .left _ _ _ => simp [derLA, empty]
+  | .middle mcount _ _ => cases mcount <;> simp [derLA, empty]
+  | .right mcount lacount _ => cases mcount <;> cases lacount <;> simp [derLA, empty]
 
 theorem derLA_unit (a : α) : derLA a I ≐ ▹ₗ I := by
   intro w
   match w with
-  | Sum.inl (xs, ys, zs) => simp [LAStep, derLA]
-  | Sum.inr (Sum.inl (n, (y, ys), zs)) => cases n <;> simp [LAStep, derLA]
-  | Sum.inr (Sum.inr (n, m, zs)) => cases n <;> cases m <;> simp [LAStep, derLA, unit]
+  | .left _ _ _   => simp [LAStep, derLA]
+  | .middle mcount _ _  => cases mcount <;> simp [LAStep, derLA]
+  | .right mcount lacount _ => cases mcount <;> cases lacount <;> simp [LAStep, derLA, unit]
 
 
 theorem derLA_top (a : α) : derLA a T ≐ LAStep T := by
   intro w
   match w with
-  | Sum.inl (xs, ys, zs) => simp [derLA, LAStep]
-  | Sum.inr (Sum.inl (n, (y, ys), zs)) => cases n <;> simp [derLA, LAStep]
-  | Sum.inr (Sum.inr (n, m, zs)) => cases n <;> cases m <;> simp [derLA, LAStep, top]
+  | .left _ _ _   => simp [derLA, LAStep]
+  | .middle mcount _ _  => cases mcount <;> simp [derLA, LAStep]
+  | .right mcount lacount _ => cases mcount <;> cases lacount <;> simp [derLA, LAStep, top]
 
 theorem derLA_symb (a b : α) : derLA b (#a) ≐ ∅ := by
   intro w
   match w with
-  | Sum.inl (xs, ys, zs) => simp [derLA, empty]
-  | Sum.inr (Sum.inl (n, (y, ys), zs)) => cases n <;> simp [derLA, empty]
-  | Sum.inr (Sum.inr (n, m, zs)) => cases n <;> cases m <;> simp [derLA, empty, symb]
+  | .left _ _ _   => simp [derLA, empty]
+  | .middle mcount _ _  => cases mcount <;> simp [derLA, empty]
+  | .right mcount lacount _ => cases mcount <;> cases lacount <;> simp [derLA, empty, symb]
 
 theorem derLA_union (a : α) (k l : Lang α) : derLA a (k ∪ l) ≐ derLA a k ∪ derLA a l := by
   intro w
   match w with
-  | Sum.inl (xs, ys, zs) => simp [derLA, union]
-  | Sum.inr (Sum.inl (n, (y, ys), zs)) => cases n <;> simp [derLA, union]
-  | Sum.inr (Sum.inr (n, m, zs)) => cases n <;> cases m <;> simp [derLA, union]
+  | .left _ _ _   => simp [derLA, union]
+  | .middle mcount _ _  => cases mcount <;> simp [derLA, union]
+  | .right mcount lacount _ => cases mcount <;> cases lacount <;> simp [derLA, union]
 
 theorem derLA_intersection (a : α) (k l : Lang α): derLA a (k ∩ l) ≐ (derLA a k) ∩ (derLA a l) := by
   intro w
   match w with
-  | Sum.inl (xs, ys, zs) => simp [derLA, intersection]
-  | Sum.inr (Sum.inl (n, (y, ys), zs)) => cases n <;> simp [derLA, intersection]
-  | Sum.inr (Sum.inr (n, m, zs)) => cases n <;> cases m <;> simp [derLA, intersection]
+  | .left _ _ _   => simp [derLA, intersection]
+  | .middle mcount _ _  => cases mcount <;> simp [derLA, intersection]
+  | .right mcount lacount _ => cases mcount <;> cases lacount <;> simp [derLA, intersection]
 
 theorem derLA_complement (a : α) (k l : Lang α): derLA a (k // l) ≐ ((derLA a k) // (derLA a l)) := by
   intro w
   match w with
-  | Sum.inl (xs, ys, zs) => simp [derLA, complement]
-  | Sum.inr (Sum.inl (n, (y, ys), zs)) => cases n <;> simp [derLA, complement]
-  | Sum.inr (Sum.inr (n, m, zs)) => cases n <;> cases m <;> simp [derLA, complement]
+  | .left _ _ _   => simp [derLA, complement]
+  | .middle mcount _ _  => cases mcount <;> simp [derLA, complement]
+  | .right mcount lacount _ => cases mcount <;> cases lacount <;> simp [derLA, complement]
 
 theorem derLA_concat (a : α) (k l : Lang α) : derLA a (k • l) ≐ derLA a k • derLA a l := by
   intro w
   match w with
-  | Sum.inl ((x, xs), ys, zs) =>
+  | .left lb main la =>
     constructor
     . intro h; simp [derLA] at h
     . intro h; obtain ⟨w₁, _, hk, _, _, _, _, _, _⟩ := h; subst w₁; simp [derLA] at hk
-  | Sum.inr (Sum.inl (n, (y, ys), zs)) =>
+  | .middle mcount _ _  =>
     constructor
     . intro h; simp [derLA] at h
-    . intro h; obtain ⟨w₁, w₂, hk, hl, _, _, _, h⟩ := h;
+    . intro h; obtain ⟨w₁, w₂, hk, hl, _, _, h⟩ := h;
       cases h with
-      | inl h => obtain ⟨_, _⟩ := h; subst w₁; simp [derLA] at hk
-      | inr h => obtain ⟨_, _, _⟩ := h; subst w₂; simp [derLA] at hl
-  | Sum.inr (Sum.inr (n, m, zs)) =>
+      | inl h => obtain ⟨_, _, _⟩ := h; subst w₁; simp [derLA] at hk
+      | inr h => obtain ⟨_, _, _, _, _⟩ := h; subst w₂; simp [derLA] at hl
+  | .right mcount lacount la =>
     constructor
     . intro h
-      cases n with
+      cases lacount with
       | zero => simp [derLA] at h
-      | succ n =>
-        cases m with
-        | zero => simp [derLA] at h
-        | succ m => obtain ⟨w₁, w₂, hk, hl, m₁, _, _⟩ := h; subst w₁ w₂; exact ⟨Sum.inr (Sum.inr (n.succ, m₁.succ, zs)), Sum.inr (Sum.inr (m₁.succ, m.succ, zs)), hk, hl, m₁.succ, rfl, rfl⟩
+      | succ lacount =>
+        obtain ⟨w₁, w₂, hk, hl, mc₁, mc₂, hmcount, _, _⟩ := h; subst w₁ w₂; exact ⟨.right mc₁ (mc₂ + lacount).succ la, .right mc₂ lacount.succ la, hk, hl, mc₁, mc₂, hmcount, rfl, rfl⟩
     . intro h
-      obtain ⟨w₁, w₂, hk, hl, m₁, _, _⟩ := h; subst w₁ w₂
-      cases n with
-      | zero => simp [derLA] at hk
-      | succ n =>
-        cases m₁ with
-        | zero => simp [derLA] at hl
-        | succ m₁ =>
-          cases m with
-          | zero => simp [derLA] at hl
-          | succ m => exact ⟨Sum.inr (Sum.inr (n, m₁, a :: zs)), Sum.inr (Sum.inr (m₁, m, a :: zs)), hk, hl, m₁, rfl, rfl⟩
+      obtain ⟨w₁, w₂, hk, hl, mc₁, mc₂, hmcount, _, _⟩ := h; subst w₁ w₂ mcount
+      cases lacount with
+      | zero => simp [derLA] at hl
+      | succ lacount => exact ⟨.right mc₁ (mc₂ + lacount) (a :: la), .right mc₂ lacount (a :: la), hk, hl, mc₁, mc₂, rfl, rfl, rfl⟩
 
 /-
 theorem derLA_star (a : α) (l : Lang α) : derLA a (l*) ≐ ▹I ∪ derLA a l := by
@@ -112,48 +104,42 @@ theorem derLA_star (a : α) (l : Lang α) : derLA a (l*) ≐ ▹I ∪ derLA a l 
         exact star_help.inUnit (l := l) n (a :: v)
  -/
 
-theorem derLA_lb (a : α) (l : Lang α) : derLA a (lb l) ≐ ∅  := by
+theorem derLA_lb (a : α) (l : Lang α) : derLA a (◁ l) ≐ ∅  := by
   intro w
   match w with
-  | Sum.inl (xs, ys, zs) => simp [derLA, empty]
-  | Sum.inr (Sum.inl (n, (y, ys), zs)) => cases n <;> simp [derLA, empty]
-  | Sum.inr (Sum.inr (n, m, zs)) => cases n <;> cases m <;> simp [derLA, lb, empty]
+  | .left _ _ _   => simp [derLA, empty]
+  | .middle mcount _ _  => cases mcount <;> simp [derLA, empty]
+  | .right mcount lacount _ => cases mcount <;> cases lacount <;> simp [derLA, lookbehind, empty]
 
-theorem derLA_la (a : α) (l : Lang α) : derLA a (la l) ≐ la (der a l)  := by
+theorem derLA_la (a : α) (l : Lang α) : derLA a (▷ l) ≐ ▷ (der a l)  := by
   intro w
   match w with
-  | Sum.inl (xs, ys, zs) => simp [derLA, la]
-  | Sum.inr (Sum.inl (n, (y, ys), zs)) => cases n <;> simp [derLA, la]
-  | Sum.inr (Sum.inr (n, m, zs)) => cases n <;> cases m <;> cases zs <;> simp [derLA, la, der]
+  | .left _ _ _  => simp [derLA, lookahead]
+  | .middle mcount _ _  => cases mcount <;> simp [derLA, lookahead]
+  | .right mcount lacount la => cases mcount <;> cases lacount <;> cases la <;> simp [derLA, lookahead, der, toList]
 
 theorem derLA_matchStep (a : α) (l : Lang α) : derLA a (matchStep l) ≐ matchStep (derLA a l) := by
   intro w
   match w with
-  | Sum.inl (xs, ys, zs) => simp [derLA, matchStep]
-  | Sum.inr (Sum.inl (n, (y, ys), zs)) =>
-    cases n with
+  | .left _ _ _   => simp [derLA, matchStep]
+  | .middle mcount _ _  =>
+    cases mcount with
     | zero => simp [derLA, matchStep]
-    | succ n => cases n <;> simp [derLA, matchStep]
-  | Sum.inr (Sum.inr (n, m, zs)) =>
-    cases n with
-    | zero => simp [derLA, matchStep]
-    | succ n => cases n <;> cases m <;> simp [derLA, matchStep]
-
+    | succ mcount => cases mcount <;> simp [derLA, matchStep]
+  | .right mcount lacount _ =>
+    cases mcount with
+    | zero => cases lacount <;> simp [derLA, matchStep]
+    | succ mcount => cases mcount <;> cases lacount <;> simp [derLA, matchStep]
 
 theorem derLA_LAStep (a : α) (l : Lang α) : derLA a (LAStep l) ≐ LAStep (derLA a l) := by
   intro w
   match w with
-  | Sum.inl (xs, ys, zs) => simp [derLA, LAStep]
-  | Sum.inr (Sum.inl (n, (y, ys), zs)) =>
-    cases n with
+  | .left _ _ _   => simp [derLA, LAStep]
+  | .middle mcount _ _  =>
+    cases mcount with
     | zero => simp [derLA, LAStep]
-    | succ n => cases n <;> simp [derLA, LAStep]
-  | Sum.inr (Sum.inr (n, m, zs)) =>
-    cases n with
-    | zero => simp [derLA, LAStep]
-    | succ n =>
-      cases m with
-      | zero =>
-        cases n <;> simp [derLA, LAStep]
-      | succ m =>
-        cases n <;> cases m <;> simp [derLA, LAStep]
+    | succ mcount => cases mcount <;> simp [derLA, LAStep]
+  | .right mcount lacount _ =>
+    cases lacount with
+    | zero => cases mcount <;> simp [derLA, LAStep]
+    | succ lacount => cases lacount <;> simp [derLA, LAStep]

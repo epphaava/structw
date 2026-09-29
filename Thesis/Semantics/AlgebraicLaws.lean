@@ -47,7 +47,7 @@ theorem complement_top (L : Lang α) : (L // T) ≐ ∅ := by intro w; simp [top
 theorem concat_distrib_union_left (p q r : Lang α) : p • (q ∪ r) ≐ (p • q) ∪ (p • r) := by
   intro w
   match w with
-  | Sum.inl ((x, xs), ys, zs) =>
+  | .left lb main la =>
     constructor
     . intro ⟨x, y, hx, hy, hc⟩
       cases hy with
@@ -57,32 +57,35 @@ theorem concat_distrib_union_left (p q r : Lang α) : p • (q ∪ r) ≐ (p •
       cases h with
       | inl h => obtain ⟨x, y, hx, hy, hc⟩ := h; exact ⟨x, y, hx, Or.inl hy, hc⟩
       | inr h => obtain ⟨x, y, hx, hy, hc⟩ := h; exact ⟨x, y, hx, Or.inr hy, hc⟩
-  | Sum.inr (Sum.inl (n, (y, ys), zs)) =>
+  | .middle mcount main la =>
     constructor
-    . intro ⟨x, y, hx, hy, ⟨n', x_sub, y_sub⟩⟩
+    . intro ⟨x, y, hx, hy, hwc⟩
       cases hy with
-      | inl hy => left; exact ⟨x, y, hx, hy, ⟨n', x_sub, y_sub⟩⟩
+      | inl hy => cases hwc with
+        
+         left; exact ⟨x, y, hx, hy, ⟨n', x_sub, y_sub⟩⟩
       | inr hy => right; exact ⟨x, y, hx, hy, ⟨n', x_sub, y_sub⟩⟩
     . intro h
       cases h with
       | inl h => obtain ⟨x, y, hx, hy, hc⟩ := h; exact ⟨x, y, hx, Or.inl hy, hc⟩
       | inr h => obtain ⟨x, y, hx, hy, hc⟩ := h; exact ⟨x, y, hx, Or.inr hy, hc⟩
-  | Sum.inr (Sum.inr (n, m, zs)) =>
+  | .right mcount lacount la =>
     constructor
-    . intro ⟨w₁, w₂, hp, hqr, n₁, n₂, m₁, hn, hw₁, hw₂⟩
+    . intro ⟨w₁, w₂, hp, hqr, n₁, n₂, hn, hw₁, hw₂⟩
       cases hqr with
-      | inl hq => left; exact ⟨w₁, w₂, hp, hq, n₁, n₂, m₁, hn, hw₁, hw₂⟩
-      | inr hr => right; exact ⟨w₁, w₂, hp, hr, n₁, n₂, m₁, hn, hw₁, hw₂⟩
+      | inl hq => left; exact ⟨w₁, w₂, hp, hq, n₁, n₂, hn, hw₁, hw₂⟩
+      | inr hr => right; exact ⟨w₁, w₂, hp, hr, n₁, n₂, hn, hw₁, hw₂⟩
     . intro h
       cases h with
-      | inl h => obtain ⟨w₁, w₂, hp, hq, n₁, n₂, m₁', hn, hw₁, hw₂⟩ := h; refine ⟨w₁, w₂, hp, Or.inl hq, n₁, n₂, m₁', hn, hw₁, hw₂⟩
-      | inr h => obtain ⟨w₁, w₂, hp, hr, n₁, n₂, m₁', hn, hw₁, hw₂⟩ := h; refine ⟨w₁, w₂, hp, Or.inr hr, n₁, n₂, m₁', hn, hw₁, hw₂⟩
+      | inl h => obtain ⟨w₁, w₂, hp, hq, n₁, n₂, hn, hw₁, hw₂⟩ := h; refine ⟨w₁, w₂, hp, Or.inl hq, n₁, n₂, hn, hw₁, hw₂⟩
+      | inr h => obtain ⟨w₁, w₂, hp, hr, n₁, n₂, hn, hw₁, hw₂⟩ := h; refine ⟨w₁, w₂, hp, Or.inr hr, n₁, n₂, hn, hw₁, hw₂⟩
+
 
 -- Equation (3.13)
 theorem concat_distrib_union_right (p q r : Lang α) : (p ∪ q) • r ≐ (p • r) ∪ (q • r) := by
   intro w
   match w with
-  | Sum.inl ((x, xs), ys, zs) =>
+  | .left lb main la =>
     constructor
     . intro ⟨w₁, w₂, hpq, hr, hc⟩
       cases hpq with
@@ -92,58 +95,57 @@ theorem concat_distrib_union_right (p q r : Lang α) : (p ∪ q) • r ≐ (p �
       cases h with
       | inl h => obtain ⟨w₁, w₂, hp, hr, hc⟩ := h; exact ⟨w₁, w₂, Or.inl hp, hr, hc⟩
       | inr h => obtain ⟨w₁, w₂, hq, hr, hc⟩ := h; exact ⟨w₁, w₂, Or.inr hq, hr, hc⟩
-  | Sum.inr (Sum.inl (n, (y, ys), zs)) =>
+  | .middle mcount main la =>
     constructor
-    . intro ⟨w₁, w₂, hpq, hr, pref, suff, hys, h⟩
+    . intro ⟨w₁, w₂, hpq, hr, pref, suff, h⟩
       cases hpq with
       | inl hp =>
         left;
         cases h with
-        | inl h =>   exact ⟨w₁, w₂, hp, hr, pref, suff, hys, Or.inl ⟨h.1, h.2⟩⟩
-        | inr h =>
-          sorry
-      | inr hq => right; exact ⟨x, y, hx, hy, ⟨n', x_sub, y_sub⟩⟩
+        | inl h => exact ⟨w₁, w₂, hp, hr, pref, suff, Or.inl ⟨h.1, h.2⟩⟩
+        | inr h => obtain ⟨mc₁, mc₂, hmcount, hw₁, hw₂⟩ := h; exact ⟨w₁, w₂, hp, hr, pref, suff, Or.inr ⟨mc₁, mc₂, hmcount, hw₁, hw₂⟩⟩
+      | inr hq =>
+        cases h with
+        | inl h => right; obtain ⟨hmain, hw₁, hw₂⟩ := h; exact ⟨w₁, w₂, hq, hr, pref, suff, Or.inl ⟨hmain, hw₁, hw₂⟩⟩
+        | inr h => right; obtain ⟨mc₁, mc₂, hmcount, hw₁, hw₂⟩ := h; exact ⟨w₁, w₂, hq, hr, pref, suff, Or.inr ⟨mc₁, mc₂, hmcount, hw₁, hw₂⟩⟩
     . intro h
       cases h with
-      | inl h => obtain ⟨x, y, hx, hy, hc⟩ := h; exact ⟨x, y, hx, Or.inl hy, hc⟩
-      | inr h => obtain ⟨x, y, hx, hy, hc⟩ := h; exact ⟨x, y, hx, Or.inr hy, hc⟩
-  | Sum.inr (Sum.inr (n, m, zs)) =>
+      | inl h =>
+        obtain ⟨x, y, hp, hr, pref, suff, h⟩ := h; cases h with
+        | inl h => obtain ⟨hmain, hx, hy⟩ := h; exact ⟨x, y, Or.inl hp, hr, pref, suff, Or.inl ⟨hmain, hx, hy⟩⟩
+        | inr h => obtain ⟨hmain, hx, hy⟩ := h; exact ⟨x, y, Or.inl hp, hr, pref, suff, Or.inr ⟨hmain, hx, hy⟩⟩
+      | inr h =>
+        obtain ⟨x, y, hq, hr, pref, suff, h⟩ := h; cases h with
+        | inl h => obtain ⟨hmain, hx, hy⟩ := h; exact ⟨x, y, Or.inr hq, hr, pref, suff, Or.inl ⟨hmain, hx, hy⟩⟩
+        | inr h => obtain ⟨hmain, hx, hy⟩ := h; exact ⟨x, y, Or.inr hq, hr, pref, suff, Or.inr ⟨hmain, hx, hy⟩⟩
+  | .right mcount lacount la =>
     constructor
-    . intro ⟨w₁, w₂, hp, hqr, n₁, n₂, m₁, hn, hw₁, hw₂⟩
-      cases hqr with
-      | inl hq => left; exact ⟨w₁, w₂, hp, hq, n₁, n₂, m₁, hn, hw₁, hw₂⟩
-      | inr hr => right; exact ⟨w₁, w₂, hp, hr, n₁, n₂, m₁, hn, hw₁, hw₂⟩
+    . intro ⟨w₁, w₂, hpq, hr, n₁, n₂, hn, hw₁, hw₂⟩
+      cases hpq with
+      | inl hp => left; exact ⟨w₁, w₂, hp, hr, n₁, n₂, hn, hw₁, hw₂⟩
+      | inr hq => right; exact ⟨w₁, w₂, hq, hr, n₁, n₂, hn, hw₁, hw₂⟩
     . intro h
       cases h with
-      | inl h => obtain ⟨w₁, w₂, hp, hq, n₁, n₂, m₁', hn, hw₁, hw₂⟩ := h; refine ⟨w₁, w₂, hp, Or.inl hq, n₁, n₂, m₁', hn, hw₁, hw₂⟩
-      | inr h => obtain ⟨w₁, w₂, hp, hr, n₁, n₂, m₁', hn, hw₁, hw₂⟩ := h; refine ⟨w₁, w₂, hp, Or.inr hr, n₁, n₂, m₁', hn, hw₁, hw₂⟩
+      | inl h => obtain ⟨w₁, w₂, hp, hr, n₁, n₂, hn, hw₁, hw₂⟩ := h; refine ⟨w₁, w₂, Or.inl hp, hr, n₁, n₂, hn, hw₁, hw₂⟩
+      | inr h => obtain ⟨w₁, w₂, hq, hr, n₁, n₂, hn, hw₁, hw₂⟩ := h; refine ⟨w₁, w₂, Or.inr hq, hr, n₁, n₂, hn, hw₁, hw₂⟩
+
 
 -- Equation (3.14)
 theorem empty_concat_left (L : Lang α) : ∅ • L ≐ ∅ := by
   intro w
   match w with
-  | Sum.inl ((hd, tl), v) =>
-    constructor
-    . intro ⟨x, y, hx, hy, hc⟩; simp [empty] at hx
-    . intro h; simp [empty] at h
-  | Sum.inr (n, v) =>
-    constructor
-    . intro ⟨x, y, hx, hy, hc⟩; simp [empty] at hx
-    . intro h; simp [empty] at h
+  | .left _ _ _ => simp [concat, empty]
+  | .middle _ _ _ => simp [concat, empty]
+  | .right _ _ _ => simp [concat, empty]
 
 theorem empty_concat_right (L : Lang α) : L • ∅ ≐ ∅ := by
   intro w
   match w with
-  | Sum.inl ((hd, tl), v) =>
-    constructor
-    . intro ⟨x, y, hx, hy, hc⟩; simp [empty] at hy
-    . intro h; simp [empty] at h
-  | Sum.inr (n, v) =>
-    constructor
-    . intro ⟨x, y, hx, hy, hc⟩; simp [empty] at hy
-    . intro h; simp [empty] at h
+  | .left _ _ _ => simp [concat, empty]
+  | .middle _ _ _ => simp [concat, empty]
+  | .right _ _ _ => simp [concat, empty]
 
--- Equation (3.15)
+/- -- Equation (3.15)
 theorem star_unfold (l  : Lang α) :  l* ≐ I ∪ (l • l*) := by
   intro w
   match w with
@@ -182,268 +184,141 @@ theorem star_unfold (l  : Lang α) :  l* ≐ I ∪ (l • l*) := by
         obtain ⟨x, y, hx, hy, ⟨n', _, _⟩⟩ := h; subst x y;
         cases hy with
         | inUnit w h => exact star_help.inUnit (l := l) n v
-        | inConcat x' y' w' hx' hy' hc' => obtain ⟨n'', x_sub, y_sub⟩ := hc'; subst y'; exact hy'
+        | inConcat x' y' w' hx' hy' hc' => obtain ⟨n'', x_sub, y_sub⟩ := hc'; subst y'; exact hy' -/
 
 
 -- Proposition 3.5.2 (Basic properties of Step).
 
--- Equation (3.16)
+/- -- Equation (3.16)
 theorem step_motonicity (L K : Lang α) : L ⊆ K → ▹L ⊆ ▹K := by
   intro h w
   match w with
   | Sum.inl ((hd, tl), v) => simp [step]
-  | Sum.inr (n, v) => intro ⟨k, hn, hl⟩; exact ⟨k, hn, h (Sum.inr (k, v)) hl⟩
+  | Sum.inr (n, v) => intro ⟨k, hn, hl⟩; exact ⟨k, hn, h (Sum.inr (k, v)) hl⟩ -/
 
--- Equation (3.17)
+/- -- Equation (3.17)
 theorem step_non_idempotence : ∃ L : Lang α, ¬ ▹▹L ≐ ▹L := by
   refine ⟨T, ?_⟩
   intro h
   have h₁ := h (Sum.inr (1, []))
-  simp [step, top] at h₁
+  simp [step, top] at h₁ -/
 
 
 -- Proposition 3.5.3 (Left identity).
 theorem concat_left_identity (L : Lang α) : I • L ≐ L  := by
   intro w
   match w with
-  | Sum.inl ((hd, tl), v) =>
+  | .left (x, xs) main la =>
     constructor
-    . intro ⟨x, y, hx, hy, hc⟩
-      cases hc with
-      | inl h => obtain ⟨_, _, _⟩ := h; subst y; exact hy
-      | inr h =>
-        cases h with
-        | inl h => obtain ⟨_, _⟩ := h; subst x; simp [unit] at hx
-        | inr h => obtain ⟨_, _, _, _, _, _⟩ := h; subst x; simp [unit] at hx
-    . intro h; exact ⟨(Sum.inr (0, hd :: tl ++ v)), Sum.inl ((hd, tl), v), by simp [unit], h, Or.inl ⟨0, rfl, rfl⟩⟩;
-  | Sum.inr (n, v) =>
-    cases n with
-    | zero =>
-      constructor
-      . intro h; obtain ⟨_, y, _, hy, _, _, _⟩ := h; subst y; exact hy
-      . intro h; exact ⟨(Sum.inr (0, v)), Sum.inr (0, v), by simp [unit], h, ⟨0, rfl, rfl⟩⟩
-    | succ n =>
-      constructor
-      . intro ⟨_, y, _, hy, n', _, _⟩; subst y; exact hy
-      . intro h; exact ⟨(Sum.inr (n + 1 + n.succ, v)), Sum.inr (n.succ, v), by simp [unit], h, ⟨n.succ, rfl, rfl⟩⟩
+    . intro ⟨w₁, w₂, hunit, hl, pref, suff, hmain, _, _⟩; subst w₁ w₂; simp [unit] at hunit; subst pref main; simp at hl; exact hl
+    . intro h; exact ⟨.left (x, xs) [] (main ++ la), .left (x, xs) main la, by simp [unit], h, [], main, rfl, rfl, by simp⟩
+  | .middle mcount main la =>
+    constructor
+    . intro ⟨w₁, w₂, hunit, hl, pref, suff, h⟩; cases h with
+      | inl h => obtain ⟨_, _, _⟩ := h; subst w₁; simp [unit] at hunit
+      | inr h => obtain ⟨mc₁, mc₂, hmcount, _, _⟩ := h; subst w₁ w₂; simp [unit] at hunit; subst mc₁ mcount; simp [hl]
+    . intro h; exact ⟨.right 0 mcount ((toList main) ++ la), .middle mcount main la, by simp [unit], h, (toList main), [], Or.inr ⟨0, mcount, by simp, rfl, rfl⟩⟩
+  | .right mcount lacount la =>
+    constructor
+    . intro ⟨w₁, w₂, hunit, hl, mc₁, mc₂, hmcount, _, _⟩;
+      cases mc₁ with
+      | zero => subst w₂ mcount; simp [hl]
+      | succ mc₁ => subst w₁; simp [unit] at hunit
+    . intro h; exact ⟨.right 0 (mcount + lacount) la, .right mcount lacount la, by simp [unit], h, 0, mcount, by simp, rfl, rfl⟩
 
-
--- Proposition 3.5.4 (Failure of right identity).
-theorem concat_right_identity_failure : ∃ (L : Lang α) (w : Word α), ¬ ((L • I) w = L w) := by
-  let l : Lang α := fun w =>
-    match w with
-    | Sum.inr (n, _) => 0 < n
-    | _ => False
-  refine ⟨l, Sum.inr (0, []), ?_⟩
-  intro h
-  have h₁: (l • I) (Sum.inr (0, [])) := by exact ⟨Sum.inr (1, []), Sum.inr (0, []), by simp [l], by simp [unit], ⟨1, rfl, rfl⟩⟩
-  have h₂ : ¬ l (Sum.inr (0, [])) := by simp [l]
-  simp [h₁] at h; contradiction
-
-
--- Proposition 3.5.5 (Restricted identity law).
-theorem concat_right_identity_restricted₁ (L : Lang α) : L ⊆ (T // step T) →  (I • L) ≐ (L • I)  := by
-  intro lang_h w
+-- Proposition 3.5.4 (Right identity).
+theorem concat_right_identity (L : Lang α) : L • I ≐ L := by
+  intro w
   match w with
-  | Sum.inl ((hd, tl), v) =>
+  | .left (x, xs) main la =>
     constructor
-    . intro ⟨x, y, hx, hy, hc⟩
-      cases hc with
-      | inl h => obtain ⟨_, _, y_sub⟩ := h; exact ⟨y, Sum.inr (0, v), hy, by simp [unit], Or.inr (Or.inl ⟨by rw [y_sub], rfl⟩)⟩
+    . intro ⟨w₁, w₂, hl, hunit, pref, suff, hmain, _, _⟩; subst w₁ w₂; simp [unit] at hunit; subst suff main; simp at ⊢ hl; exact hl
+    . intro h; exact ⟨ .left (x, xs) main la, .left (x, xs ++ main) [] la, h, by simp [unit], main, [], by simp, rfl, rfl⟩
+  | .middle mcount main la =>
+    constructor
+    . intro ⟨w₁, w₂, hl, hunit, pref, suff, h⟩; cases h with
+      | inl h => obtain ⟨hmain, _, _⟩ := h; subst w₁ w₂; simp [unit] at hunit; subst suff; simp at hmain; subst pref; exact hl
+      | inr h => obtain ⟨mc₁, mc₂, hmcount, _, _⟩ := h; subst w₁ w₂; simp [unit] at hunit
+    . intro h; exact ⟨.middle mcount main la, .left (main.fst, main.snd) [] la, h, by simp [unit], main.snd, [], Or.inl ⟨by simp, rfl, rfl⟩⟩
+  | .right mcount lacount la =>
+    constructor
+    . intro ⟨w₁, w₂, hl, hunit, mc₁, mc₂, hmcount, _, _⟩;
+      cases mc₁ with
+      | zero =>
+        cases mc₂ with
+        | zero => subst w₁ mcount; simp at hl; exact hl
+        | succ mc₂ => subst w₂; simp [unit] at hunit
+      | succ mc₁ => subst w₁ w₂ ; simp [unit] at hunit; subst mc₂ mcount; simp at hl; exact hl
+    . intro h; exact ⟨.right mcount lacount la, .right 0 lacount la, h, by simp [unit], mcount, 0, rfl, by simp, rfl⟩
+
+-- Proposition 3.5.6 (Associativity).
+theorem concat_assoc (k l m : Lang α) : k • (l • m) ≐ (k • l) • m := by
+  intro w
+  match w with
+  | .left lb main la =>
+    constructor
+    . intro ⟨w₁, w₂₃, hk, ⟨w₂, w₃, hl, hm, hwc₂₃⟩ , pref₁, suff₁, hmain, hw₁, hw₂₃⟩
+      subst w₂₃; obtain ⟨pref₂, suff₂, hsuff₁, hw₂, hw₃⟩ := hwc₂₃
+      have hwc₁₂ : wc w₁ w₂ (.left lb (pref₁ ++ pref₂) (suff₂ ++ la)) := by exact ⟨pref₁, pref₂, rfl, by simp [hsuff₁] at hw₁; exact hw₁, hw₂⟩
+      have concat₁ : (k • l) (.left lb (pref₁ ++ pref₂) (suff₂ ++ la)) := by exact ⟨w₁, w₂, hk, hl, hwc₁₂⟩
+      exact ⟨.left lb (pref₁ ++ pref₂) (suff₂ ++ la), w₃, concat₁, hm, (pref₁ ++ pref₂), suff₂, by simp [hsuff₁, hmain], rfl, by simp at hw₃; exact hw₃⟩
+    . intro ⟨w₁₂, w₃, ⟨w₁, w₂, hk, hl, hwc₁₂⟩, hm, pref₁, suff₁, hmain, hw₁₂, hw₃⟩
+      subst w₁₂; obtain ⟨pref₂, suff₂, hpref₁, hw₁, hw₂⟩ := hwc₁₂; subst main pref₁
+      have hwc₂₃ : wc w₂ w₃ (.left (lb.fst, lb.snd ++ pref₂) (suff₂ ++ suff₁) la) := by exact ⟨suff₂, suff₁, rfl, hw₂, by simp; exact hw₃⟩
+      have concat₂ : (l • m) (.left (lb.fst, lb.snd ++ pref₂) (suff₂ ++ suff₁) la) := by exact ⟨w₂, w₃, hl, hm, hwc₂₃⟩
+      exact ⟨w₁, .left (lb.fst, lb.snd ++ pref₂) (suff₂ ++ suff₁) la, hk, concat₂, pref₂, (suff₂ ++ suff₁), by simp, by simp; exact hw₁, rfl⟩
+  | .middle mcount (y, ys) la =>
+    constructor
+    . intro ⟨w₁, w₂₃, hk, ⟨w₂, w₃, hl, hm, hwc₂₃⟩, pref₁, suff₁, h⟩
+      cases h with
+      | inl h =>
+        obtain ⟨hys, hw₁, hw₂₃⟩ := h
+        subst w₂₃; obtain ⟨pref₂, suff₂, hsuff₁, hw₂, hw₃⟩ := hwc₂₃; simp at hys; subst hys suff₁
+        have hwc₁₂ : wc w₁ w₂ (.middle mcount (y, pref₁ ++ pref₂) (suff₂ ++ la)) := by exact ⟨pref₁, pref₂, Or.inl ⟨rfl, ⟨by simp at hw₁ ⊢; exact hw₁, hw₂⟩⟩⟩
+        have concat₁ : (k • l) (.middle mcount (y, pref₁ ++ pref₂) (suff₂ ++ la)) := by exact ⟨w₁, w₂, hk, hl, hwc₁₂⟩
+        exact ⟨(.middle mcount (y, pref₁ ++ pref₂) (suff₂ ++ la)), w₃, concat₁, hm, (pref₁ ++ pref₂), suff₂, Or.inl ⟨by simp, rfl, by simp at hw₃; exact hw₃⟩⟩
       | inr h =>
+        obtain ⟨mc₁, mc₂, hmcount, hw₁, hw₂⟩ := h; subst w₂₃; obtain ⟨pref, suff, h⟩ := hwc₂₃
         cases h with
-        | inl h => obtain ⟨_, _⟩ := h; subst x; simp [unit] at hx
-        | inr h => obtain ⟨_, _, _, _, _, _⟩ := h; subst x; simp [unit] at hx
-    . intro ⟨x, y, hx, hy, hc⟩
-      cases hc with
-      | inl h => obtain ⟨_, _, _⟩ := h; subst y; simp [unit] at hy
-      | inr h =>
-        cases h with
-        | inl h => obtain ⟨x_sub, y_sub⟩ := h; exact ⟨Sum.inr (0, hd :: tl ++ v), x, by simp [unit], hx, Or.inl ⟨0, rfl, by rw [x_sub]⟩⟩
+        | inl h =>
+          obtain ⟨hys, hw₂, hw₃⟩ := h; simp at hys; subst ys mcount
+          have hwc₁₂ : wc w₁ w₂ (.middle (mc₁ + mc₂) (y, pref) (suff ++ la)) := by exact ⟨pref, suff, Or.inr ⟨mc₁, mc₂, rfl, by simp [toList] at hw₁; exact hw₁, hw₂⟩⟩
+          have concat₁ : (k • l) (.middle (mc₁ + mc₂) (y, pref) (suff ++ la)) := by exact ⟨w₁, w₂, hk, hl, hwc₁₂⟩
+          exact ⟨.middle (mc₁ + mc₂) (y, pref) (suff ++ la), w₃, concat₁, hm, pref, suff, Or.inl ⟨rfl, rfl, hw₃⟩⟩
         | inr h =>
-          obtain ⟨_, _, _, _, _, y_sub⟩ := h
-          rw [y_sub] at hy; simp [unit] at hy
-  | Sum.inr (n, v) =>
-    cases n with
-    | zero =>
-      constructor
-      . intro ⟨x, y, hx, hy, ⟨n, x_sub, y_sub⟩⟩; exact ⟨y, Sum.inr (0, v), hy, by simp [unit], ⟨0, y_sub, rfl⟩⟩
-      . intro ⟨x, y, hx, hy, ⟨n, x_sub, y_sub⟩⟩; refine ⟨Sum.inr (0 + n, v), x, by simp [unit], hx, ⟨n, rfl, ?_⟩⟩
-        cases n with
-        | zero => exact x_sub
-        | succ n => have := lang_h x hx; rw [x_sub] at this; simp [complement, step, top] at this
-    | succ n =>
-      simp [subset] at lang_h
-      simp [concat, wc]
-      constructor
-      . intro ⟨_, _, h, _⟩; have := lang_h (Sum.inr (n.succ, v)) h; simp [complement, step, top] at this
-      . intro ⟨x, hx, _, n', _⟩; have := lang_h x hx; subst x; simp [complement, step, top] at this
-
-theorem concat_right_identity_restricted₂ (L : Lang α) : L ⊆ T // (step T) →  (I • L) ≐ L  := by
-  intro lang_h w
-  match w with
-  | Sum.inl ((hd, tl), v) =>
-    constructor
-    . intro ⟨x, y, hx, hy, hc⟩
-      cases hc with
-      | inl h => obtain ⟨_, _, y_sub⟩ := h; rw [y_sub] at hy; exact hy
-      | inr h =>
+          obtain ⟨mc₁', mc₂', hmc₂, hw₂, hw₃⟩ := h; subst mc₂ mcount
+          have hwc₁₂ : wc w₁ w₂ (.right (mc₁ + mc₁') mc₂' (y :: ys ++ la)) := by exact ⟨mc₁, mc₁', rfl, hw₁, hw₂⟩
+          have concat₁ : (k • l) (.right (mc₁ + mc₁') mc₂' (y :: ys ++ la)) := by exact ⟨w₁, w₂, hk, hl, hwc₁₂⟩
+          refine ⟨(.right (mc₁ + mc₁') mc₂' (y :: ys ++ la)), w₃, concat₁, hm, pref, suff, Or.inr ⟨(mc₁ + mc₁'), mc₂', by simp [Nat.add_assoc], rfl, hw₃⟩⟩
+    . intro ⟨w₁₂, w₃, ⟨w₁, w₂, hk, hl, hwc₁₂⟩, hm, pref₁, suff₁, h⟩
+      cases h with
+      | inl h =>
+        obtain ⟨hys, hw₁₂, hw₃⟩ := h; subst w₁₂; obtain ⟨pref₂, suff₂, h⟩ := hwc₁₂
         cases h with
-        | inl h => obtain ⟨_, _⟩ := h; subst x; simp [unit] at hx
-        | inr h => obtain ⟨_, _, _, _, _, _⟩ := h; subst x; simp [unit] at hx
-    . intro h; exact ⟨Sum.inr (0, hd :: tl ++ v), Sum.inl ((hd, tl), v), by simp [unit], h, Or.inl ⟨0, rfl, rfl⟩⟩
-  | Sum.inr (n, v) =>
-    cases n with
-    | zero =>
-      constructor
-      . intro ⟨_, y, _, hy, ⟨_, _, y_sub⟩⟩; rw [y_sub] at hy; exact hy
-      . intro h; refine ⟨Sum.inr (0, v), Sum.inr (0, v), by simp [unit], h, ⟨0, rfl, rfl⟩⟩
-    | succ n =>
-      simp [subset] at lang_h
-      simp [concat, wc]
-      constructor
-      . intro ⟨_, _, h, _⟩; have := lang_h (Sum.inr (n.succ, v)) h; simp [complement, step, top] at this
-      . intro h; have := lang_h (Sum.inr (n.succ, v)) h; simp [complement, step, top] at this
-
-
--- Proposition 3.5.6 (Restricted associativity).
-theorem concat_assoc_restricted (P Q R : Lang α) : ([P, Q, R] ⊆ (T // step T))  →  P • (Q • R) ≐ (P • Q) • R := by
-  simp [subsetAll]
-  intro hp hq hr w
-  simp [subset] at hp hq hr
-  match hw : w with
-  | Sum.inl ((hd, tl), v) =>
+        | inl h =>
+          obtain ⟨hpref₁, hw₁, hw₂⟩ := h; simp at hpref₁ hys; subst pref₁ ys
+          have hwc₂₃ : wc w₂ w₃ (.left (y, pref₂) (suff₂ ++ suff₁) la) := by exact ⟨suff₂, suff₁, rfl, hw₂, hw₃⟩
+          have concat₂ : (l • m) (.left (y, pref₂) (suff₂ ++ suff₁) la) := by exact ⟨w₂, w₃, hl, hm, hwc₂₃⟩
+          exact ⟨w₁, (.left (y, pref₂) (suff₂ ++ suff₁) la), hk, concat₂, pref₂, (suff₂ ++ suff₁), Or.inl ⟨by simp, by simp; exact hw₁, rfl⟩⟩
+        | inr h =>
+          obtain ⟨mc₁, mc₂, hmcount, hw₁, hw₂⟩ := h; simp at hys; subst mcount ys
+          have hwc₂₃ : wc w₂ w₃ (.middle mc₂ (y, pref₁ ++ suff₁) la) := by exact ⟨pref₁, suff₁, Or.inl ⟨rfl, hw₂, hw₃⟩⟩
+          have concat₂ : (l • m) (.middle mc₂ (y, pref₁ ++ suff₁) la) := by exact ⟨w₂, w₃, hl, hm, hwc₂₃⟩
+          exact ⟨w₁, (.middle mc₂ (y, pref₁ ++ suff₁) la), hk, concat₂, pref₁, suff₁, Or.inr ⟨mc₁, mc₂, rfl, by simp [toList] at hw₁ ⊢; exact hw₁, rfl⟩⟩
+      | inr h =>
+        obtain ⟨mc₁, mc₂, hmcount, hw₁₂, hw₃⟩ := h; subst hw₁₂; obtain ⟨mc₁', mc₂', hmc₁, hw₁, hw₂⟩ := hwc₁₂; subst mc₁ mcount
+        have hwc₂₃ : wc w₂ w₃ (.middle (mc₂' + mc₂) (y, ys) la) := by exact ⟨[], ys, Or.inr ⟨mc₂', mc₂, rfl, hw₂, hw₃⟩⟩
+        have concat₂ : (l • m) (.middle (mc₂' + mc₂) (y, ys) la) := by exact ⟨w₂, w₃, hl, hm, hwc₂₃⟩
+        exact ⟨w₁, (.middle (mc₂' + mc₂) (y, ys) la), hk, concat₂, [], ys, Or.inr ⟨mc₁', (mc₂' + mc₂), by simp [Nat.add_assoc], hw₁, rfl⟩⟩
+  | .right mcount lacount la =>
     constructor
-    . intro ⟨x, yz, hx, hyz, hc₁⟩
-      obtain ⟨y, z, hy, hz, hc₂⟩ := hyz
-      cases hc₁ with
-      | inl hc₁ =>
-        obtain ⟨n', x_sub, _⟩ := hc₁; subst yz;
-        cases n' with
-        | zero =>
-          cases hc₂ with
-          | inl hc₂ =>
-            obtain ⟨n', y_sub, z_sub⟩ := hc₂;
-            cases n' with
-            | zero =>
-              refine ⟨x, z, ?_ , hz, Or.inl ⟨0, x_sub, z_sub⟩⟩
-              exact ⟨x, y, hx, hy, by rw [x_sub, y_sub]; exact ⟨0, rfl, rfl⟩⟩
-            | succ n' => have := hq y; subst y; simp [complement, top, step] at this; contradiction
-          | inr hc₂ =>
-            cases hc₂ with
-            | inl hc₂ =>
-              obtain ⟨y_sub, z_sub⟩ := hc₂;
-              refine ⟨y, z, ?_ , hz, Or.inr (Or.inl ⟨y_sub, z_sub⟩)⟩
-              exact ⟨x, y, hx, hy, by rw [y_sub]; exact (Or.inl ⟨0, x_sub, rfl⟩)⟩
-            | inr hc₂ =>
-              obtain ⟨as, b, bs, _, y_sub, z_sub⟩ := hc₂; subst tl
-              refine ⟨y, z, ?_ , hz, Or.inr (Or.inr ⟨as, b, bs, rfl, y_sub, z_sub⟩)⟩
-              exact ⟨x, y, hx, hy, by rw [x_sub, y_sub]; exact (Or.inl ⟨0, by simp, rfl⟩)⟩
-        | succ n' => have := hp x; subst x; simp [complement, top, step] at this; contradiction
-      | inr hc₁ =>
-        cases hc₁ with
-        | inl hc₁ =>
-          obtain ⟨x_sub, _⟩ := hc₁; subst yz;
-          obtain ⟨n', y_sub, z_sub⟩ := hc₂
-          cases n' with
-          | zero =>
-            refine ⟨x, z, ?_ , hz, Or.inr (Or.inl ⟨x_sub, z_sub⟩)⟩
-            exact ⟨x, y, hx, hy, by rw [x_sub, y_sub]; exact (Or.inr (Or.inl ⟨rfl, rfl⟩))⟩
-          | succ n' => have := hq y; subst y; simp [complement, top, step] at this; rw [Nat.zero_add] at hy; contradiction
-        | inr hc₁ =>
-          obtain ⟨as, b, bs, htl, x_sub, yz_sub⟩ := hc₁
-          rw [← htl] at hw ⊢
-          subst yz_sub
-          cases hc₂ with
-          | inl hc₂ =>
-            obtain ⟨n', y_sub, z_sub⟩ := hc₂;
-            cases n' with
-            | zero =>
-              refine ⟨x, z, ?_ , hz, Or.inr (Or.inr ⟨as, b, bs, rfl, x_sub, z_sub⟩)⟩
-              exact ⟨x, y, hx, hy, by simp [x_sub, y_sub, wc]⟩
-            | succ n' => have := hq y; subst y; simp [complement, top, step] at this; contradiction
-          | inr hc₂ =>
-            cases hc₂ with
-            | inl hc₂ =>
-              obtain ⟨y_sub, z_sub⟩ := hc₂
-              refine ⟨Sum.inl ((hd, as ++ b :: bs), v), z, ⟨x, y, hx, hy, ?_⟩, hz, Or.inr (Or.inl ⟨rfl, z_sub⟩)⟩
-              rw [x_sub, y_sub]; exact Or.inr (Or.inr ⟨as, b, bs, rfl, rfl, rfl⟩)
-            | inr hc₂ =>
-              obtain ⟨cs, d, ds, hbs, y_sub, z_sub⟩ := hc₂
-              refine ⟨Sum.inl ((hd, as ++ b :: cs), d :: ds ++ v), z, ⟨x, y, hx, hy, ?_⟩, hz, ?_⟩
-              . rw [x_sub, y_sub, ← hbs]; exact Or.inr (Or.inr ⟨as, b, cs, rfl, by simp [List.append_assoc], rfl⟩)
-              . rw [z_sub, ← hbs]; exact Or.inr (Or.inr ⟨as ++ b :: cs, d, ds, by simp [List.append_assoc], rfl, rfl⟩)
-    . intro ⟨xy, z, hxy, hz, hc₁⟩
-      obtain ⟨x, y, hx, hy, hc₂⟩ := hxy
-      cases hc₁ with
-      | inl hc₁ =>
-        obtain ⟨n', xy_sub, z_sub⟩ := hc₁
-        rw [xy_sub] at hc₂; obtain ⟨n₁, x_sub, y_sub⟩ := hc₂
-        cases n₁ with
-        | zero => exact ⟨x, z, hx, ⟨y, z, hy, hz, by rw [y_sub, z_sub]; exact Or.inl ⟨n', rfl, rfl⟩⟩, Or.inl ⟨n', x_sub, z_sub⟩⟩
-        | succ n₁ => have := hp x hx; rw [x_sub] at this; simp [complement, top, step] at this
-      | inr hc₁ =>
-        cases hc₁ with
-        | inl hc₁ =>
-          obtain ⟨xy_sub, z_sub⟩ := hc₁
-          rw [xy_sub] at hc₂
-          cases hc₂ with
-          | inl hc₂ =>
-            obtain ⟨n', x_sub, y_sub⟩ := hc₂
-            cases n' with
-            | zero => exact ⟨x, y, hx, ⟨y, z, hy, hz, by rw [z_sub, y_sub]; exact Or.inr (Or.inl ⟨rfl, rfl⟩)⟩, Or.inl ⟨0, x_sub, y_sub⟩⟩
-            | succ n' => have := hp x hx; rw [x_sub] at this; simp [complement, top, step] at this
-          | inr hc₂ =>
-            cases hc₂ with
-            | inl hc₂ =>
-              obtain ⟨x_sub, y_sub⟩ := hc₂
-              exact ⟨x, z, hx, ⟨y, z, hy, hz, by rw [y_sub, z_sub]; exact ⟨0, rfl, rfl⟩⟩, Or.inr (Or.inl ⟨x_sub, z_sub⟩)⟩
-            | inr hc₂ =>
-              obtain ⟨as, b, bs, htl, x_sub, y_sub⟩ := hc₂
-              exact ⟨x, y, hx, ⟨y, z, hy, hz, by rw [z_sub, y_sub]; exact Or.inr (Or.inl ⟨rfl, rfl⟩)⟩, by rw [x_sub, y_sub]; exact Or.inr (Or.inr ⟨as, b, bs, htl, rfl, rfl⟩)⟩
-        | inr hc₁ =>
-          obtain ⟨as, b, bs, htl, x_sub, z_sub⟩ := hc₁; subst xy
-          cases hc₂ with
-          | inl hc₂ =>
-            obtain ⟨n', x_sub, y_sub⟩ := hc₂
-            cases n' with
-            | zero => exact ⟨x, Sum.inl ((hd, tl), v), hx, ⟨y, z, hy, hz, by rw [y_sub, z_sub]; exact Or.inr (Or.inr ⟨as, b, bs, htl, rfl, rfl⟩)⟩, Or.inl ⟨0, by simp [←htl]; exact x_sub, rfl⟩⟩
-            | succ n' => have := hp x hx; rw [x_sub] at this; simp [complement, top, step] at this
-          | inr hc₂ =>
-            cases hc₂ with
-            | inl hc₂ =>
-              obtain ⟨x_sub, y_sub⟩ := hc₂
-              refine ⟨x, z, hx, ?_, Or.inr (Or.inr ⟨as, b, bs, htl, x_sub, z_sub⟩)⟩
-              exact ⟨y, z, hy, hz, by rw [z_sub, y_sub]; exact Or.inl ⟨0, rfl, rfl⟩⟩
-            | inr hc₂ =>
-              obtain ⟨cs, d, ds, has, x_sub, y_sub⟩ := hc₂
-              refine ⟨x, Sum.inl ((d, ds ++ b :: bs), v), hx, ?_, ?_⟩
-              . exact ⟨y, z, hy, hz, by rw [y_sub, z_sub]; exact Or.inr (Or.inr ⟨ds, b, bs, rfl, rfl, rfl⟩)⟩
-              . rw [x_sub]
-                exact Or.inr (Or.inr ⟨cs, d, ds ++ b :: bs, by rw [←htl, ←has]; simp, by simp [List.append_assoc], rfl⟩)
-  | Sum.inr (n, v) =>
-    constructor
-    . intro ⟨x, yz, hx, ⟨y, z, hy, hz, hc₂⟩ , ⟨n', x_sub, _⟩⟩; subst yz
-      cases n with
-      | zero =>
-        cases n' with
-        | zero =>
-          obtain ⟨n'', y_sub, z_sub⟩ := hc₂
-          cases n'' with
-          | zero => exact ⟨x, z, ⟨x, y, hx, hy, by rw [x_sub]; exact ⟨0, rfl, y_sub⟩⟩, hz, ⟨0, x_sub, z_sub⟩⟩
-          | succ n'' => have := hq y hy; rw [y_sub] at this; simp [complement, top, step] at this
-        | succ n' => have := hp x hx; rw [x_sub] at this; simp [complement, top, step] at this
-      | succ n' => have := hp x hx; rw [x_sub] at this; simp [complement, top, step] at this
-    . intro ⟨xy, z, ⟨x, y, hx, hy, hc₂⟩, hz, ⟨n', _, z_sub⟩⟩; subst xy
-      cases n with
-      | zero =>
-        obtain ⟨n'', x_sub, y_sub⟩ := hc₂
-        cases n' with
-        | zero =>
-          cases n'' with
-          | zero => exact ⟨x, z, hx, ⟨y, z, hy, hz, by rw [y_sub, z_sub]; exact ⟨0, rfl, rfl⟩⟩, ⟨0, x_sub, z_sub⟩⟩
-          | succ n'' => have := hp x hx; rw [x_sub] at this; simp [complement, top, step] at this
-        | succ n' => have := hp x hx; rw [x_sub] at this; simp [complement, top, step] at this
-      | succ n => have := hr z hz; rw [z_sub] at this; simp [complement, top, step] at this
+    . intro ⟨w₁, w₂₃, hk, ⟨w₂, w₃, hl, hm, hwc₂₃⟩, mc₁, mc₂, hmcount, hw₁, hw₂₃⟩; subst w₂₃; obtain ⟨mc₁', mc₂', hmc₂, hw₂, hw₃⟩ := hwc₂₃; subst mc₂ mcount
+      have hwc₁₂ : wc w₁ w₂ (.right (mc₁ + mc₁') (mc₂' + lacount) la) := by exact ⟨mc₁, mc₁', rfl, by simp [Nat.add_assoc] at hw₁; exact hw₁, hw₂⟩
+      have concat₁ : (k • l) (.right (mc₁ + mc₁') (mc₂' + lacount) la) := by exact ⟨w₁, w₂, hk, hl, hwc₁₂⟩
+      exact ⟨(.right (mc₁ + mc₁') (mc₂' + lacount) la), w₃, concat₁, hm, (mc₁ + mc₁'), mc₂', by simp [Nat.add_assoc], rfl, hw₃⟩
+    . intro ⟨w₁₂, w₃, ⟨w₁, w₂, hk, hl, hwc₁₂⟩, hm, mc₁, mc₂, hmcount, hw₁₂, hw₃⟩; subst w₁₂; obtain ⟨mc₁', mc₂', hmc₁, hw₁, hw₂⟩ := hwc₁₂; subst mc₁ mcount
+      have hwc₂₃ : wc w₂ w₃ (.right (mc₂' + mc₂) lacount la) := by exact ⟨mc₂', mc₂, rfl, hw₂, hw₃⟩
+      have concat₂ : (l • m) (.right (mc₂' + mc₂) lacount la) := by exact ⟨w₂, w₃, hl, hm, hwc₂₃⟩
+      exact ⟨w₁, (.right (mc₂' + mc₂) lacount la), hk, concat₂, mc₁', (mc₂' + mc₂), by simp [Nat.add_assoc], by simp [Nat.add_assoc]; exact hw₁, rfl⟩
 
 end AlgebraicLaws

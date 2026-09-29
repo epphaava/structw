@@ -7,27 +7,22 @@ open Operators
 -- Lookbehind derivative
 def derLB {α} (a : α) (l : Lang α) : Lang α := λ w =>
   match w with
-  | Sum.inl ((x, xs), ys, zs) => l (Sum.inl ((a, x :: xs), ys, zs))
-  | Sum.inr (Sum.inl (n, (y, ys), zs)) =>
-    match n with
-    | 0 => l (Sum.inl ((a, []), (y :: ys), zs))
-    | _ => False
-  | Sum.inr (Sum.inr (n, m, zs)) =>
-    match n, m with
-    | 0, 0 => l (Sum.inl ((a, []), [], zs))
-    | _, _ => False
+  | .left lb main la => l (.left (a, toList lb) main la)
+  | .middle 0 main la => l (.left (a, []) (toList main) la)
+  | .right 0 0 la => l (.left (a, []) [] la)
+  | _ => False
 
 -- Match derivative
 def der {α} (a : α) (l : Lang α) : Lang α := λ w =>
   match w with
-  | Sum.inr (Sum.inl (.succ n, (y, ys), zs)) => l (Sum.inr (Sum.inl (n, (a, y :: ys), zs)))
-  | Sum.inr (Sum.inr (.succ n, 0, zs)) => l (Sum.inr (Sum.inl (n, (a, []), zs)))
+  | .middle (.succ mcount) main la => l (.middle mcount (a, toList main) la)
+  | .right (.succ mcount) 0 la => l (.middle mcount (a, []) la)
   | _ => False
 
 -- Lookahead derivative
 def derLA (a : α) (l : Lang α) : Lang α := λ w =>
   match w with
-  | Sum.inr (Sum.inr (.succ n, .succ m, zs)) => l (Sum.inr (Sum.inr (n, m, a :: zs)))
+  | .right mcount (.succ lacount) la => l (.right mcount lacount (a :: la))
   | _ => False
 
 -- Definition 3.2.3 (Iterated derivatives).
@@ -50,8 +45,8 @@ def derLA_word (w : List α) (l : Lang α) : Lang α :=
 
 
  /-- Definition 3.2.4 (Indexed nullability). -/
-def nullable_n (l : Lang α) (n m: Nat) : Prop :=
-  l (Sum.inr (Sum.inr (n, m, [])))
+def nullable_n (l : Lang α) (mcount lacount : Nat) : Prop :=
+  l (.right mcount lacount [])
 
  -- Definition 3.2.5 (Existential derivative).
 def xder (w : List α) (l : Lang α) : Lang α :=
