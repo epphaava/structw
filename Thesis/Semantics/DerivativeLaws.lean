@@ -24,12 +24,12 @@ theorem der_unit (a : α) : der a I ≐ ∅ := by
   | .middle mcount main la => cases mcount <;> simp [der, unit, empty]
   | .right mcount lacount la => cases mcount <;> cases lacount <;> simp [der, unit, empty]
 
-theorem der_top (a : α): (der a T) ≐ ▹ₘ T := by
+theorem der_top (a : α): (der a T) ≐ (▹ₘ T // ▹ₗ T) := by
   intro w
   match w with
-  | .left lb main la => simp [der, matchStep]
-  | .middle mcount main la => cases mcount <;> simp [der, matchStep, top]
-  | .right mcount lacount la => cases mcount <;> cases lacount <;> simp [der, matchStep, top]
+  | .left lb main la => simp [complement, der, matchStep]
+  | .middle mcount main la => cases mcount <;> simp [complement, der, matchStep, LAStep, top]
+  | .right mcount lacount la => cases mcount <;> cases lacount <;> simp [complement, der, matchStep, LAStep, top]
 
 
 theorem der_symb_match (a b: α) (h : a = b) : der b (#a) ≐ (▹ₘ I // ▹ₗ T) := by
@@ -174,132 +174,7 @@ theorem der_concat (a : α) (k l : Lang α) :
         | inr h => obtain ⟨_, w₂, _, hl, _, _, _, _, _⟩ := h; subst w₂; simp [der] at hl
 
 theorem der_star (a : α) (l : Lang α) : der a (l*) ≐ ((der a l) • (derLB a l*)) ∪ ((derLA a l) • (der a l*)) := by
-  intro w
-  match w with
-  | .left lb main la =>
-    simp [der]
-    intro h
-    cases h with
-    | inl h =>
-      obtain ⟨w₁, w₂, hder, hstar, hwc⟩ := h
-      match w₁ with
-      | .left lb₁ main₁ la₁ => simp [der] at hder
-      | .middle mcount₁ main₁ la₁ => simp [wc] at hwc
-      | .right mcount lacount la => simp [wc] at hwc
-    | inr h =>
-      obtain ⟨w₁, w₂, hder, hstar, hwc⟩ := h
-      match w₁ with
-      | .left lb₁ main₁ la₁ => simp [derLA] at hder
-      | .middle mcount₁ main₁ la₁ => simp [wc] at hwc
-      | .right mcount lacount la => simp [wc] at hwc
-  | .middle mcount (y, ys) la =>
-    constructor
-    . intro h
-      cases mcount with
-      | zero => simp [der] at h
-      | succ mcount =>
-        rw [union, concat]
-        rw [der] at h
-        cases h with
-        | inUnit w hunit => simp [unit] at hunit
-        | inConcat w₁ w₂ w hl hstar hwc =>
-          cases hwc with
-          | inl h =>
-            obtain ⟨pref, suff, hys, hw₁, hw₂⟩ := h; simp [toList] at hys hw₁ hw₂; subst w₁ w₂
-            cases pref with
-            | nil =>
-              simp at hys; subst suff; left
-              exact ⟨.right mcount.succ 0 (y :: ys ++ la), .middle 0 (y, ys) la, hl, hstar, Or.inr ⟨mcount.succ, 0, rfl, rfl, rfl⟩⟩
-            | cons hd tl =>
-              simp at hys; obtain ⟨hy, hys⟩ := hys; subst y ys; left
-              exact ⟨.middle mcount.succ (hd, tl) (suff ++ la), .left (hd, tl) suff la, hl, hstar, Or.inl ⟨tl, suff, rfl, rfl, rfl⟩⟩
-          | inr h =>
-            obtain ⟨mc₁, mc₂, hmcount, hw₁, hw₂⟩ := h; subst mcount w₁ w₂; right
-            exact ⟨.right mc₁ mc₂.succ (toList (y, ys) ++ la), .middle mc₂.succ (y, ys) la, hl, hstar, Or.inr ⟨mc₁, mc₂.succ, rfl, rfl, rfl⟩⟩
-    . intro h
-      cases h with
-      | inl h =>
-        obtain ⟨w₁, w₂, hl, hstar, hwc⟩ := h
-        cases hwc with
-        | inl hwc =>
-          obtain ⟨pref, suff, hys, hw₁, hw₂⟩ := hwc; subst hys w₁ w₂
-          cases mcount with
-          | zero => simp [der] at hl
-          | succ mcount =>
-            let := star_help.inConcat (.middle mcount (a, toList (y, pref)) (suff ++ la)) (.left (a, toList (y, pref)) suff la) (.middle mcount (a, toList (y, pref ++ suff)) la) hl hstar
-            simp [wc] at this; exact this (y :: pref) rfl rfl
-        | inr hwc =>
-          obtain ⟨mc₁, mc₂, hmcount, hw₁, hw₂⟩ := hwc; subst mcount w₁ w₂;
-          cases mc₂ with
-          | zero =>
-            cases mc₁ with
-            | zero => simp [der] at hl
-            | succ mc₁ =>
-              let := star_help.inConcat (.middle mc₁ (a, []) (toList (y, ys) ++ la)) (.left (a, []) (toList (y, ys)) la) (.middle mc₁ (a, toList (y, ys)) la) hl hstar
-              simp [wc] at this; exact this
-          | succ mc₂ => simp [der] at hl
-      | inr h =>
-        obtain ⟨w₁, w₂, hl, hstar, hwc⟩ := h
-        cases hwc with
-        | inl hwc => obtain ⟨_, _, _, _, _⟩ := hwc; subst w₁; simp [derLA] at hl
-        | inr hwc =>
-          obtain ⟨mc₁, mc₂, hmcount, hw₁, hw₂⟩ := hwc; subst mcount w₁ w₂
-          cases mc₂ with
-          | zero => simp [derLA] at hl
-          | succ mc₂ =>
-            let := star_help.inConcat (.right mc₁ mc₂ (a :: (toList (y, ys) ++ la))) (.middle mc₂ (a, toList (y, ys)) la) (.middle (mc₁ + mc₂) (a, toList (y, ys)) la) hl hstar
-            simp [wc, toList] at this; exact this
-  | .right mcount lacount la =>
-    constructor
-    . intro h
-      cases mcount with
-      | zero => simp [der] at h
-      | succ mcount =>
-        cases lacount with
-        | zero =>
-          simp [der, star] at h ⊢
-          cases h with
-          | inUnit w hunit => simp [unit] at hunit
-          | inConcat w₁ w₂ w hl hstar hwc =>
-            cases hwc with
-            | inl hwc =>
-              obtain ⟨pref, suff, hys, hw₁, hw₂⟩ := hwc; simp at hys hw₁ hw₂; obtain ⟨_, _⟩ := hys; subst pref suff w₁ w₂; left
-              exact ⟨.right mcount.succ 0 ([] ++ la), .right 0 0 la, hl, hstar, mcount.succ, 0, rfl, rfl, rfl⟩
-            | inr hwc =>
-              obtain ⟨mc₁, mc₂, hmcount, hw₁, hw₂⟩ := hwc; subst mcount w₁ w₂; right
-              exact ⟨.right mc₁ mc₂.succ la, .right mc₂.succ 0 la, hl, hstar, mc₁, mc₂.succ, rfl, rfl, rfl⟩
-        | succ lacount => simp [der] at h
-    . intro h
-      cases h with
-      | inl h =>
-        obtain ⟨w₁, w₂, hder, hstar, ⟨mc₁, mc₂, hmcount, hw₁, hw₂⟩⟩ := h; subst mcount w₁ w₂
-        cases lacount with
-        | zero =>
-          cases mc₂ with
-          | zero =>
-            cases mc₁ with
-            | zero => simp [der] at hder
-            | succ mc₁ =>
-              simp [der] at hder
-              exact star_help.inConcat (.middle mc₁ (a, []) la) (.left (a, []) [] la)
-                (.middle mc₁ (a, []) la) hder (star_help.inUnit _ rfl) (Or.inl ⟨[], [], rfl, rfl, rfl⟩)
-          | succ mc₂ => simp [der] at hder
-        | succ lacount => simp [derLB] at hstar
-      | inr h =>
-        obtain ⟨w₁, w₂, hder, hstar, ⟨mc₁, mc₂, hmcount, hw₁, hw₂⟩⟩ := h; subst mcount w₁ w₂
-        cases lacount with
-        | zero =>
-          cases mc₂ with
-          | zero =>
-            cases mc₁ with
-            | zero => simp [derLA] at hder
-            | succ mc₁ => simp [derLA] at hder
-          | succ mc₂ =>
-            simp [derLA] at hder
-            simp [der] at hstar
-            exact star_help.inConcat (.right mc₁ mc₂ (a :: la)) (.middle mc₂ (a, []) la)
-              (.middle (mc₁ + mc₂) (a, []) la) hder hstar (Or.inr ⟨mc₁, mc₂, rfl, rfl, rfl⟩)
-        | succ lacount => simp [der] at hstar
+  sorry
 
 theorem der_lb (a : α) (l : Lang α) : der a (◁ l) ≐ ∅  := by
   intro w

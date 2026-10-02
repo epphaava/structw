@@ -62,54 +62,171 @@ theorem derLB_complement (a : α) (k l : Lang α): derLB a (k // l) ≐ ((derLB 
   | .middle mcount _ _ => cases mcount <;> simp [complement, derLB]
   | .right mcount lacount _ => cases mcount <;> cases lacount <;> simp [complement, derLB]
 
-/-
+
+
 theorem derLB_concat (a : α) (k l : Lang α) : derLB a (k • l) ≐ derLB a k • derLB a l := by
   intro w
   match w with
-  | .left _ _ _ =>
+  | .left lb main la =>
     constructor
-    . intro h; simp [derLB] at h
-    . intro h; obtain ⟨w₁, _, hk, _, _, _, _, _, _⟩ := h; subst w₁; simp [derLB] at hk
-  | .middle mcount _ _ =>
-    constructor
-    . intro h; simp [derLB] at h
-    . intro h; obtain ⟨w₁, w₂, hk, hl, _, _, _, h⟩ := h;
-      cases h with
-      | inl h => obtain ⟨_, _⟩ := h; subst w₁; simp [derLB] at hk
-      | inr h => obtain ⟨_, _, _, _, _, _⟩ := h; subst w₂; simp [derLB] at hl
-  | .right mcount lacount _ =>
+    . intro h; obtain ⟨w₁, w₂, hk, hl, pref, suff, hmain, _, _⟩ := h; subst w₁ w₂; exact ⟨.left lb pref (suff ++ la), .left (lb.fst, lb.snd ++ pref) suff la, hk, hl, pref, suff, hmain, rfl, rfl⟩
+    . intro h; obtain ⟨w₁, w₂, hk, hl, pref, suff, hmain, hw₁, hw₂⟩ := h; subst w₁ w₂; exact ⟨.left (a, toList lb) pref (suff ++ la), .left (a, (toList lb) ++ pref) suff la, hk, hl, pref, suff, hmain, rfl, rfl⟩
+  | .middle mcount main la =>
     constructor
     . intro h
-      cases m with
-      | zero => simp [derLB] at h
-      | succ m =>
-        obtain ⟨w₁, w₂, hk, hl, n₁, n₂, m₁, _, _, _⟩ := h; subst w₁ w₂ n
-        refine ⟨Sum.inr (Sum.inr (n₁, (m + m₁).succ , zs)), Sum.inr (Sum.inr (n₂, m.succ, zs)), hk, hl, n₁, n₂, m₁, rfl, ?_, rfl⟩
-        sorry
+      cases mcount with
+      | zero =>
+        obtain ⟨w₁, w₂, hk, hl, pref, suff, hmain, _, _⟩ := h; subst w₁ w₂;
+        cases pref with
+        | nil => simp [toList] at hmain; exact ⟨.right 0 0 (suff ++ la), .middle 0 main la, hk, by simp [←hmain] at hl; exact hl, Or.inr ⟨0, 0, rfl, by simp [toList, hmain], rfl⟩⟩
+        | cons y ys  => simp [toList] at hmain; exact ⟨.middle 0 (y, ys) (suff ++ la), .left (y, ys) suff la, hk, hl, Or.inl ⟨ys, suff, hmain.2, by simp [hmain], by simp [hmain]⟩⟩
+      | succ mcount => simp [derLB] at h
     . intro h
-      obtain ⟨w₁, w₂, hk, hl, n₁, n₂, m₁', _, _, _⟩ := h; subst w₁ w₂ n
-      cases m with
-      | zero => simp [derLB] at hl
-      | succ m =>
-        refine ⟨Sum.inr (Sum.inr (n₁, m + m₁', a :: zs)), Sum.inr (Sum.inr (n₂, m, a :: zs)), ?_, hl, n₁, n₂, m₁', rfl, rfl, rfl⟩
-        sorry -/
-/-
-theorem derLB_star (a : α) (l : Lang α) : derLB a (l*) ≐ ▹I ∪ derLB a l := by
+      cases mcount with
+      | zero =>
+        obtain ⟨w₁, w₂, hk, hl, h⟩ := h;
+        cases h with
+        | inl h => obtain ⟨pref, suff, hmain, _, _⟩ := h; subst w₁ w₂; exact ⟨.left (a, []) (main.fst :: pref) (suff ++ la), .left (a, main.fst :: pref) suff la, hk, hl, (main.fst :: pref), suff, by simp [toList, hmain], rfl, rfl⟩
+        | inr h => obtain ⟨mc₁, mc₂, hmcount, _, _⟩ := h; simp at hmcount; obtain ⟨_, _⟩ := hmcount; subst mc₁ mc₂ w₁ w₂; exact ⟨.left (a, []) [] (toList main ++ la), .left (a, []) (toList main) la, hk, hl, [], (toList main), rfl, rfl, rfl⟩
+      | succ mcount =>
+        obtain ⟨w₁, w₂, hk, hl, h⟩ := h;
+        cases h with
+        | inl h => obtain ⟨_, _, _, _, _⟩ := h; subst w₁; simp [derLB] at hk
+        | inr h => obtain ⟨mc₁, mc₂, hmcount, _, _⟩ := h; subst w₁ w₂; cases mc₁ <;> cases mc₂ <;> simp [derLB] at hk hl; simp at hmcount
+  | .right mcount lacount la =>
+      cases mcount with
+      | zero =>
+        cases lacount with
+        | zero =>
+          constructor
+          . intro ⟨w₁, w₂, hk, hl, pref, suff, hmain, _, _⟩; simp at hmain; obtain ⟨_, _⟩ := hmain; subst pref suff w₁ w₂; exact ⟨.right 0 0 la, .right 0 0 la, hk, hl, 0, 0, rfl, rfl, rfl⟩
+          . intro ⟨w₁, w₂, hk, hl, mc₁, mc₂, hmcount, _, _⟩; symm at hmcount; simp [Nat.add_eq_zero_iff] at hmcount; obtain ⟨_, _⟩ := hmcount; subst mc₁ mc₂ w₁ w₂
+            exact ⟨.left (a, []) [] la, .left (a, []) [] la, hk, hl, [], [], rfl, rfl, rfl⟩
+        | succ lacount => simp [derLB]; intro ⟨w₁, _, hk, _, _, _, _, _, _⟩; subst w₁; simp [derLB] at hk
+      | succ mcount =>
+        cases lacount with
+        | zero => simp [derLB]; intro ⟨w₁, w₂, hk, hl, mc₁, mc₂, hmcount, _, _⟩; subst w₁ w₂; cases mc₁ <;> cases mc₂ <;> simp [derLB] at hk hl hmcount
+        | succ lacounct => simp [derLB]; intro ⟨w₁, w₂, hk, hl, mc₁, mc₂, hmcount, _, _⟩; subst w₁ w₂; cases mc₁ <;> cases mc₂ <;> simp [derLB] at hk hl hmcount
+
+
+
+theorem derLB_star_left_help (a : α) (l : Lang α) : ∀ (x : α) (xs main la : List α), star_help l (.left (a, x :: xs) main la) ↔ star_help (derLB a l) (.left (x, xs) main la) := by
+  intro x xs main la
+  constructor
+  · suffices key : ∀ w, star_help l w →
+        ∀ x xs main la, w = .left (a, x :: xs) main la →
+          star_help (derLB a l) (.left (x, xs) main la) by
+      intro h; exact key _ h x xs main la rfl
+    intro _ h
+    induction h with
+    | inUnit w hunit =>
+      intro x xs main la heq; simp [unit] at hunit; subst heq hunit
+      exact star_help.inUnit _ (by simp [unit])
+    | inConcat w₁ w₂ w hl _ hwc ih =>
+      intro x xs main la hw; subst hw; obtain ⟨pref, suff, hmain, _, _⟩ := hwc; subst w₁ w₂
+      exact star_help.inConcat (.left (x, xs) pref (suff ++ la)) (.left (x, xs ++ pref) suff la) (.left (x, xs) main la) hl (ih x (xs ++ pref) suff la rfl) ⟨pref, suff, hmain, rfl, rfl⟩
+  · suffices key : ∀ w, star_help (derLB a l) w →
+        ∀ x xs main la, w = .left (x, xs) main la →
+          star_help l (.left (a, x :: xs) main la) by
+      intro h; exact key _ h x xs main la rfl
+    intro _ h
+    induction h with
+    | inUnit w hunit =>
+      intro x xs main la hw; simp [unit] at hunit; subst hw hunit
+      exact star_help.inUnit _ (by simp [unit])
+    | inConcat w₁ w₂ w hl _ hwc ih =>
+      intro x xs main la heq; subst heq; obtain ⟨pref, suff, hmain, _, _⟩ := hwc; subst w₁ w₂
+      exact star_help.inConcat (.left (a, x :: xs) pref (suff ++ la)) (.left (a, x :: (xs ++ pref)) suff la) (.left (a, x :: xs) main la) hl (ih x (xs ++ pref) suff la rfl) ⟨pref, suff, hmain, rfl, rfl⟩
+
+theorem derLB_star_middle_help (a : α) (l : Lang α) : ∀ (main : NEList α) (la : List α), star_help l (.left (a, []) (toList main) la) ↔ star_help (derLB a l) (.middle 0 main la) := by
+  intro main la
+  constructor
+  · suffices key : ∀ w, star_help l w →
+        ∀ (main : NEList α) la, w = .left (a, []) (toList main) la →
+          star_help (derLB a l) (.middle 0 main la) by
+      intro h; exact key _ h main la rfl
+    intro _ h
+    induction h with
+    | inUnit w hunit => intro _ _ hw; subst hw; simp [unit, toList] at hunit
+    | inConcat w₁ w₂ w hl hstar hwc ih =>
+      intro main la hw; subst hw; obtain ⟨pref, suff, hmain, _, _⟩ := hwc; subst w₁ w₂
+      cases pref with
+      | nil => exact ih main la (by simp [hmain])
+      | cons y ys =>
+        simp [toList] at hmain; obtain ⟨hy, hys⟩ := hmain
+        exact star_help.inConcat (.middle 0 (y, ys) (suff ++ la)) (.left (y, ys) suff la) (.middle 0 main la) hl ((derLB_star_left_help a l y ys suff la).mp hstar) (Or.inl ⟨ys, suff, hys, by simp [hy], by simp [hy]⟩)
+  · suffices key : ∀ w, star_help (derLB a l) w →
+        ∀ (main : NEList α) la, w = .middle 0 main la →
+          star_help l (.left (a, []) (toList main) la) by
+      intro h; exact key _ h main la rfl
+    intro _ h
+    induction h with
+    | inUnit w hunit => intro _ _ hw; subst hw; simp [unit] at hunit
+    | inConcat w₁ w₂ w hl hstar hwc ih =>
+      intro main la hw; subst hw
+      cases hwc with
+      | inl hwc =>
+        obtain ⟨pref, suff, hmain, _, _⟩ := hwc; subst w₁ w₂
+        exact star_help.inConcat (.left (a, []) (main.1 :: pref) (suff ++ la))
+          (.left (a, main.1 :: pref) suff la) (.left (a, []) (toList main) la)
+          hl ((derLB_star_left_help a l main.1 pref suff la).mpr hstar)
+          ⟨main.1 :: pref, suff, by simp [toList, hmain], rfl, rfl⟩
+      | inr hwc =>
+        obtain ⟨mc₁, mc₂, hmcount, _, hw₂⟩ := hwc; simp at hmcount; obtain ⟨_, _⟩ := hmcount; subst mc₂
+        exact ih main la hw₂
+
+theorem derLB_star (a : α) (l : Lang α) : derLB a (l*) ≐ ((derLB a l)* // (▹ₗ I)) := by
   intro w
   match w with
-  | Sum.inl w => simp [derLB, union, step]
-  | Sum.inr (n, v) =>
-    cases n with
-    | zero => simp [derLB, union, step]
-    | succ n =>
-      constructor
-      · intro h
-        left
-        refine ⟨n, rfl, ?_⟩
-        trivial
-      · intro _
-        exact star_help.inUnit (l := l) n (a :: v)
- -/
+  | .left (x, xs) main la =>
+    simp [derLB, complement, LAStep, toList]
+    exact derLB_star_left_help a l x xs main la
+  | .middle mcount main la =>
+    cases mcount with
+    | zero =>
+      simp [derLB, complement, LAStep]
+      exact derLB_star_middle_help a l main la
+    | succ mcount =>
+      simp [derLB, complement, LAStep]
+      intro h
+      cases h with
+      | inUnit w hunit => simp [unit] at hunit
+      | inConcat w₁ w₂ w hl _ hwc =>
+        rcases hwc with ⟨pref, suff, hmain, _, _⟩ | ⟨mc₁, mc₂, hmcount, _, _⟩
+        · subst w₁; simp [derLB] at hl
+        · subst w₁
+          cases mc₁ with
+          | zero =>
+            cases mc₂ with
+            | zero => simp at hmcount
+            | succ mc₂ => simp [derLB] at hl
+          | succ mc₁ => simp [derLB] at hl
+  | .right mcount lacount la =>
+    cases mcount with
+    | zero =>
+      cases lacount with
+      | zero =>
+        simp only [derLB, complement, LAStep]
+        constructor
+        · intro _; exact ⟨star_help.inUnit _ (by simp [unit]), by simp⟩
+        · intro _; exact star_help.inUnit _ (by simp [unit])
+      | succ lacount => simp [derLB, complement, LAStep, unit]
+    | succ mcount =>
+      simp [derLB, complement, LAStep]
+      intro h
+      cases h with
+      | inUnit w hunit => simp [unit] at hunit
+      | inConcat w₁ w₂ w hl hsh hwc =>
+        obtain ⟨mc₁, mc₂, hmcount, _, _⟩ := hwc
+        subst w₁
+        cases mc₁ with
+        | zero =>
+          cases lacount with
+          | zero => cases mc₂ <;> simp [derLB] at hl <;> simp at hmcount
+          | succ lacount => cases mc₂ <;> simp [derLB] at hl
+        | succ mc₁ => simp [derLB] at hl
+
+
 
 theorem derLB_lb (a : α) (l : Lang α) : derLB a (◁ l) ≐ ◁ (der a l)  := by
   intro w

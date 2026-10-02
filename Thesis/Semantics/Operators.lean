@@ -34,7 +34,7 @@ def unit : Lang α := λ w =>
   match w with
   | .left _ main _ => main = []
   | .middle _ _ _ => False
-  | .right mcount _ _ => mcount = 0
+  | .right mcount _ _ =>  mcount = 0
 notation "I" => unit
 
 def top : Lang α := λ _ => True
@@ -97,7 +97,7 @@ prefix:max "▷" => lookahead
 def matchStep (l : Lang α) : Lang α := λ w =>
   match w with
   | .middle (.succ mcount) main la => l (.middle mcount main la)
-  | .right (.succ mcount) 0 la => l (.right mcount 0 la)
+  | .right (.succ mcount) lacount la => l (.right mcount lacount la)
   | _ => False
 prefix:max "▹ₘ" => matchStep
 
@@ -106,13 +106,5 @@ def LAStep (l : Lang α) : Lang α := λ w =>
   | .right mcount (.succ lacount) la => l (.right mcount lacount la)
   | _ => False
 prefix:max "▹ₗ" => LAStep
-
-def step (l : Lang α) : Lang α := λ w =>
-  match w with
-  | .middle (.succ mcount) main la => l (.middle mcount main la)
-  | .right mcount (.succ lacount) la => l (.right mcount lacount la)
-  | _ => False
-prefix:max "▹" => step
-
 
 end Operators
