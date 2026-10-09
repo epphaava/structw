@@ -150,63 +150,17 @@ theorem empty_concat_right (L : Lang α) : L • ∅ ≐ ∅ := by
   | .middle _ _ _ => simp [concat, empty]
   | .right _ _ _ => simp [concat, empty]
 
-/- -- Equation (3.15)
-theorem star_unfold (l  : Lang α) :  l* ≐ I ∪ (l • l*) := by
-  intro w
-  match w with
-  | Sum.inl ((hd, tl), v) =>
-    constructor
-    . intro h
-      cases h with
-      | inConcat x y w hx hy hc => right; exact ⟨x, y, hx, hy, hc⟩
-    . intro h
-      cases h with
-      | inl h => simp [unit] at h
-      | inr h =>
-        obtain ⟨x, y, hx, hy, hc⟩ := h
-        cases hc with
-        | inl h => obtain ⟨n, x_sub, y_sub⟩ := h; subst x y; trivial
-        | inr h =>
-          cases h with
-          | inl h =>
-            obtain ⟨x_sub, y_sub⟩ := h;
-            exact star_help.inConcat (l := l) x y (Sum.inl ((hd, tl), v)) hx hy (by rw [x_sub, y_sub]; simp [wc])
-          | inr h =>
-            obtain ⟨xs, z, zs, htl, hx, hy⟩ := h; subst tl x y;
-            exact star_help.inConcat (l := l) (Sum.inl ((hd, xs), z :: zs ++ v)) (Sum.inl ((z, zs), v)) (Sum.inl ((hd, xs ++ z :: zs), v)) hx hy (Or.inr (Or.inr ⟨xs, z, zs, rfl, rfl, rfl⟩ ))
-  | Sum.inr (n, v) =>
-    constructor
-    . intro h
-      cases h with
-      | inUnit w h => left; trivial
-      | inConcat x y w hx hy hc =>
-        obtain ⟨n', x_sub, y_sub⟩ := hc; subst x y
-        right; exact ⟨(Sum.inr (n + n', v)), (Sum.inr (n, v)), hx, hy, ⟨n', rfl, rfl⟩⟩
-    . intro h
-      cases h with
-      | inl h => exact star_help.inUnit (l := l) n v
-      | inr h =>
-        obtain ⟨x, y, hx, hy, ⟨n', _, _⟩⟩ := h; subst x y;
-        cases hy with
-        | inUnit w h => exact star_help.inUnit (l := l) n v
-        | inConcat x' y' w' hx' hy' hc' => obtain ⟨n'', x_sub, y_sub⟩ := hc'; subst y'; exact hy' -/
-
-
--- Proposition 3.5.2 (Basic properties of Step).
-
-/- -- Equation (3.16)
-theorem step_motonicity (L K : Lang α) : L ⊆ K → ▹L ⊆ ▹K := by
-  intro h w
-  match w with
-  | Sum.inl ((hd, tl), v) => simp [step]
-  | Sum.inr (n, v) => intro ⟨k, hn, hl⟩; exact ⟨k, hn, h (Sum.inr (k, v)) hl⟩ -/
-
-/- -- Equation (3.17)
-theorem step_non_idempotence : ∃ L : Lang α, ¬ ▹▹L ≐ ▹L := by
-  refine ⟨T, ?_⟩
-  intro h
-  have h₁ := h (Sum.inr (1, []))
-  simp [step, top] at h₁ -/
+-- Equation (3.15)
+theorem star_unfold (base l : Lang α) : (star base l) ≐ base ∪ (l • (star base l)) := by
+  intro w; constructor
+  . intro h
+    cases h with
+    | inUnit _ hb => exact .inl hb
+    | inConcat w₁ w₂ _ hl hs hwc => exact .inr ⟨w₁, w₂, hl, hs, hwc⟩
+  . intro h
+    rcases h with hb | ⟨w₁, w₂, hl, hs, hwc⟩
+    . exact .inUnit _ hb
+    . exact .inConcat w₁ w₂ _ hl hs hwc
 
 
 -- Proposition 3.5.3 (Left identity).

@@ -86,85 +86,61 @@ theorem derLA_concat (a : α) (k l : Lang α) : derLA a (k • l) ≐ derLA a k 
       | zero => simp [derLA] at hl
       | succ lacount => exact ⟨.right mc₁ (mc₂ + lacount) (a :: la), .right mc₂ lacount (a :: la), hk, hl, mc₁, mc₂, rfl, rfl, rfl⟩
 
-theorem derLA_star (a : α) (l : Lang α) : derLA a (l*) ≐ ▹ₗ I ∪ (derLA a l • derLA a (l*)) := by
+theorem derLA_star_right (a : α) (l : Lang α) : ∀ (mc lac : Nat) (la : List α),
+    star_help I l (.right mc lac (a :: la)) ↔ star_help (derLA a I) (derLA a l) (.right mc (lac + 1) la) := by
+  intro mc lac la
+  constructor
+  · suffices key : ∀ w, star_help I l w → ∀ mc lac la, w = .right mc lac (a :: la) →
+        star_help (derLA a I) (derLA a l) (.right mc (lac + 1) la) by exact fun h => key _ h mc lac la rfl
+    intro w h
+    induction h with
+    | inUnit w hu => intro mc lac la _; subst w;  exact star_help.inUnit _ hu
+    | inConcat w₁ w₂ w hl _ hwc ih =>
+      intro mc lac la _; subst w; obtain ⟨mc₁, mc₂, rfl, rfl, rfl⟩ := hwc
+      exact star_help.inConcat (.right mc₁ (mc₂ + (lac + 1)) la) (.right mc₂ (lac + 1) la) _
+        hl (ih mc₂ lac la rfl) ⟨mc₁, mc₂, rfl, rfl, rfl⟩
+  · suffices key : ∀ w, star_help (derLA a I) (derLA a l) w → ∀ mc lac la, w = .right mc (lac + 1) la →
+        star_help I l (.right mc lac (a :: la)) by exact fun h => key _ h mc lac la rfl
+    intro w h
+    induction h with
+    | inUnit w hu => rintro mc lac la _; subst w; exact star_help.inUnit _ hu
+    | inConcat w₁ w₂ w hl _ hwc ih =>
+      intro mc lac la _; subst w; obtain ⟨mc₁, mc₂, rfl, rfl, rfl⟩ := hwc
+      exact star_help.inConcat (.right mc₁ (mc₂ + lac) (a :: la)) (.right mc₂ lac (a :: la)) _
+        hl (ih mc₂ lac la rfl) ⟨mc₁, mc₂, rfl, rfl, rfl⟩
+
+theorem derLA_star (a : α) (l : Lang α) : derLA a (l*) ≐ star (derLA a I) (derLA a l) := by
   intro w
   match w with
-  | .left lb main la => simp [derLA, LAStep, union]; intro ⟨w₁, _, hk, _, ⟨_, _, _, _, _⟩⟩; subst w₁; simp [derLA] at hk
+  | .left lb main la =>
+    simp [derLA]; intro h
+    cases h with
+    | inUnit _ hu => simp [derLA] at hu
+    | inConcat w₁ _ _ hl _ hwc => obtain ⟨_, _, _, rfl, _⟩ := hwc; simp [derLA] at hl
   | .middle mcount main la =>
-    simp [derLA, LAStep, union]
-    rintro ⟨_, _, hk, hl, ⟨_, _, _, rfl, _⟩ | ⟨_, _, _, _, rfl⟩⟩
-    · simp [derLA] at hk
-    · simp [derLA] at hl
+    simp [derLA]
+    suffices key : ∀ w, star_help (derLA a I) (derLA a l) w → ∀ mcount main la, w = .middle mcount main la → False by
+      exact fun h => key _ h mcount main la rfl
+    intro w h
+    induction h with
+    | inUnit _ hu => intro mcount main la rfl; simp [derLA] at hu
+    | inConcat w₁ w₂ _ hl _ hwc ih =>
+      intro mcount main la rfl
+      rcases hwc with ⟨_, _, _, rfl, _⟩ | ⟨_, _, _, _, rfl⟩
+      · simp [derLA] at hl
+      · exact ih _ _ _ rfl
   | .right mcount lacount la =>
     cases lacount with
-    | zero => simp [derLA, LAStep, union]; intro ⟨_, w₂, _, hstar, _, _, _, _, _⟩; subst w₂; simp [derLA] at hstar
-    | succ lacount =>
-      constructor
-      · intro h
-        simp only [derLA] at h
-        cases h with
-        | inUnit _ hu => left; cases mcount <;> simp [LAStep, unit] at hu ⊢
-        | inConcat w₁ w₂ _ hl hs hwc =>
-          obtain ⟨mc₁, mc₂, rfl, rfl, rfl⟩ := hwc; right
-          exact ⟨.right mc₁ (mc₂ + (lacount + 1)) la, .right mc₂ (lacount + 1) la, hl, hs, mc₁, mc₂, rfl, rfl, rfl⟩
-      · rintro (hu | ⟨x, y, hx, hy, mc₁, mc₂, rfl, rfl, rfl⟩)
-        · exact star_help.inUnit _ (by cases mcount <;> simp [LAStep, unit] at hu ⊢)
-        · exact star_help.inConcat (.right mc₁ (mc₂ + lacount) (a :: la)) (.right mc₂ lacount (a :: la)) _ hx hy ⟨mc₁, mc₂, rfl, rfl, rfl⟩
-
-theorem derLA_star_right_help (a : α) (l : Lang α) : ∀ (mc n : Nat) (la : List α),
-    star_help l (.right mc n (a :: la)) ↔ star_help (derLA a l) (.right mc (n + 1) la) := by
-  intro mc n la
-  constructor
-  · suffices key : ∀ w, star_help l w → ∀ mc n la, w = .right mc n (a :: la) →
-        star_help (derLA a l) (.right mc (n + 1) la) by exact fun h => key _ h mc n la rfl
-    intro w h
-    induction h with
-    | inUnit _ hu => rintro mc n la rfl; exact star_help.inUnit _ (by simpa [unit] using hu)
-    | inConcat w₁ w₂ _ hl _ hwc ih =>
-      rintro mc n la rfl
-      obtain ⟨mc₁, mc₂, rfl, rfl, rfl⟩ := hwc
-      exact star_help.inConcat (.right mc₁ (mc₂ + (n + 1)) la) (.right mc₂ (n + 1) la) _
-        hl (ih mc₂ n la rfl) ⟨mc₁, mc₂, rfl, rfl, rfl⟩
-  · suffices key : ∀ w, star_help (derLA a l) w → ∀ mc n la, w = .right mc (n + 1) la →
-        star_help l (.right mc n (a :: la)) by exact fun h => key _ h mc n la rfl
-    intro w h
-    induction h with
-    | inUnit _ hu => rintro mc n la rfl; exact star_help.inUnit _ (by simpa [unit] using hu)
-    | inConcat w₁ w₂ _ hl _ hwc ih =>
-      rintro mc n la rfl
-      obtain ⟨mc₁, mc₂, rfl, rfl, rfl⟩ := hwc
-      exact star_help.inConcat (.right mc₁ (mc₂ + n) (a :: la)) (.right mc₂ n (a :: la)) _
-        hl (ih mc₂ n la rfl) ⟨mc₁, mc₂, rfl, rfl, rfl⟩
-
-theorem derLA_star' (a : α) (l : Lang α) : derLA a (l*) ≐ ((derLA a l)* ∩ ▹ₗ T) := by
-  intro w
-  match w with
-  | .left _ _ _ => simp [derLA, intersection, LAStep]
-  | .middle _ _ _ => simp [derLA, intersection, LAStep]
-  | .right mc 0 la => simp [derLA, intersection, LAStep]
-  | .right mc (n + 1) la =>
-    simp [derLA, intersection, LAStep, top, star]
-    constructor
-    · suffices key : ∀ w, star_help l w → ∀ mc n la, w = .right mc n (a :: la) →
-          star_help (derLA a l) (.right mc (n + 1) la) by exact fun h => key _ h mc n la rfl
+    | zero =>
+      simp [derLA]
+      suffices key : ∀ w, star_help (derLA a I) (derLA a l) w → ∀ mcount la, w = .right mcount 0 la → False by
+        exact fun h => key _ h mcount la rfl
       intro w h
       induction h with
-      | inUnit _ hu => rintro mc n la rfl; exact star_help.inUnit _ (by simpa [unit] using hu)
-      | inConcat w₁ w₂ _ hl _ hwc ih =>
-        rintro mc n la rfl
-        obtain ⟨mc₁, mc₂, rfl, rfl, rfl⟩ := hwc
-        exact star_help.inConcat (.right mc₁ (mc₂ + (n + 1)) la) (.right mc₂ (n + 1) la) _
-          hl (ih mc₂ n la rfl) ⟨mc₁, mc₂, rfl, rfl, rfl⟩
-    · suffices key : ∀ w, star_help (derLA a l) w → ∀ mc n la, w = .right mc (n + 1) la →
-          star_help l (.right mc n (a :: la)) by exact fun h => key _ h mc n la rfl
-      intro w h
-      induction h with
-      | inUnit _ hu => rintro mc n la rfl; exact star_help.inUnit _ (by simpa [unit] using hu)
-      | inConcat w₁ w₂ _ hl _ hwc ih =>
-        rintro mc n la rfl
-        obtain ⟨mc₁, mc₂, rfl, rfl, rfl⟩ := hwc
-        exact star_help.inConcat (.right mc₁ (mc₂ + n) (a :: la)) (.right mc₂ n (a :: la)) _
-          hl (ih mc₂ n la rfl) ⟨mc₁, mc₂, rfl, rfl, rfl⟩
+      | inUnit _ hu => intro mcount la rfl; simp [derLA] at hu
+      | inConcat w₁ w₂ _ hl _ hwc ih => intro mcount la rfl; obtain ⟨_, _, _, _, rfl⟩ := hwc; exact ih _ _ rfl
+    | succ lacount => exact derLA_star_right a l mcount lacount la
+
 
 
 theorem derLA_lb (a : α) (l : Lang α) : derLA a (◁ l) ≐ ∅  := by

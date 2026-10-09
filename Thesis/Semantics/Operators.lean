@@ -64,18 +64,21 @@ def concat {α} (k l : Lang α) : Lang α := λ w =>
 infixr:60 " • " => concat
 
 -- helper operator for star
-inductive star_help {α} (l : Lang α) : Word α → Prop
-| inUnit : ∀ w, I w → star_help l w
+inductive star_help {α} (base : Lang α) (l : Lang α) : Word α → Prop
+| inUnit : ∀ w, base w → star_help base l w
 | inConcat :
   ∀ w₁ w₂ w,
   l w₁ →
-  star_help l w₂ →
+  star_help base l w₂ →
   wc w₁ w₂ w →
-  star_help l w
+  star_help base l w
 
-def star (l : Lang α) : Lang α :=
-  star_help l
-postfix:max "*" => star
+def starUnit (l : Lang α) : Lang α :=
+  star_help I l
+postfix:max "*" => starUnit
+
+def star (base l : Lang α) : Lang α :=
+  star_help base l
 
 def lookbehind (l : Lang α) : Lang α := λ w =>
   match w with
