@@ -59,53 +59,55 @@ theorem membership_right_iff_nullable (L : Lang α) (mcount lacount : Nat) (la :
   exact (derLA_word_iff L mcount lacount la).symm
 
 /-- Theorem 3.2.2 — existential derivative and indexed nullability. -/
-theorem xder_nullable_iff {α} (L : Lang α) (w : List α) (n : Nat) :
-    nullable_n (xder w L) n ↔
-      (∃ x : NEList α, ∃ y : List α, w = toList x ++ y ∧ y.length = n ∧ L (Sum.inl (x, y)))
-      ∨ (∃ k : Nat, k + w.length = n ∧ L (Sum.inr (k, w))) := by
-  induction w generalizing L n with
+theorem xder_nullable_iff {α} (l : Lang α) (w : List α) (n m : Nat) :
+    nullable_n_m (xder w l) n m ↔
+      (∃ (lb : NEList α) (main la : List α),
+        w = toList lb ++ main ++ la ∧ n = main.length ∧ m = la.length ∧ l (.left lb main la))
+      ∨ (∃ (mc : Nat) (main : NEList α) (la : List α),
+        w = toList main ++ la ∧ n = mc + (toList main).length ∧ m = la.length ∧ l (.middle mc main la))
+      ∨ (∃ lac : Nat, m = lac + w.length ∧ l (.right n lac w)) := by
+  induction w generalizing l n m with
   | nil =>
-    simp only [xder, nullable_n, List.length]
     constructor
-    · intro h
-      right
-      exact ⟨n, rfl, h⟩
-    · rintro (⟨x, y, hw, _, _⟩ | ⟨k, hk, hL⟩)
-      · cases x with
-        | mk xh xt =>
-          simp [toList] at hw
-      · simp at hk
-        subst hk
-        exact hL
+    · intro h; right; right; exact ⟨m, rfl, h⟩
+    · rintro (⟨_, _, _, hw, _⟩ | ⟨_, _, _, hw, _⟩ | ⟨_, hm, h⟩)
+      · simp [toList] at hw
+      · simp [toList] at hw
+      · simp at hm; subst hm; exact h
   | cons hd tl ih =>
-    simp only [xder, List.length]
-    rw [ih (der hd L ∪ derLA hd L)]
+    simp [xder, ih]
     constructor
-    . intro h
-      cases h with
-      | inl h =>
-        left; obtain ⟨x, y, htl, hy, hunion⟩ := h
-        refine ⟨(hd, toList x), y, by simp [toList] at ⊢ htl; trivial, hy, ?_⟩
-        cases hunion with
-        | inl hder => cases x with | mk x xs => simp [der, toList] at hder ⊢; exact hder
-        | inr hderLA => simp [derLA] at hderLA
-      | inr h =>
-        obtain ⟨k, hk, hunion⟩ := h
-        cases k with
-        | zero =>
-          cases hunion with
-          | inl hder => left; exact ⟨(hd, []), tl, by simp [toList], by rw [Nat.zero_add] at hk; exact hk, hder⟩
-          | inr hderLA => simp [derLA] at hderLA
-        | succ k =>
-          cases hunion with
-          | inl hder => simp [der] at hder
-          | inr hderLA => right; exact ⟨k, by rw [Nat.succ_add_eq_add_succ] at hk; exact hk, hderLA⟩
-    . intro h
-      cases h with
-      | inl h =>
-        obtain ⟨x, y, hw, hy, h⟩ := h
-        cases x with | mk x xs =>
-          cases xs with
-          | nil => right; simp [toList] at hw; exact ⟨0, by rw [hw.2, Nat.zero_add]; exact hy, by rw [hw.1, hw.2]; exact Or.inl h⟩
-          | cons xshd xstl => left; simp [toList] at hw; exact ⟨(xshd, xstl), y, by simp [toList] at ⊢ hw; exact hw.2, hy, by rw [hw.1]; exact Or.inl h⟩
-      | inr h => obtain ⟨k, hk, h⟩ := h; right; exact ⟨k.succ, by rw [Nat.succ_add_eq_add_succ]; exact hk, Or.inr h⟩
+    · rintro (⟨lb, main, la, hw, hn, hm, h⟩ | ⟨mc, main, la, hw, hn, hm, h⟩ | ⟨lac, hm, h⟩)
+      · left; exact ⟨(hd, toList lb), main, la, by simp [toList, hw], hn, hm, by simp [Operators.union, derLB, der, derLA] at h; exact h⟩
+      · cases mc with
+        | zero => left; exact ⟨(hd, []), toList main, la, by simp [toList, hw], by simpa using hn, hm, by simp [Operators.union, derLB, der, derLA] at h; exact h⟩
+        | succ mc => right; left; exact ⟨mc, (hd, toList main), la, by simp [toList, hw], by simp [toList] at hn ⊢; omega, hm, by simp [Operators.union, derLB, der, derLA] at h; exact h⟩
+      · rcases h with h | h | h
+        · cases n with
+          | succ n => simp [derLB] at h
+          | zero =>
+            cases lac with
+            | succ lac => simp [derLB] at h
+            | zero => left; exact ⟨(hd, []), [], tl, by simp [toList], rfl, by simp at hm; exact hm, h⟩;
+        · cases lac with
+          | succ lac => cases n <;> simp [der] at h
+          | zero =>
+            cases n with
+            | zero => simp [der] at h
+            | succ n => right; left; exact ⟨n, (hd, []), tl, by simp [toList], by simp [toList], by simp at hm; exact hm, h⟩
+        · cases lac with
+          | zero => simp [derLA] at h
+          | succ lac => right; right; exact ⟨lac, by simp [Nat.add_comm] at hm ⊢; omega, h⟩;
+    · rintro (⟨⟨x, xs⟩, main, la, hw, hn, hm, h⟩ | ⟨mc, ⟨y, ys⟩, la, hw, hn, hm, h⟩ | ⟨lac, hm, h⟩)
+      · obtain ⟨rfl, hw⟩ := hw
+        cases xs with
+        | nil =>
+          cases main with
+          | nil => subst hn; right; right; exact ⟨0, by simp; exact hm, Or.inl h⟩
+          | cons y ys => right; left; exact ⟨0, (y, ys), la, by simp [toList], by simp [toList]; exact hn, hm, Or.inl h⟩
+        | cons x' xs' => left; exact ⟨(x', xs'), main, la, by simp [toList], hn, hm, Or.inl h⟩
+      · obtain ⟨rfl, hw⟩ := hw
+        cases ys with
+        | nil => subst hn; right; right; exact ⟨0, by simp; exact hm, Or.inr (Or.inl h)⟩
+        | cons y' ys' => right; left; exact ⟨mc + 1, (y', ys'), la, by simp [toList], by simp [toList] at hn ⊢; omega, hm, .inr (.inl h)⟩
+      · right; right; refine ⟨lac + 1, ?_, .inr (.inr h)⟩; omega
