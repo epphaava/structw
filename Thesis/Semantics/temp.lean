@@ -3,7 +3,7 @@ import Thesis.Semantics.Operators
 import Thesis.Semantics.Derivatives
 import Thesis.Semantics.AlgebraicLaws
 import Thesis.Semantics.DerivativeLaws
-import Thesis.Semantics.LookaheadDerivativeLaws
+import Thesis.Semantics.LookbehindDerivativeLaws
 
 
 open StructuredWords

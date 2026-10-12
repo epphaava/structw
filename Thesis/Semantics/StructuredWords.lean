@@ -39,6 +39,15 @@ def Word.word_to_list {α} : Word α → List α
   | .middle _ main la => toList main ++ la
   | .right _ _ la => la
 
+
+def mk_mcount_word : Nat → List α → List α → Word α
+  | n, [], la => .right n 0 la
+  | n, x :: xs, la => .middle n (x, xs) la
+
+def mk_word : List α → List α → List α → Word α
+  | [], main, la => mk_mcount_word 0 main la
+  | x :: xs, main, la => .left (x, xs) main la
+
 export Word (word_to_list)
 
 

@@ -7,38 +7,56 @@ namespace DerAccept
 open StructuredWords
 
 
-theorem der_word_iff {α} (L : Lang α) (hd : α) (tl : List α) (v : List α) :
-    der_word (hd :: tl) L (Sum.inr (0, v)) ↔ L (Sum.inl ((hd, tl), v)) := by
-  induction tl generalizing hd L v with
-  | nil => simp [der_word, der]
-  | cons y ys ih => exact ih (der hd L) y v
 
-theorem derLA_word_iff {α} (L : Lang α) (u : List α) (n : Nat) (ys : List α) :
-    derLA_word u L (Sum.inr (u.length + n, ys)) ↔ L (Sum.inr (n, u ++ ys)) := by
-  induction u generalizing L n ys with
+theorem derLB_word_iff {α} (L : Lang α) (x : α) (xs main la : List α) :
+    derLB_word (x :: xs) L (mk_mcount_word 0 main la) ↔ L (.left (x, xs) main la) := by
+  induction xs generalizing x L with
+  | nil => cases main <;> exact Iff.rfl
+  | cons x' xs' ih => exact ih (derLB x L) x'
+
+
+theorem der_word_iff {α} (L : Lang α) (mcount : Nat) (y : α) (ys la : List α) :
+    der_word (y :: ys) L (.right (mcount + ys.length.succ) 0 la) ↔ L (.middle mcount (y, ys) la) := by
+  induction ys generalizing L mcount y with
+  | nil => cases mcount <;> simp [der_word, der]
+  | cons y' ys' ih =>
+    have := ih (der y L) (mcount + 1) y'
+    have e : mcount + 1 + ys'.length.succ = mcount + (y' :: ys').length.succ := by simp [List.length_cons]; omega
+    rw [e] at this
+    exact this
+
+theorem derLA_word_iff {α} (L : Lang α) (mcount lacount : Nat) (la : List α) :
+    derLA_word la L (.right mcount (lacount + la.length) []) ↔ L (.right mcount lacount la) := by
+  induction la generalizing L mcount lacount with
   | nil => simp [derLA_word]
-  | cons a as ih =>
-    have := ih (derLA a L) (1 + n) ys
+  | cons z zs ih =>
+    have := ih (derLA z L) (mcount) (lacount.succ)
     simp [Nat.add_assoc, Nat.one_add, derLA] at ⊢ this
     exact this
 
 -- Theorem 3.2.1 (Derivative characterization of membership).
-theorem membership_inl_iff_nullable (L : Lang α) (x : NEList α) (y : List α) :
-    L (Sum.inl (x, y)) ↔ nullable_n (derLA_word y (der_word (toList x) L)) y.length := by
-  cases x with | mk hd tl =>
-    rw [nullable_n, toList]
-    have hla := derLA_word_iff (der_word (hd :: tl) L) y 0 []
-    have hder := der_word_iff L hd tl y
-    simp at hla
-    exact hder.symm.trans hla.symm
+theorem membership_left_iff_nullable (l : Lang α) (lb : NEList α) (main la : List α) :
+    l (.left lb main la) ↔ nullable_n_m (derLA_word la (der_word main (derLB_word (toList lb) l))) main.length la.length := by
+  have hlb := derLB_word_iff l lb.fst lb.snd main la
+  have hla := derLA_word_iff (der_word main (derLB_word (toList lb) l)) main.length 0 la
+  rw [Nat.zero_add] at hla
+  refine Iff.trans ?_ hla.symm
+  cases main with
+  | nil => exact hlb.symm
+  | cons y ys =>
+    have hder := der_word_iff (derLB_word (toList lb) l) 0 y ys la
+    rw [Nat.zero_add] at hder
+    exact hlb.symm.trans hder.symm
 
-theorem membership_inr_iff_nullable (L : Lang α) (n : Nat) (y : List α) :
-    L (Sum.inr (n, y)) ↔ nullable_n (derLA_word y L) (y.length + n) := by
-  simp only [nullable_n]
-  have := (derLA_word_iff L y n []).symm
-  simp only [List.append_nil] at this
-  exact this
+theorem membership_middle_iff_nullable (L : Lang α) (mcount : Nat) (main : NEList α) (la : List α) :
+    L (.middle mcount main la) ↔ nullable_n_m (derLA_word la (der_word (toList main) L)) (mcount + (toList main).length) la.length := by
+  have hla := derLA_word_iff (der_word (toList main) L) (mcount + (toList main).length) 0 la
+  rw [Nat.zero_add] at hla
+  exact (der_word_iff L mcount main.fst main.snd la).symm.trans hla.symm
 
+theorem membership_right_iff_nullable (L : Lang α) (mcount lacount : Nat) (la : List α) :
+    L (.right mcount lacount la) ↔ nullable_n_m (derLA_word la L) mcount (lacount + la.length) := by
+  exact (derLA_word_iff L mcount lacount la).symm
 
 /-- Theorem 3.2.2 — existential derivative and indexed nullability. -/
 theorem xder_nullable_iff {α} (L : Lang α) (w : List α) (n : Nat) :
@@ -91,4 +109,3 @@ theorem xder_nullable_iff {α} (L : Lang α) (w : List α) (n : Nat) :
           | nil => right; simp [toList] at hw; exact ⟨0, by rw [hw.2, Nat.zero_add]; exact hy, by rw [hw.1, hw.2]; exact Or.inl h⟩
           | cons xshd xstl => left; simp [toList] at hw; exact ⟨(xshd, xstl), y, by simp [toList] at ⊢ hw; exact hw.2, hy, by rw [hw.1]; exact Or.inl h⟩
       | inr h => obtain ⟨k, hk, h⟩ := h; right; exact ⟨k.succ, by rw [Nat.succ_add_eq_add_succ]; exact hk, Or.inr h⟩
-

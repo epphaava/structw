@@ -73,10 +73,6 @@ inductive star_help {α} (base : Lang α) (l : Lang α) : Word α → Prop
   wc w₁ w₂ w →
   star_help base l w
 
-def starUnit (l : Lang α) : Lang α :=
-  star_help I l
-postfix:max "*" => starUnit
-
 def star (base l : Lang α) : Lang α :=
   star_help base l
 
