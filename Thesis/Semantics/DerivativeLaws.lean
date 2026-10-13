@@ -3,6 +3,8 @@ import Thesis.Semantics.Operators
 import Thesis.Semantics.Derivatives
 import Thesis.Semantics.AlgebraicLaws
 import Thesis.Semantics.LookaheadDerivativeLaws
+import Thesis.Semantics.LookbehindDerivativeLaws
+
 
 namespace DerLaws
 
@@ -175,9 +177,6 @@ theorem der_concat (a : α) (k l : Lang α) :
         | inl h => obtain ⟨_, w₂, _, hl, _, _, _, _, _⟩ := h; subst w₂; simp [derLB] at hl
         | inr h => obtain ⟨_, w₂, _, hl, _, _, _, _, _⟩ := h; subst w₂; simp [der] at hl
 
-
-
-
 theorem wc_mcount_word (p q : Nat) (r la : List α) : wc (.right p q (r ++ la)) (mk_mcount_word q r la) (mk_mcount_word (p + q) r la) := by
   cases r with
   | nil => exact ⟨p, q, rfl, rfl, rfl⟩
@@ -238,15 +237,32 @@ theorem der_star_bwd (a : α) (l base : Lang α) :
   | inConcat w₁ w₂ w hl _ hwc ih =>
     exact der_sub a (concat_star_sub base l) w ((DerLaws.der_concat a l (star base l) w).mpr (Or.inr ⟨w₁, w₂, hl, ih, hwc⟩))
 
+theorem star_base_sub {b b' : Lang α} (l : Lang α) (h : b ⊆ b') : star b l ⊆ star b' l := by
+  intro w hw
+  induction hw with
+  | inUnit w hb => exact star_help.inUnit w (h w hb)
+  | inConcat w₁ w₂ w hl _ hwc ih => exact star_help.inConcat w₁ w₂ w hl ih hwc
+
+theorem union_concat_sub (k m : Lang α) {l l' : Lang α} (h : l ⊆ l') : k ∪ (m • l) ⊆ k ∪ (m • l') := by
+  intro w hw
+  rcases hw with hw | ⟨x, y, hx, hy, hwc⟩
+  · exact Or.inl hw
+  · exact Or.inr ⟨x, y, hx, h y hy, hwc⟩
+
 theorem der_star (a : α) (l base : Lang α) :
-    der a (star base l) ≐ star (der a base ∪ (der a l • derLB a (star base l))) (derLA a l) := by
+    der a (star base l) ≐ star (der a base ∪ (der a l • (star (derLB a base) (derLB a l)))) (derLA a l) := by
   intro w
   constructor
   · intro h
+    apply star_base_sub (derLA a l) (union_concat_sub (der a base) (der a l)
+      (fun u hu => (derLBws.derLB_star a l base u).mp hu)) w
     match w with
     | .middle (.succ mcount) (y, ys) la => exact der_star_fwd a l base _ h mcount (y :: ys) la rfl
     | .right (.succ mcount) 0 la => exact der_star_fwd a l base _ h mcount [] la rfl
-  · intro h; exact der_star_bwd a l base w h
+  · intro h
+    exact der_star_bwd a l base w (star_base_sub (derLA a l) (union_concat_sub (der a base) (der a l)
+      (fun u hu => (derLBws.derLB_star a l base u).mpr hu)) w h)
+
 
 
 theorem der_lb (a : α) (l : Lang α) : der a (◁ l) ≐ ∅  := by

@@ -58,7 +58,7 @@ theorem nullable_n_m_LAStep : nullable_n_m (▹ₗl) n (.succ m) ↔  nullable_n
 
 theorem nullable_empty : ¬ nullable (∅ : Lang α) := by simp [nullable, empty]
 
-theorem nullable_unit (n : Nat) : nullable (I : Lang α) := by simp [nullable, unit]
+theorem nullable_unit : nullable (I : Lang α) := by simp [nullable, unit]
 
 theorem nullable_top : nullable (T : Lang α) := by simp [nullable, top]
 
