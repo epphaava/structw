@@ -16,14 +16,14 @@ theorem derLB_empty (a : α) : derLB a ∅ ≐ ∅ := by
   | .middle mcount _ _ => cases mcount <;> simp [derLB, empty]
   | .right mcount lacount _ => cases mcount <;> cases lacount <;> simp [derLB, empty]
 
-theorem derLB_unit (a : α) : derLB a I ≐ (I // ▹ₗ I) := by
+theorem derLB_unit (a : α) : derLB a I ≐ (I - ▹ₗ I) := by
   intro w
   match w with
   | .left _ _ _ => simp [complement, derLB, LAStep, unit]
   | .middle mcount _ _ => cases mcount <;> simp [complement, derLB, LAStep, unit, toList]
   | .right mcount lacount _ => cases mcount <;> cases lacount <;> simp [complement, derLB, LAStep, unit]
 
-theorem derLB_top (a : α) : derLB a T ≐ (T // (▹ₘ T ∪ ▹ₗ T )) := by
+theorem derLB_top (a : α) : derLB a T ≐ (T - (▹ₘ T ∪ ▹ₗ T )) := by
   intro w
   match w with
   | .left _ _ _ => simp [union, complement, derLB, matchStep, LAStep, top]
@@ -31,7 +31,7 @@ theorem derLB_top (a : α) : derLB a T ≐ (T // (▹ₘ T ∪ ▹ₗ T )) := by
     cases mcount <;> simp [union, complement, derLB, matchStep, LAStep, top]
   | .right mcount lacount _ => cases mcount <;> cases lacount <;> simp [union, complement, derLB, matchStep, LAStep, top]
 
-theorem derLB_symb (a b : α) : derLB b (#a) ≐ (#a // (matchStep #a ∪ LAStep #a)):= by
+theorem derLB_symb (a b : α) : derLB b (#a) ≐ (#a - (matchStep #a ∪ LAStep #a)):= by
   intro w
   match w with
   | .left _ _ _ => simp [derLB, complement, union, matchStep, LAStep, symb]
@@ -55,7 +55,7 @@ theorem derLB_intersection (a : α) (k l : Lang α): derLB a (k ∩ l) ≐ (derL
   | .middle mcount _ _ => cases mcount <;> simp [intersection, derLB]
   | .right mcount lacount _ => cases mcount <;> cases lacount <;> simp [intersection, derLB]
 
-theorem derLB_complement (a : α) (k l : Lang α): derLB a (k // l) ≐ ((derLB a k) // (derLB a l)) := by
+theorem derLB_complement (a : α) (k l : Lang α): derLB a (k - l) ≐ ((derLB a k) - (derLB a l)) := by
   intro w
   match w with
   | .left _ _ _ => simp [complement, derLB]
@@ -195,7 +195,7 @@ theorem derLB_star_right (a : α) (l base : Lang α) : ∀ (la : List α),
     induction h with
     | inUnit w hunit => intro _ _; subst w; exact star_help.inUnit _ hunit
     | inConcat w₁ w₂ w hl _ hwc ih =>
-      intro la _; subst w; obtain ⟨mc₁, mc₂, hmcount, _, _⟩ := hwc; subst w₁ w₂
+      intro la _; subst w; obtain ⟨mc₁, mc₂, hmcount, _, _⟩ := hwc;  subst w₁ w₂
       obtain rfl : mc₁ = 0 := by omega
       obtain rfl : mc₂ = 0 := by omega
       exact star_help.inConcat (.left (a, []) [] la) (.left (a, []) [] la) (.left (a, []) [] la) hl (ih la rfl) ⟨[], [], rfl, rfl, rfl⟩

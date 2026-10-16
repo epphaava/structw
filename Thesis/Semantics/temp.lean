@@ -8,4 +8,3 @@ import Thesis.Semantics.LookbehindDerivativeLaws
 
 open StructuredWords
 open Operators
-

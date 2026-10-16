@@ -3,94 +3,54 @@ import Thesis.Semantics.Operators
 
 open Expr
 
-inductive MatchSet : Type
-| inl : List Nat → MatchSet
-| inr : List Nat → MatchSet
-deriving Repr
 
-namespace MatchSet
-abbrev included : List Nat → MatchSet := MatchSet.inl
-abbrev excluded : List Nat → MatchSet := MatchSet.inr
-end MatchSet
+def NStar (fr fb : Nat → Nat → Bool) (mc lac : Nat) : Bool :=
+  fb mc lac || (List.range mc).attach.any fun ⟨k, hk⟩ => fr (k + 1) ((mc - (k + 1)) + lac) && NStar fr fb (mc - (k + 1)) lac
+--termination_by mc
+decreasing_by have := List.mem_range.mp hk; omega
 
-instance : Membership Nat MatchSet where
-  mem m n :=
-    match m with
-    | MatchSet.inl included => n ∈ included
-    | MatchSet.inr excluded => n ∉ excluded
-
-
-def matchesOfPlus (m₁ m₂ : MatchSet) : MatchSet :=
-  match m₁ with
-  | .inl included₁ =>
-    match m₂ with
-    | .inl included₂ => .included (included₁ ++ included₂)
-    | .inr excluded₂ => .excluded (excluded₂.filter (λ n => !(List.elem n included₁)))
-  | .inr excluded₁ =>
-    match m₂ with
-    | .inl included₂ => .excluded (excluded₁.filter (λ n => !(List.elem n included₂)))
-    | .inr excluded₂ => .excluded (excluded₁.filter (λ n => List.elem n excluded₂))
-
-def matchesOfIntersection (m₁ m₂ : MatchSet) : MatchSet :=
-  match m₁ with
-  | .inl included₁ =>
-    match m₂ with
-    | .inl included₂ => .included (included₁.filter (λ n => List.elem n included₂))
-    | .inr excluded₂ => .included (included₁.filter (λ n => !(List.elem n excluded₂)))
-  | .inr excluded₁ =>
-    match m₂ with
-    | .inl included₂ => .included (included₂.filter (λ n => !(List.elem n excluded₁)))
-    | .inr excluded₂ => .excluded (excluded₁ ++ excluded₂)
-
-def matchesOfComplement (m₁ m₂ : MatchSet) : MatchSet :=
-  match m₁ with
-  | .inl included₁ =>
-    match m₂ with
-    | .inl included₂ => .included (included₁.filter (λ n => !(List.elem n included₂)))
-    | .inr excluded₂ => .included (included₁.filter (λ n => List.elem n excluded₂))
-  | .inr excluded₁ =>
-    match m₂ with
-    | .inl included₂ => .excluded (excluded₁ ++ included₂)
-    | .inr excluded₂ => .included (excluded₂.filter (λ n => !(List.elem n excluded₁)))
-
-def matchesOfMult (m₁ m₂ : MatchSet) : MatchSet :=
-  match m₁ with
-  | .inl included₁ =>
-    match m₂ with
-    | .inl included₂ => .included (included₂.filter (λ n₂ => included₁.any (λ n₁ => Nat.ble n₂ n₁)))
-    | .inr excluded₂ =>
-      match included₁.max? with
-      | none => .included []
-      | some max => .included ((List.range (max + 1)).filter (λ n => !(List.elem n excluded₂)))
-  | .inr _ => m₂
-
-def matchesOfStar (m : MatchSet) : MatchSet :=
-  match m with
-  | .inl _ => .excluded []
-  | .inr _ => .excluded []
-
-def matchesOfLA (m : MatchSet) : MatchSet :=
-  match m with
-  | .inl included => if 0 ∈ included then .included [0] else .included []
-  | .inr excluded => if 0 ∈ excluded then .included [] else .included [0]
-
-def matchesOfStep (m : MatchSet) : MatchSet :=
-  match m with
-  | .inl included => .included (included.map Nat.succ)
-  | .inr excluded => .excluded (0 :: excluded.map Nat.succ)
-
-/-- Definition 4.3.1 — nullability set `N(r)`. -/
-def N (r : Expr α) : MatchSet :=
+def N {α} (r : Expr α) (n : Nat) (mc lac : Nat) : Bool :=
   match r with
-  | .empty => .included []
-  | .unit => .excluded []
-  | .top => .excluded []
-  | .symbol _ => .included []
-  | .plus r₁ r₂ => matchesOfPlus (N r₁) (N r₂)
-  | .intersection r₁ r₂ => matchesOfIntersection (N r₁) (N r₂)
-  | .complement r₁ r₂ => matchesOfComplement (N r₁) (N r₂)
-  | .mult r₁ r₂ => matchesOfMult (N r₁) (N r₂)
-  | .star _ => .excluded []
-  | .la r => matchesOfLA (N r)
-  | .step r => matchesOfStep (N r)
-termination_by sizeOf r
+  | .empty => false
+  | .unit => mc == 0
+  | .top => true
+  | .symbol _ => false
+  | .plus r₁ r₂ => N r₁ n mc lac || N r₂ n mc lac
+  | .intersection r₁ r₂ => N r₁ n mc lac && N r₂ n mc lac
+  | .complement r₁ r₂ => N r₁ n mc lac && !N r₂ n mc lac
+  | .mult r₁ r₂ => (List.range (mc + 1)).any fun mc₁ => N r₁ n mc₁ ((mc - mc₁) + lac) && N r₂ n (mc - mc₁) lac
+  | .star r b => NStar (N r n) (N b n) mc lac
+  | .lb r => mc == 0 && lac == 0 && (List.range (n + 1)).any fun m => N r n m 0
+  | .la r => mc == 0 && N r n lac 0
+  | .mStep r => match mc with | 0 => false | mc + 1 => N r n mc lac
+  | .laStep r => match lac with | 0 => false | lac + 1 => N r n mc lac
+
+
+abbrev Tbl := Array (Array Bool)
+
+def Tbl.get (t : Tbl) (mc lac : Nat) : Bool := (t[lac]? >>= (·[mc]?)).getD false
+
+def Tbl.build (n : Nat) (f : Nat → Nat → Bool) : Tbl :=
+  (Array.range (n + 1)).map fun lac => (Array.range ((n + 1) - lac)).map fun mc => f mc lac
+
+
+def starCol (fr fb : Nat → Nat → Bool) (L lac : Nat) : Array Bool :=
+  (List.range ((L + 1) - lac)).foldl (init := #[]) fun s mc =>
+    s.push (fb mc lac || (List.range mc).any fun k =>
+      fr (k + 1) ((mc - (k + 1)) + lac) && s.getD (mc - (k + 1)) false)
+
+def NT (r : Expr α) (n : Nat) : Tbl :=
+  match r with
+  | .empty => Tbl.build n fun _ _ => false
+  | .unit => Tbl.build n fun mc _ => mc == 0
+  | .top => Tbl.build n fun _ _ => true
+  | .symbol _ => Tbl.build n fun _ _ => false
+  | .plus r₁ r₂ => Tbl.build n fun mc lac => (NT r₁ n).get mc lac || (NT r₂ n).get mc lac
+  | .intersection r₁ r₂ => Tbl.build n fun mc lac => (NT r₁ n).get mc lac && (NT r₂ n).get mc lac
+  | .complement r₁ r₂ => Tbl.build n fun mc lac => (NT r₁ n).get mc lac && !(NT r₂ n).get mc lac
+  | .mult r₁ r₂ => Tbl.build n fun mc lac => (List.range (mc + 1)).any fun mc₁ => (NT r₁ n).get mc₁ ((mc - mc₁) + lac) && (NT r₂ n).get (mc - mc₁) lac
+  | .star r b => (Array.range (n + 1)).map fun lac => starCol (NT r n).get (NT b n).get n lac
+  | .lb r => Tbl.build n fun mc lac => mc == 0 && lac == 0 && (List.range (n + 1)).any fun m => (NT r n).get m 0
+  | .la r => Tbl.build n fun mc lac => mc == 0 && (NT r n).get lac 0
+  | .mStep r => Tbl.build n fun mc lac => match mc with | 0 => false | mc + 1 => (NT r n).get mc lac
+  | .laStep r => Tbl.build n fun mc lac => match lac with | 0 => false | lac + 1 => (NT r n).get mc lac

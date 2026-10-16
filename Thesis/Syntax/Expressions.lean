@@ -16,22 +16,26 @@ inductive Expr (α : Type) : Type
 | intersection : Expr α → Expr α → Expr α
 | complement : Expr α → Expr α → Expr α
 | mult : Expr α → Expr α → Expr α
-| star : Expr α → Expr α
+| star : Expr α → Expr α → Expr α
+| lb : Expr α → Expr α
 | la : Expr α → Expr α
-| step : Expr α → Expr α
+| mStep : Expr α → Expr α
+| laStep : Expr α → Expr α
 deriving Repr
 
 notation "∅" => Expr.empty
-notation "ε" => Expr.unit
+notation "I" => Expr.unit
 notation "T" => Expr.top
 prefix:max "#" => Expr.symbol
-infixr:55 "+" => Expr.plus
-infixl:55 " ∩ " => Expr.intersection
-infixl:30 " // " => Expr.complement
+infixr:30 " + " => Expr.plus
+infixl:55 " & " => Expr.intersection
+infixl:30 " -" => Expr.complement
 infixr:60 " • " => Expr.mult
 postfix:max "*" => Expr.star
+prefix:max "◁" => Expr.lb
 prefix:max "▷" => Expr.la
-prefix:max "▹" => Expr.step
+prefix:max "↑ₘ" => Expr.mStep
+prefix:max "↑ₗ" => Expr.laStep
 
 -- Definition 4.1.2 (Denotational semantics ⟦·⟧).
 def sem [DecidableEq α] (r : Expr α) : Lang α :=
@@ -42,10 +46,12 @@ def sem [DecidableEq α] (r : Expr α) : Lang α :=
   | .symbol x => # x
   | .plus r₁ r₂ => (sem r₁) ∪ (sem r₂)
   | .intersection r₁ r₂ => (sem r₁) ∩ (sem r₂)
-  | .complement r₁ r₂ => (sem r₁) // (sem r₂)
+  | .complement r₁ r₂ => (sem r₁) - (sem r₂)
   | .mult r₁ r₂ => (sem r₁) • (sem r₂)
-  | .star r => (sem r)*
-  | .la r => la (sem r)
-  | .step r => ▹ (sem r)
+  | .star r b => star (sem b) (sem r)
+  | .lb r => lookbehind (sem r)
+  | .la r => lookahead (sem r)
+  | .mStep r => matchStep (sem r)
+  | .laStep r => LAStep (sem r)
 
 variable {α : Type} [DecidableEq α]

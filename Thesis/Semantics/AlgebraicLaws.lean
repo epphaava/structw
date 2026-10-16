@@ -35,13 +35,13 @@ theorem intersection_idempotent (L : Lang α) : L ∩ L ≐ L := by intro w; sim
 theorem intersection_top (L : Lang α) : T ∩ L ≐ L := by intro w; simp [top, intersection]
 
 -- Equation (3.9)
-theorem complement_empty (L : Lang α) : (L // ∅) ≐ L := by intro w; simp [empty, complement]
+theorem complement_empty (L : Lang α) : (L - ∅) ≐ L := by intro w; simp [empty, complement]
 
 -- Equation (3.10)
-theorem complement_self (L : Lang α) : (L // L) ≐ ∅ := by intro w; simp [complement, empty]
+theorem complement_self (L : Lang α) : (L - L) ≐ ∅ := by intro w; simp [complement, empty]
 
 -- Equation (3.11)
-theorem complement_top (L : Lang α) : (L // T) ≐ ∅ := by intro w; simp [top, complement, empty]
+theorem complement_top (L : Lang α) : (L - T) ≐ ∅ := by intro w; simp [top, complement, empty]
 
 -- Equation (3.12)
 theorem concat_distrib_union_left (p q r : Lang α) : p • (q ∪ r) ≐ (p • q) ∪ (p • r) := by

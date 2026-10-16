@@ -52,7 +52,7 @@ theorem derLA_intersection (a : α) (k l : Lang α): derLA a (k ∩ l) ≐ (derL
   | .middle mcount _ _  => cases mcount <;> simp [derLA, intersection]
   | .right mcount lacount _ => cases mcount <;> cases lacount <;> simp [derLA, intersection]
 
-theorem derLA_complement (a : α) (k l : Lang α): derLA a (k // l) ≐ ((derLA a k) // (derLA a l)) := by
+theorem derLA_complement (a : α) (k l : Lang α): derLA a (k - l) ≐ ((derLA a k) - (derLA a l)) := by
   intro w
   match w with
   | .left _ _ _   => simp [derLA, complement]

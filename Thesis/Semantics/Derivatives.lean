@@ -45,7 +45,7 @@ def derLA_word (w : List α) (l : Lang α) : Lang α :=
 
 
  /-- Definition 3.2.4 (Indexed nullability). -/
-def nullable_n_m (l : Lang α) (mcount lacount : Nat) : Prop :=
+def nullable_m_n (l : Lang α) (mcount lacount : Nat) : Prop :=
   l (.right mcount lacount [])
 
  /-- Existential nullability. -/

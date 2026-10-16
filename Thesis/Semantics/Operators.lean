@@ -57,7 +57,7 @@ infixl:55 " ∩ " => intersection
 
 def complement (k l : Lang α) : Lang α := λ u =>
   k u ∧ ¬ l u
-infixl:30 " // " => complement
+infixl:30 " - " => complement
 
 def concat {α} (k l : Lang α) : Lang α := λ w =>
   ∃ x y, k x ∧ l y ∧ wc x y w
