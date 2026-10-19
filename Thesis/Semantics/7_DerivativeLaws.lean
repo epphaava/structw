@@ -1,9 +1,9 @@
-import Thesis.Semantics.StructuredWords
-import Thesis.Semantics.Operators
-import Thesis.Semantics.Derivatives
-import Thesis.Semantics.AlgebraicLaws
-import Thesis.Semantics.LookaheadDerivativeLaws
-import Thesis.Semantics.LookbehindDerivativeLaws
+import Thesis.Semantics.«1_StructuredWords»
+import Thesis.Semantics.«2_Operators»
+import Thesis.Semantics.«3_Derivatives»
+import Thesis.Semantics.«8_AlgebraicLaws»
+import Thesis.Semantics.«6_LookaheadDerivativeLaws»
+import Thesis.Semantics.«5_LookbehindDerivativeLaws»
 
 
 namespace DerLaws

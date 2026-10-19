@@ -1,7 +1,7 @@
 import Thesis.Syntax.Expressions
 import Thesis.Syntax.Nullability
-import Thesis.Semantics.NullabilityLaws
-import Thesis.Semantics.StructuredWords
+import Thesis.Semantics.«9_NullabilityLaws»
+import Thesis.Semantics.«1_StructuredWords»
 
 namespace NullabilityCorrect
 
@@ -81,7 +81,7 @@ theorem nullability_correct [DecidableEq α] (r : Expr α) (mc lac : Nat) (n : N
           simp at h; obtain ⟨hr, hstar⟩ := h
           have hl := (ihᵣ k.succ (.add (.sub mc k.succ) lac) (by simp [Nat.sub_eq]; omega)).mp hr
           have hs := ihm (.sub mc k.succ) (by simp [Nat.sub_eq]; omega) (by simp [Nat.sub_eq]; omega) hstar
-          exact (nullable_n_m_star (sem r) (sem b)).mpr (.inr ⟨k.succ, Nat.sub mc k.succ, by simp [Nat.sub_eq]; omega, hl, hs⟩)
+          exact (nullable_m_n_star (sem r) (sem b)).mpr (.inr ⟨k.succ, Nat.sub mc k.succ, by simp [Nat.sub_eq]; omega, hl, hs⟩)
     . intro h
       simp [nullable_m_n, star] at h
       generalize hw : Word.right mc lac [] = w at h

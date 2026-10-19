@@ -2,8 +2,8 @@ import Thesis.Syntax.Expressions
 import Thesis.Syntax.Derivatives
 import Thesis.Syntax.Nullability
 import Thesis.Syntax.NullabilityCorrectness
-import Thesis.Semantics.Derivatives
-import Thesis.Semantics.DerivativeLaws
+import Thesis.Semantics.«3_Derivatives»
+import Thesis.Semantics.«7_DerivativeLaws»
 
 namespace DerCorrect
 

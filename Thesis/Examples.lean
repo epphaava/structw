@@ -4,9 +4,9 @@ import Thesis.Syntax.Nullability
 import Thesis.Syntax.NullabilityCorrectness
 import Thesis.Syntax.DerivativeCorrectness
 import Thesis.Algorithm
-import Thesis.Semantics.StructuredWords
-import Thesis.Semantics.Operators
-import Thesis.Semantics.Derivatives
+import Thesis.Semantics.«1_StructuredWords»
+import Thesis.Semantics.«2_Operators»
+import Thesis.Semantics.«3_Derivatives»
 
 /-
 Examples from the thesis

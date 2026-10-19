@@ -1,6 +1,6 @@
-import Thesis.Semantics.StructuredWords
-import Thesis.Semantics.Operators
-import Thesis.Semantics.Derivatives
+import Thesis.Semantics.«1_StructuredWords»
+import Thesis.Semantics.«2_Operators»
+import Thesis.Semantics.«3_Derivatives»
 
 namespace DerAccept
 
@@ -36,7 +36,7 @@ theorem derLA_word_iff {α} (L : Lang α) (mcount lacount : Nat) (la : List α) 
 
 -- Theorem 3.2.1 (Derivative characterization of membership).
 theorem membership_left_iff_nullable (l : Lang α) (lb : NEList α) (main la : List α) :
-    l (.left lb main la) ↔ nullable_n_m (derLA_word la (der_word main (derLB_word (toList lb) l))) main.length la.length := by
+    l (.left lb main la) ↔ nullable_m_n (derLA_word la (der_word main (derLB_word (toList lb) l))) main.length la.length := by
   have hlb := derLB_word_iff l lb.fst lb.snd main la
   have hla := derLA_word_iff (der_word main (derLB_word (toList lb) l)) main.length 0 la
   rw [Nat.zero_add] at hla
@@ -49,18 +49,18 @@ theorem membership_left_iff_nullable (l : Lang α) (lb : NEList α) (main la : L
     exact hlb.symm.trans hder.symm
 
 theorem membership_middle_iff_nullable (L : Lang α) (mcount : Nat) (main : NEList α) (la : List α) :
-    L (.middle mcount main la) ↔ nullable_n_m (derLA_word la (der_word (toList main) L)) (mcount + (toList main).length) la.length := by
+    L (.middle mcount main la) ↔ nullable_m_n (derLA_word la (der_word (toList main) L)) (mcount + (toList main).length) la.length := by
   have hla := derLA_word_iff (der_word (toList main) L) (mcount + (toList main).length) 0 la
   rw [Nat.zero_add] at hla
   exact (der_word_iff L mcount main.fst main.snd la).symm.trans hla.symm
 
 theorem membership_right_iff_nullable (L : Lang α) (mcount lacount : Nat) (la : List α) :
-    L (.right mcount lacount la) ↔ nullable_n_m (derLA_word la L) mcount (lacount + la.length) := by
+    L (.right mcount lacount la) ↔ nullable_m_n (derLA_word la L) mcount (lacount + la.length) := by
   exact (derLA_word_iff L mcount lacount la).symm
 
 /-- Theorem 3.2.2 — existential derivative and indexed nullability. -/
 theorem xder_nullable_iff {α} (l : Lang α) (w : List α) (n m : Nat) :
-    nullable_n_m (xder w l) n m ↔
+    nullable_m_n (xder w l) n m ↔
       (∃ (lb : NEList α) (main la : List α),
         w = toList lb ++ main ++ la ∧ n = main.length ∧ m = la.length ∧ l (.left lb main la))
       ∨ (∃ (mc : Nat) (main : NEList α) (la : List α),

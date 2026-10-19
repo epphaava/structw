@@ -1,32 +1,32 @@
-import Thesis.Semantics.StructuredWords
-import Thesis.Semantics.Operators
-import Thesis.Semantics.Derivatives
+import Thesis.Semantics.«1_StructuredWords»
+import Thesis.Semantics.«2_Operators»
+import Thesis.Semantics.«3_Derivatives»
 
 namespace NullabilityLaws
 
 open StructuredWords
 open Operators
 
-theorem nullable_n_m_empty : ¬ nullable_m_n (∅ : Lang α) n m := by rw [nullable_m_n, empty]; trivial
+theorem nullable_m_n_empty : ¬ nullable_m_n (∅ : Lang α) n m := by rw [nullable_m_n, empty]; trivial
 
-theorem nullable_n_m_unit (n : Nat) : nullable_m_n (I : Lang α) n m  ↔ n == 0 := by simp [nullable_m_n, unit]
+theorem nullable_m_n_unit (n : Nat) : nullable_m_n (I : Lang α) n m  ↔ n == 0 := by simp [nullable_m_n, unit]
 
-theorem nullable_n_m_top : nullable_m_n (T : Lang α) n m := by rw [nullable_m_n, top]; trivial
+theorem nullable_m_n_top : nullable_m_n (T : Lang α) n m := by rw [nullable_m_n, top]; trivial
 
-theorem nullable_n_m_symb (a : α) : ¬ nullable_m_n (#a : Lang α) n m := by simp [nullable_m_n, symb]
+theorem nullable_m_n_symb (a : α) : ¬ nullable_m_n (#a : Lang α) n m := by simp [nullable_m_n, symb]
 
-theorem nullable_n_m_union (l k : Lang α) n : nullable_m_n (k ∪ l) n m ↔ (nullable_m_n k n m) ∨ (nullable_m_n l n m) := by simp [nullable_m_n, union]
+theorem nullable_m_n_union (l k : Lang α) n : nullable_m_n (k ∪ l) n m ↔ (nullable_m_n k n m) ∨ (nullable_m_n l n m) := by simp [nullable_m_n, union]
 
-theorem nullable_n_m_intersection : nullable_m_n (k ∩ l) n m ↔ nullable_m_n k n m ∧ nullable_m_n l n m := by rw [nullable_m_n, intersection]; rfl
+theorem nullable_m_n_intersection : nullable_m_n (k ∩ l) n m ↔ nullable_m_n k n m ∧ nullable_m_n l n m := by rw [nullable_m_n, intersection]; rfl
 
-theorem nullable_n_m_diff : nullable_m_n (k - l) n m ↔ nullable_m_n k n m ∧ ¬ nullable_m_n l n m := by rw [nullable_m_n, complement]; rfl
+theorem nullable_m_n_diff : nullable_m_n (k - l) n m ↔ nullable_m_n k n m ∧ ¬ nullable_m_n l n m := by rw [nullable_m_n, complement]; rfl
 
-theorem nullable_n_m_concat : nullable_m_n (k • l) n m ↔ (∃ mc₁ mc₂, n = mc₁ + mc₂ ∧ nullable_m_n k mc₁ (mc₂ + m) ∧ nullable_m_n l mc₂ m) := by
+theorem nullable_m_n_concat : nullable_m_n (k • l) n m ↔ (∃ mc₁ mc₂, n = mc₁ + mc₂ ∧ nullable_m_n k mc₁ (mc₂ + m) ∧ nullable_m_n l mc₂ m) := by
   simp [nullable_m_n]; constructor
   . intro ⟨w₁, w₂, hk, hl, mc₁, mc₂, hn, _, _⟩; subst w₁ w₂; exact ⟨mc₁, mc₂, hn, hk, hl⟩
   . intro ⟨mc₁, mc₂, hn, hk, hl⟩; exact ⟨.right mc₁ (mc₂ + m) [], .right mc₂ m [], hk, hl, mc₁, mc₂, hn, rfl, rfl⟩
 
-theorem nullable_n_m_star (l base : Lang α) : nullable_m_n (star base l) n m ↔
+theorem nullable_m_n_star (l base : Lang α) : nullable_m_n (star base l) n m ↔
     nullable_m_n base n m ∨
     ∃ mc₁ mc₂, n = mc₁ + mc₂ ∧ nullable_m_n l mc₁ (mc₂ + m) ∧ nullable_m_n (star base l) mc₂ m := by
   simp [nullable_m_n]; constructor
@@ -42,15 +42,15 @@ theorem nullable_n_m_star (l base : Lang α) : nullable_m_n (star base l) n m �
     . exact .inConcat _ _ _ hl hs ⟨mc₁, mc₂, hn, rfl, rfl⟩
 
 
-theorem nullable_n_m_lookbehind (l : Lang α) : nullable_m_n (◁ l) n m ↔ n = 0 ∧ m = 0 ∧ ∃ mc, nullable_m_n l mc 0  := by
+theorem nullable_m_n_lookbehind (l : Lang α) : nullable_m_n (◁ l) n m ↔ n = 0 ∧ m = 0 ∧ ∃ mc, nullable_m_n l mc 0  := by
   cases n <;> cases m <;> simp [nullable_m_n, lookbehind]
 
-theorem nullable_n_m_lookahead (l : Lang α) : nullable_m_n (▷ l) n m ↔ n = 0 ∧ nullable_m_n l m 0 := by
+theorem nullable_m_n_lookahead (l : Lang α) : nullable_m_n (▷ l) n m ↔ n = 0 ∧ nullable_m_n l m 0 := by
   cases n <;> simp [nullable_m_n, lookahead]
 
-theorem nullable_n_m_matchStep : nullable_m_n (▹ₘl) (.succ n) m ↔ nullable_m_n l n m := by simp [nullable_m_n, matchStep]
+theorem nullable_m_n_matchStep : nullable_m_n (▹ₘl) (.succ n) m ↔ nullable_m_n l n m := by simp [nullable_m_n, matchStep]
 
-theorem nullable_n_m_LAStep : nullable_m_n (▹ₗl) n (.succ m) ↔  nullable_m_n l n m := by simp [nullable_m_n, LAStep]
+theorem nullable_m_n_LAStep : nullable_m_n (▹ₗl) n (.succ m) ↔  nullable_m_n l n m := by simp [nullable_m_n, LAStep]
 
 
 

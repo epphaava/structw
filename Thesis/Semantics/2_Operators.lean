@@ -1,4 +1,4 @@
-import Thesis.Semantics.StructuredWords
+import Thesis.Semantics.«1_StructuredWords»
 
 namespace Operators
 
@@ -78,8 +78,8 @@ def star (base l : Lang α) : Lang α :=
 
 def lookbehind (l : Lang α) : Lang α := λ w =>
   match w with
-  | .left lb [] [] => ∃ mc, l (.middle mc lb [])
-  | .right 0 0 [] => ∃ mc, l (.right mc 0 [])
+  | .left lb [] la => ∃ mc, l (.middle mc lb la)
+  | .right 0 0 la => ∃ mc, l (.right mc 0 la)
   | _ => False
 prefix:max "◁" => lookbehind
 

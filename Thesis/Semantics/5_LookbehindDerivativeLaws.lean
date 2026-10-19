@@ -1,6 +1,6 @@
-import Thesis.Semantics.StructuredWords
-import Thesis.Semantics.Operators
-import Thesis.Semantics.Derivatives
+import Thesis.Semantics.«1_StructuredWords»
+import Thesis.Semantics.«2_Operators»
+import Thesis.Semantics.«3_Derivatives» 
 
 namespace derLBws
 
@@ -252,19 +252,22 @@ theorem derLB_lb (a : α) (l : Lang α) : derLB a (◁ l) ≐ ◁ (der a l)  := 
   intro w
   match w with
   | .left (x, xs) main la =>
-    constructor
-    . intro h; cases main <;> cases la <;> obtain ⟨mc, h⟩ := h; exact ⟨mc.succ, h⟩
-    . intro h; cases main <;> cases la <;> obtain ⟨mc, h⟩ := h;
-      cases mc with
-      | zero => simp [der] at h
-      | succ mc => exact ⟨mc, h⟩
+    cases main with
+    | cons _ _ => simp [derLB, lookbehind]
+    | nil =>
+      constructor
+      . intro ⟨mc, h⟩; exact ⟨mc.succ, h⟩
+      . intro ⟨mc, h⟩
+        cases mc with
+        | zero => simp [der] at h
+        | succ mc => exact ⟨mc, h⟩
   | .middle mcount main la  => cases mcount <;> simp [derLB, lookbehind, toList]
   | .right mcount lacount la =>
     cases mcount with
     | zero =>
       cases lacount with
       | zero =>
-        cases la <;> simp [derLB, lookbehind]
+        simp only [derLB, lookbehind]
         constructor
         . intro ⟨mc, h⟩; refine ⟨mc.succ, h⟩
         . intro ⟨mc, h⟩; cases mc with

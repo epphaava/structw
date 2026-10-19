@@ -1,6 +1,6 @@
 import Thesis.Syntax.Nullability
 import Thesis.Syntax.Derivatives
-import Thesis.Semantics.Derivatives
+import Thesis.Semantics.«3_Derivatives»
 import Thesis.Syntax.NullabilityCorrectness
 
 namespace Algorithm

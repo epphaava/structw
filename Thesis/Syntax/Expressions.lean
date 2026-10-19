@@ -1,5 +1,5 @@
-import Thesis.Semantics.StructuredWords
-import Thesis.Semantics.Operators
+import Thesis.Semantics.«1_StructuredWords»
+import Thesis.Semantics.«2_Operators»
 
 namespace Expr
 

@@ -1,6 +1,6 @@
-import Thesis.Semantics.StructuredWords
-import Thesis.Semantics.Operators
-import Thesis.Semantics.Derivatives
+import Thesis.Semantics.«1_StructuredWords»
+import Thesis.Semantics.«2_Operators»
+import Thesis.Semantics.«3_Derivatives»
 
 namespace DerLaws
 
@@ -142,14 +142,31 @@ theorem derLA_star (a : α) (l base : Lang α) : derLA a (star base l) ≐ star 
     | succ lacount => exact derLA_star_right a l base mcount lacount la
 
 
-
-
-theorem derLA_lb (a : α) (l : Lang α) : derLA a (◁ l) ≐ ∅  := by
+theorem derLA_lb (a : α) (l : Lang α) : derLA a (◁ l) ≐ ▹ₗ (◁ (derLA a l • ▹ₘ I)) := by
   intro w
   match w with
-  | .left _ _ _   => simp [derLA, empty]
-  | .middle mcount _ _  => cases mcount <;> simp [derLA, empty]
-  | .right mcount lacount _ => cases mcount <;> cases lacount <;> simp [derLA, lookbehind, empty]
+  | .left _ main _ => cases main <;> simp [derLA, LAStep]
+  | .middle _ _ _ => simp [derLA, LAStep]
+  | .right mcount lacount la =>
+    cases mcount with
+    | zero =>
+      cases lacount with
+      | zero => simp [derLA, LAStep]
+      | succ lacount =>
+        cases lacount with
+        | zero =>
+          simp [derLA, LAStep, lookbehind]
+          constructor
+          . intro ⟨mc, h⟩
+            exact ⟨mc + 1, .right mc 1 la, .right 1 0 la, h, rfl, mc, 1, rfl, rfl, rfl⟩
+          . rintro ⟨_, x, y, hx, hy, mc₁, mc₂, _, rfl, rfl⟩
+            cases mc₂ with
+            | zero => simp [matchStep] at hy
+            | succ mc₂ =>
+              simp [matchStep, unit] at hy; subst hy
+              exact ⟨mc₁, hx⟩
+        | succ _ => simp [derLA, LAStep, lookbehind]
+    | succ mcount => cases lacount <;> simp [derLA, LAStep, lookbehind]
 
 theorem derLA_la (a : α) (l : Lang α) : derLA a (▷ l) ≐ ▷ (der a l)  := by
   intro w

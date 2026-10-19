@@ -1,5 +1,5 @@
 import Thesis.Syntax.Expressions
-import Thesis.Semantics.Operators
+import Thesis.Semantics.«2_Operators»
 
 open Expr
 
