@@ -12,7 +12,7 @@ open StructuredWords
 
 -- Theorem 4.3.1 — Correctness of nullability
 theorem nullability_correct [DecidableEq α] (r : Expr α) (mc lac : Nat) (n : Nat) :
-  ((mc + lac : Nat) ≤ n) → (N r n mc lac ↔ nullable_m_n (sem r) mc lac) := by
+  ((mc + lac : Nat) ≤ n) → (N r n mc lac ↔ nullable_m_n (sem r) n mc lac) := by
   induction r generalizing mc lac with
   | empty => simp [nullable_m_n, sem, empty, N]
   | unit => simp [nullable_m_n, sem, unit, N]

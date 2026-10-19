@@ -27,10 +27,10 @@ def D [DecidableEq α] (a : α) : Expr α → Expr α
     | .complement r₁ r₂ => (DLB a r₁) - (DLB a r₂)
     | .mult r₁ r₂ => DLB a r₁ • DLB a r₂
     | .star r b => .star (DLB a r) (DLB a b)
-    | .lb r => ◁(DLB a r)
+    | .lb r => ◁(D a r)
 
   def DLA [DecidableEq α] (a : α) : Expr α → Expr α
-    | .empty | .symbol _ | .lb _ => ∅
+    | .empty | .symbol _ => ∅
     | .unit => ↑ₗI
     | .top => ↑ₗT
     | .plus r₁ r₂ => (DLA a r₁) + (DLA a r₂)
@@ -38,7 +38,8 @@ def D [DecidableEq α] (a : α) : Expr α → Expr α
     | .complement r₁ r₂ => (DLA a r₁) - (DLA a r₂)
     | .mult r₁ r₂ => (DLA a r₁) • (DLA a r₂)
     | .star r b => .star (DLA a r) (DLA a b)
-    | .la r => ▷(DLA a r)
+    | .lb r => ↑ₗ(◁(DLA a r • ↑ₘI))
+    | .la r => ▷(D a r)
     | .mStep r => ↑ₘ (DLA a r)
     | .laStep r => ↑ₗ (DLA a r)
 
