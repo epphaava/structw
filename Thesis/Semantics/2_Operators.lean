@@ -79,7 +79,7 @@ def star (base l : Lang α) : Lang α :=
 def lookbehind (l : Lang α) : Lang α := λ w =>
   match w with
   | .left lb [] la => ∃ mc, l (.middle mc lb la)
-  | .right 0 0 la => ∃ mc, l (.right mc 0 la)
+  | .right 0 lac la => ∃ mc, l (.right mc lac la)
   | _ => False
 prefix:max "◁" => lookbehind
 

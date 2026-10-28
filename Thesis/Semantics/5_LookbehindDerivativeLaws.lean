@@ -1,6 +1,6 @@
 import Thesis.Semantics.«1_StructuredWords»
 import Thesis.Semantics.«2_Operators»
-import Thesis.Semantics.«3_Derivatives» 
+import Thesis.Semantics.«3_Derivatives»
 
 namespace derLBws
 
@@ -273,7 +273,7 @@ theorem derLB_lb (a : α) (l : Lang α) : derLB a (◁ l) ≐ ◁ (der a l)  := 
         . intro ⟨mc, h⟩; cases mc with
           | zero => simp [der] at h
           | succ mc => refine ⟨mc, h⟩
-      | succ lacount => simp [derLB, lookbehind]
+      | succ lacount => simp [derLB, lookbehind, der]
     | succ mcount => cases la <;> simp [derLB, lookbehind]
 
 theorem derLB_la (a : α) (l : Lang α) : derLB a (▷ l) ≐ ∅ := by

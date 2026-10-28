@@ -105,6 +105,8 @@ theorem nullability_correct [DecidableEq α] (r : Expr α) (mc lac : Nat) (n : N
         . intro ⟨mc, hl⟩
           have := ih mc 0
           refine ⟨mc, ?_⟩
+          simp [sem] at hl
+          
           sorry
       . simp [nullable_m_n, sem, lookbehind, N]
     . simp [nullable_m_n, sem, lookbehind, N]

@@ -142,31 +142,15 @@ theorem derLA_star (a : α) (l base : Lang α) : derLA a (star base l) ≐ star 
     | succ lacount => exact derLA_star_right a l base mcount lacount la
 
 
-theorem derLA_lb (a : α) (l : Lang α) : derLA a (◁ l) ≐ ▹ₗ (◁ (derLA a l • ▹ₘ I)) := by
+theorem derLA_lb (a : α) (l : Lang α) : derLA a (◁ l) ≐ (◁ (derLA a l)) := by
   intro w
   match w with
-  | .left _ main _ => cases main <;> simp [derLA, LAStep]
-  | .middle _ _ _ => simp [derLA, LAStep]
+  | .left _ main _ => cases main <;> simp [lookbehind, derLA]
+  | .middle _ _ _ => simp [lookbehind, derLA]
   | .right mcount lacount la =>
     cases mcount with
-    | zero =>
-      cases lacount with
-      | zero => simp [derLA, LAStep]
-      | succ lacount =>
-        cases lacount with
-        | zero =>
-          simp [derLA, LAStep, lookbehind]
-          constructor
-          . intro ⟨mc, h⟩
-            exact ⟨mc + 1, .right mc 1 la, .right 1 0 la, h, rfl, mc, 1, rfl, rfl, rfl⟩
-          . rintro ⟨_, x, y, hx, hy, mc₁, mc₂, _, rfl, rfl⟩
-            cases mc₂ with
-            | zero => simp [matchStep] at hy
-            | succ mc₂ =>
-              simp [matchStep, unit] at hy; subst hy
-              exact ⟨mc₁, hx⟩
-        | succ _ => simp [derLA, LAStep, lookbehind]
-    | succ mcount => cases lacount <;> simp [derLA, LAStep, lookbehind]
+    | zero => cases lacount <;> simp [derLA, lookbehind]
+    | succ mcount => cases lacount <;> simp [derLA, lookbehind]
 
 theorem derLA_la (a : α) (l : Lang α) : derLA a (▷ l) ≐ ▷ (der a l)  := by
   intro w
