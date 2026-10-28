@@ -7,79 +7,59 @@ namespace NullabilityLaws
 open StructuredWords
 open Operators
 
-theorem nullable_m_n_empty : ¬ nullable_m_n (∅ : Lang α) length n m := by simp [nullable_m_n, empty]
+theorem nullable_empty : ¬ nullable (∅ : Lang α)  lbc mc lac := by simp [nullable, empty]
 
-theorem nullable_m_n_unit (n : Nat) : nullable_m_n (I : Lang α) length n m ↔ n = 0 ∧ m ≤ length := by
-  simp [nullable_m_n, unit]; omega
+theorem nullable_unit : nullable (I : Lang α) lbc mc lac ↔ mc = 0 := by simp [nullable, unit];
 
-theorem nullable_m_n_top (h : n + m ≤ length) : nullable_m_n (T : Lang α) length n m := ⟨h, trivial⟩
+theorem nullable_top : nullable (T : Lang α) lbc mc lac := by simp [nullable, top]
 
-theorem nullable_m_n_symb (a : α) : ¬ nullable_m_n (#a : Lang α) length n m := by simp [nullable_m_n, symb]
+theorem nullable_symb (a : α) : ¬ nullable (#a : Lang α) lbc mc lac := by simp [nullable, symb]
 
-theorem nullable_m_n_union (l k : Lang α) n : nullable_m_n (k ∪ l) length n m ↔ (nullable_m_n k length n m) ∨ (nullable_m_n l length n m) := by
-  simp only [nullable_m_n, union]; exact and_or_left
+theorem nullable_union : nullable (k ∪ l) lbc mc lac ↔ (nullable k lbc mc lac) ∨ (nullable l lbc mc lac) := by simp [nullable, union]
 
-theorem nullable_m_n_intersection : nullable_m_n (k ∩ l) length n m ↔ nullable_m_n k length n m ∧ nullable_m_n l length n m := by
-  simp only [nullable_m_n, intersection]
+theorem nullable_intersection : nullable (k ∩ l) lbc mc lac ↔ nullable k lbc mc lac ∧ nullable l lbc mc lac := by simp [nullable, intersection]
+
+theorem nullable_diff : nullable (k - l) lbc mc lac ↔ nullable k lbc mc lac ∧ ¬ nullable l lbc mc lac := by simp [nullable, complement]
+
+theorem nullable_concat : nullable (k • l) lbc mc lac ↔ (∃ mc₁ mc₂, mc = mc₁ + mc₂ ∧ nullable k lbc mc₁ (mc₂ + lac) ∧ nullable l (lbc + mc₁) mc₂ lac) := by
   constructor
-  . intro ⟨hb, hk, hl⟩; exact ⟨⟨hb, hk⟩, ⟨hb, hl⟩⟩
-  . intro ⟨⟨hb, hk⟩, ⟨_, hl⟩⟩; exact ⟨hb, hk, hl⟩
+  . rintro ⟨w₁, w₂, hk, hl, mc₁, mc₂, hn, rfl, rfl⟩; exact ⟨mc₁, mc₂, hn, hk, hl⟩
+  . intro ⟨mc₁, mc₂, hn, hk, hl⟩; exact ⟨.right lbc mc₁ (mc₂ + lac) [], .right (lbc + mc₁) mc₂ lac [], hk, hl, mc₁, mc₂, hn, rfl, rfl⟩
 
-theorem nullable_m_n_diff : nullable_m_n (k - l) length n m ↔ nullable_m_n k length n m ∧ ¬ nullable_m_n l length n m := by
-  simp only [nullable_m_n, complement]
+theorem nullable_star (l base : Lang α) : nullable (star base l) lbc mc lac ↔
+    nullable base lbc mc lac ∨ ∃ mc₁ mc₂, mc = mc₁ + mc₂ ∧ nullable l lbc mc₁ (mc₂ + lac) ∧ nullable (star base l) (lbc + mc₁) mc₂ lac := by
   constructor
-  . intro ⟨hb, hk, hl⟩; exact ⟨⟨hb, hk⟩, fun ⟨_, h⟩ => hl h⟩
-  . intro ⟨⟨hb, hk⟩, hl⟩; exact ⟨hb, hk, fun h => hl ⟨hb, h⟩⟩
-
-theorem nullable_m_n_concat : nullable_m_n (k • l) length n m ↔ (∃ mc₁ mc₂, n = mc₁ + mc₂ ∧ nullable_m_n k length mc₁ (mc₂ + m) ∧ nullable_m_n l length mc₂ m) := by
-  constructor
-  . intro ⟨hb, w₁, w₂, hk, hl, mc₁, mc₂, hn, h₁, h₂⟩; subst h₁ h₂
-    exact ⟨mc₁, mc₂, hn, ⟨by omega, hk⟩, ⟨by omega, hl⟩⟩
-  . intro ⟨mc₁, mc₂, hn, ⟨hb, hk⟩, ⟨_, hl⟩⟩
-    exact ⟨by omega, .right mc₁ (mc₂ + m) [], .right mc₂ m [], hk, hl, mc₁, mc₂, hn, rfl, rfl⟩
-
-theorem nullable_m_n_star (l base : Lang α) : nullable_m_n (star base l) length n m ↔
-    nullable_m_n base length n m ∨
-    ∃ mc₁ mc₂, n = mc₁ + mc₂ ∧ nullable_m_n l length mc₁ (mc₂ + m) ∧ nullable_m_n (star base l) length mc₂ m := by
-  constructor
-  . intro ⟨hb, h⟩
-    unfold star at h
+  . intro h; unfold star at h
     cases h with
-    | inUnit _ hbase => exact .inl ⟨hb, hbase⟩
-    | inConcat w₁ w₂ _ hl hs hwc =>
-      obtain ⟨mc₁, mc₂, hn, rfl, rfl⟩ := hwc
-      exact .inr ⟨mc₁, mc₂, hn, ⟨by omega, hl⟩, ⟨by omega, hs⟩⟩
-  . rintro (⟨hb, hbase⟩ | ⟨mc₁, mc₂, hn, ⟨hb, hl⟩, ⟨_, hs⟩⟩)
-    . exact ⟨hb, .inUnit _ hbase⟩
-    . exact ⟨by omega, .inConcat _ _ _ hl hs ⟨mc₁, mc₂, hn, rfl, rfl⟩⟩
+    | inUnit _ hbase => exact .inl hbase
+    | inConcat w₁ w₂ _ hl hs hwc => obtain ⟨mc₁, mc₂, hn, rfl, rfl⟩ := hwc; exact .inr ⟨mc₁, mc₂, hn, hl, hs⟩
+  . rintro (hbase | ⟨mc₁, mc₂, hn, hl, hs⟩)
+    . exact .inUnit _ hbase
+    . exact .inConcat _ _ _ hl hs ⟨mc₁, mc₂, hn, rfl, rfl⟩
 
-theorem nullable_m_n_lookbehind (l : Lang α) : nullable_m_n (◁ l) length n m ↔ n = 0 ∧ ∃ mc, mc + m = length ∧ l (.right mc m []) := by
-  cases n <;> simp [nullable_m_n, lookbehind]
+theorem nullable_lookbehind (l : Lang α) : nullable (◁ l) lbc mc lac ↔ mc = 0 ∧ l (.right 0 lbc lac []) := by cases mc <;> simp [nullable, lookbehind]
 
-theorem nullable_m_n_lookahead (l : Lang α) : nullable_m_n (▷ l) length n m ↔ n = 0 ∧ nullable_m_n l length m 0 := by
-  cases n <;> simp [nullable_m_n, lookahead]
+theorem nullable_lookahead (l : Lang α) : nullable (▷ l) lbc mc lac ↔ mc = 0 ∧ l (.right lbc lac 0 []) := by cases mc <;> simp [nullable, lookahead]
 
-theorem nullable_m_n_matchStep : nullable_m_n (▹ₘl) (.succ length) (.succ n) m ↔ nullable_m_n l length n m := by
-  simp only [nullable_m_n, matchStep]
-  constructor <;> (intro ⟨hb, h⟩; exact ⟨by omega, h⟩)
+theorem nullable_lbStep : nullable (↑₁l) (.succ lbc) mc lac ↔ nullable l lbc mc lac := by simp [nullable, lbStep]
 
-theorem nullable_m_n_LAStep : nullable_m_n (▹ₗl) (.succ length) n (.succ m) ↔ nullable_m_n l length n m := by
-  simp only [nullable_m_n, LAStep]
-  constructor <;> (intro ⟨hb, h⟩; exact ⟨by omega, h⟩)
+theorem nullable_matchStep : nullable (↑₂l) lbc (.succ mc) lac ↔ nullable l lbc mc lac := by simp only [nullable, matchStep]
+
+theorem nullable_LAStep : nullable (↑₃l) lbc mc (.succ lac) ↔ nullable l lbc mc lac := by simp only [nullable, laStep]
 
 
 
 
 
-theorem nullable_empty : ¬ nullable (∅ : Lang α) length := by simp [nullable, nullable_m_n, empty]
+theorem xnullable_empty : ¬ xnullable (∅ : Lang α) := by simp [xnullable, nullable, empty]
 
-theorem nullable_unit : nullable (I : Lang α) length := ⟨0, 0, Nat.zero_le _, rfl⟩
+theorem xnullable_unit : xnullable (I : Lang α) := by simp [xnullable, nullable, unit]
 
-theorem nullable_top : nullable (T : Lang α) length := ⟨0, 0, Nat.zero_le _, trivial⟩
+theorem xnullable_top : xnullable (T : Lang α) := by simp [xnullable, nullable, top]
 
-theorem nullable_symb (a : α) : ¬ nullable (#a : Lang α) length := by simp [nullable, nullable_m_n, symb]
+theorem xnullable_symb (a : α) : ¬ xnullable (#a : Lang α) := by simp [xnullable, nullable, symb]
 
-theorem nullable_union (l k : Lang α) : nullable (k ∪ l) length ↔ (nullable k length) ∨ (nullable l length) := by
+theorem xnullable_union (l k : Lang α) : xnullable (k ∪ l) ↔ (xnullable k) ∨ (xnullable l) := by
   constructor
   . rintro ⟨mc, lac, hb, hk | hl⟩
     . exact .inl ⟨mc, lac, hb, hk⟩
@@ -88,67 +68,73 @@ theorem nullable_union (l k : Lang α) : nullable (k ∪ l) length ↔ (nullable
     . exact ⟨mc, lac, hb, .inl hk⟩
     . exact ⟨mc, lac, hb, .inr hl⟩
 
-theorem nullable_intersection : nullable (k ∩ l) length ↔ ∃ mc lac, nullable_m_n k length mc lac ∧ nullable_m_n l length mc lac := by
+theorem xnullable_intersection : xnullable (k ∩ l) ↔ ∃ lbc mc lac, nullable k lbc mc lac ∧ nullable l lbc mc lac := by
   constructor
-  . intro ⟨mc, lac, h⟩; exact ⟨mc, lac, nullable_m_n_intersection.mp h⟩
-  . intro ⟨mc, lac, h⟩; exact ⟨mc, lac, nullable_m_n_intersection.mpr h⟩
+  . intro ⟨lbc, mc, lac, h⟩; exact ⟨lbc, mc, lac, nullable_intersection.mp h⟩
+  . intro ⟨lbc, mc, lac, h⟩; exact ⟨lbc, mc, lac, nullable_intersection.mpr h⟩
 
-theorem nullable_diff : nullable (k - l) length ↔ ∃ mc lac, nullable_m_n k length mc lac ∧ ¬ nullable_m_n l length mc lac := by
+theorem xnullable_diff : xnullable (k - l) ↔ ∃ lbc mc lac, nullable k lbc mc lac ∧ ¬ nullable l lbc mc lac := by
   constructor
-  . intro ⟨mc, lac, h⟩; exact ⟨mc, lac, nullable_m_n_diff.mp h⟩
-  . intro ⟨mc, lac, h⟩; exact ⟨mc, lac, nullable_m_n_diff.mpr h⟩
+  . intro ⟨lbc, mc, lac, h⟩; exact ⟨lbc, mc, lac, nullable_diff.mp h⟩
+  . intro ⟨lbc, mc, lac, h⟩; exact ⟨lbc, mc, lac, nullable_diff.mpr h⟩
 
-theorem nullable_concat : nullable (k • l) length ↔ (∃ mc₁ mc₂ m, nullable_m_n k length mc₁ (mc₂ + m) ∧ nullable_m_n l length mc₂ m) := by
+theorem xnullable_concat : xnullable (k • l) ↔ (∃ lbc mc₁ mc₂ lac, nullable k lbc mc₁ (mc₂ + lac) ∧ nullable l (lbc + mc₁) mc₂ lac) := by
   constructor
-  . intro ⟨_, lacount, h⟩
-    obtain ⟨mc₁, mc₂, _, hk, hl⟩ := nullable_m_n_concat.mp h
-    exact ⟨mc₁, mc₂, lacount, hk, hl⟩
-  . intro ⟨mc₁, mc₂, lacount, hk, hl⟩
-    exact ⟨mc₁ + mc₂, lacount, nullable_m_n_concat.mpr ⟨mc₁, mc₂, rfl, hk, hl⟩⟩
+  . intro ⟨lbc, _, lacount, h⟩
+    obtain ⟨mc₁, mc₂, _, hk, hl⟩ := nullable_concat.mp h
+    exact ⟨lbc, mc₁, mc₂, lacount, hk, hl⟩
+  . intro ⟨lbc, mc₁, mc₂, lacount, hk, hl⟩
+    exact ⟨lbc, mc₁ + mc₂, lacount, nullable_concat.mpr ⟨mc₁, mc₂, rfl, hk, hl⟩⟩
 
-theorem nullable_star (l base : Lang α) : nullable (star base l) length ↔ nullable base length := by
+theorem xnullable_star (l base : Lang α) : xnullable (star base l) ↔ xnullable base := by
   constructor
-  . intro ⟨mcount, lacount, hb, h⟩
-    unfold star at h
-    generalize hw : Word.right mcount lacount [] = w at h
-    induction h generalizing mcount with
-    | inUnit _ hbase => subst hw; exact ⟨mcount, lacount, hb, hbase⟩
-    | inConcat w₁ w₂ _ hl hs hwc ih =>
-      subst hw
-      obtain ⟨mc₁, mc₂, hn, rfl, rfl⟩ := hwc
-      exact ih mc₂ (by omega) rfl
-  . intro ⟨mcount, lacount, hb, hbase⟩
-    exact ⟨mcount, lacount, hb, .inUnit _ hbase⟩
+  . intro ⟨lbcount, mcount, lacount, h⟩
+    unfold star nullable at h
+    generalize hw : Word.right lbcount mcount lacount [] = w at h
+    induction h generalizing lbcount mcount with
+    | inUnit _ hbase => subst hw; exact ⟨lbcount, mcount, lacount, hbase⟩
+    | inConcat w₁ w₂ _ _ _ hwc ih =>
+      subst hw; obtain ⟨mc₁, mc₂, _, _, rfl⟩ := hwc
+      exact ih (lbcount + mc₁) mc₂ rfl
+  . intro ⟨lbcount, mcount, lacount, hbase⟩; exact ⟨lbcount, mcount, lacount, .inUnit _ hbase⟩
 
--- The lookbehind's match count is unconstrained, and any lookahead count up to `length` is allowed.
-theorem nullable_lookbehind (l : Lang α) : nullable (◁ l) length ↔ ∃ mc lac, lac ≤ length ∧ l (.right mc lac []) := by
+theorem xnullable_lookbehind (l : Lang α) : xnullable (◁ l) ↔ ∃ mc lac, nullable l 0 mc lac := by
   constructor
-  . intro ⟨n, m, hb, h⟩
-    cases n with
-    | zero => obtain ⟨mc, h⟩ := h; exact ⟨mc, m, by omega, h⟩
-    | succ n => simp [lookbehind] at h
-  . intro ⟨mc, lac, hb, h⟩; exact ⟨0, lac, by omega, mc, h⟩
+  . intro ⟨lbc, mc, lac, h⟩
+    cases mc with
+    | zero => exact ⟨lbc, lac, h⟩
+    | succ n => simp [nullable, lookbehind] at h
+  . intro ⟨mc, lac, h⟩; exact ⟨mc, 0, lac, h⟩
 
-theorem nullable_lookahead (l : Lang α) : nullable (▷ l) length ↔ ∃ mc, nullable_m_n l length mc 0 := by
+theorem xnullable_lookahead (l : Lang α) : xnullable (▷ l) ↔ ∃ lbc mc, nullable l lbc mc 0 := by
   constructor
-  . intro ⟨n, m, hb, h⟩
-    cases n with
-    | zero => exact ⟨m, by omega, h⟩
-    | succ n => simp [lookahead] at h
-  . intro ⟨mc, hb, h⟩; exact ⟨0, mc, by omega, h⟩
+  . intro ⟨lbc, mc, lac, h⟩
+    cases mc with
+    | zero => exact ⟨lbc, lac, h⟩
+    | succ mc => simp [nullable, lookahead] at h
+  . intro ⟨lbc, mc, h⟩; exact ⟨lbc, 0, mc, h⟩
 
-theorem nullable_matchStep : nullable (▹ₘl) (.succ length) ↔ nullable l length := by
+theorem xnullable_lbStep : xnullable (↑₁l) ↔ xnullable l := by
   constructor
-  . intro ⟨n, m, hb, h⟩
-    cases n with
-    | zero => simp [matchStep] at h
-    | succ n => exact ⟨n, m, by omega, h⟩
-  . intro ⟨n, m, hb, h⟩; exact ⟨n.succ, m, by omega, h⟩
+  . intro ⟨lbc, mc, lac, h⟩
+    cases lbc with
+    | zero => simp [nullable, lbStep] at h
+    | succ lbc => exact ⟨lbc, mc, lac, h⟩
+  . intro ⟨lbc, mc, lac, h⟩; exact ⟨lbc.succ, mc, lac, h⟩
 
-theorem nullable_LAStep : nullable (▹ₗl) (.succ length) ↔ nullable l length := by
+theorem xnullable_matchStep : xnullable (↑₂l) ↔ xnullable l := by
   constructor
-  . intro ⟨n, m, hb, h⟩
-    cases m with
-    | zero => simp [LAStep] at h
-    | succ m => exact ⟨n, m, by omega, h⟩
-  . intro ⟨n, m, hb, h⟩; exact ⟨n, m.succ, by omega, h⟩
+  . intro ⟨lbc, mc, lac, h⟩
+    cases mc with
+    | zero => simp [nullable, matchStep] at h
+    | succ mc => exact ⟨lbc, mc, lac, h⟩
+  . intro ⟨lbc, mc, lac, h⟩; exact ⟨lbc, mc.succ, lac, h⟩
+
+
+theorem xnullable_LAStep : xnullable (↑₃l) ↔ xnullable l  := by
+  constructor
+  . intro ⟨lbc, mc, lac, h⟩
+    cases lac with
+    | zero => simp [nullable, laStep] at h
+    | succ lac => exact ⟨lbc, mc, lac, h⟩
+  . intro ⟨lbc, mc, lac, h⟩; exact ⟨lbc, mc, lac.succ, h⟩

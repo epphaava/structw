@@ -19,6 +19,7 @@ inductive Expr (α : Type) : Type
 | star : Expr α → Expr α → Expr α
 | lb : Expr α → Expr α
 | la : Expr α → Expr α
+| lbStep : Expr α → Expr α
 | mStep : Expr α → Expr α
 | laStep : Expr α → Expr α
 deriving Repr
@@ -34,8 +35,9 @@ infixr:60 " • " => Expr.mult
 postfix:max "*" => Expr.star
 prefix:max "◁" => Expr.lb
 prefix:max "▷" => Expr.la
-prefix:max "↑ₘ" => Expr.mStep
-prefix:max "↑ₗ" => Expr.laStep
+prefix:max "↑₁" => Expr.lbStep
+prefix:max "↑₂" => Expr.mStep
+prefix:max "↑₃" => Expr.laStep
 
 -- Definition 4.1.2 (Denotational semantics ⟦·⟧).
 def sem [DecidableEq α] (r : Expr α) : Lang α :=
@@ -51,7 +53,8 @@ def sem [DecidableEq α] (r : Expr α) : Lang α :=
   | .star r b => star (sem b) (sem r)
   | .lb r => lookbehind (sem r)
   | .la r => lookahead (sem r)
+  | .lbStep r => lbStep (sem r)
   | .mStep r => matchStep (sem r)
-  | .laStep r => LAStep (sem r)
+  | .laStep r => laStep (sem r)
 
 variable {α : Type} [DecidableEq α]

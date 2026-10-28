@@ -11,103 +11,104 @@ open Operators
 open StructuredWords
 
 -- Theorem 4.3.1 — Correctness of nullability
-theorem nullability_correct [DecidableEq α] (r : Expr α) (mc lac : Nat) (n : Nat) :
-  ((mc + lac : Nat) ≤ n) → (N r n mc lac ↔ nullable_m_n (sem r) n mc lac) := by
-  induction r generalizing mc lac with
-  | empty => simp [nullable_m_n, sem, empty, N]
-  | unit => simp [nullable_m_n, sem, unit, N]
-  | top => simp [nullable_m_n, sem, top, N]
-  | symbol _ => simp [nullable_m_n, sem, symb, N]
+theorem nullability_correct [DecidableEq α] (r : Expr α) (lbc mc lac : Nat) : (N r lbc mc lac ↔ nullable (sem r) lbc mc lac) := by
+  induction r generalizing lbc mc lac with
+  | empty => simp [nullable, sem, empty, N]
+  | unit => simp [nullable, sem, unit, N]
+  | top => simp [nullable, sem, top, N]
+  | symbol _ => simp [nullable, sem, symb, N]
   | plus r₁ r₂ ih₁ ih₂ =>
-    intro hn
-    if hr₁ : N r₁ n mc lac then
-      have := (ih₁ mc lac hn).mp hr₁; simp [nullable_m_n] at this
-      simp [N, hr₁, nullable_m_n, sem, union, this]
+    if hr₁ : N r₁ lbc mc lac then
+      have := (ih₁ lbc mc lac).mp hr₁; simp [nullable] at this
+      simp [N, hr₁, nullable, sem, union, this]
     else
-      if hr₂ : N r₂ n mc lac then
-        have := (ih₂ mc lac hn).mp hr₂; simp [nullable_m_n] at this
-        simp [N, hr₂, nullable_m_n, sem, union, this]
+      if hr₂ : N r₂ lbc mc lac then
+        have := (ih₂ lbc mc lac).mp hr₂; simp [nullable] at this
+        simp [N, hr₂, nullable, sem, union, this]
       else
-        simp [N, hr₁, hr₂, nullable_m_n, sem, union];
-        exact ⟨mt (ih₁ mc lac hn).mpr hr₁, mt (ih₂ mc lac hn).mpr hr₂⟩
+        simp [N, hr₁, hr₂, nullable, sem, union];
+        exact ⟨mt (ih₁ lbc mc lac).mpr hr₁, mt (ih₂ lbc mc lac).mpr hr₂⟩
   | intersection r₁ r₂ ih₁ ih₂ =>
-    intro hn
-    if hr₁ : N r₁ n mc lac then
-      if hr₂ : N r₂ n mc lac then
-        simp [N, hr₁, hr₂, nullable_m_n, sem, intersection]
-        exact ⟨(ih₁ mc lac hn).mp hr₁, (ih₂ mc lac hn).mp hr₂⟩
+    if hr₁ : N r₁ lbc mc lac then
+      if hr₂ : N r₂ lbc mc lac then
+        simp [N, hr₁, hr₂, nullable, sem, intersection]
+        exact ⟨(ih₁ lbc mc lac).mp hr₁, (ih₂ lbc mc lac).mp hr₂⟩
       else
-        have := mt (ih₂ mc lac hn).mpr hr₂; simp [nullable_m_n] at this
-        simp [N, hr₂, nullable_m_n, sem, intersection, this]
+        have := mt (ih₂ lbc mc lac).mpr hr₂; simp [nullable] at this
+        simp [N, hr₂, nullable, sem, intersection, this]
     else
-      have := mt (ih₁ mc lac hn).mpr hr₁; simp [nullable_m_n] at this
-      simp [N, hr₁, nullable_m_n, sem, intersection, this]
+      have := mt (ih₁ lbc mc lac).mpr hr₁; simp [nullable] at this
+      simp [N, hr₁, nullable, sem, intersection, this]
   | complement r₁ r₂ ih₁ ih₂ =>
-    intro hn
-    if hr₁ : N r₁ n mc lac then
-      if hr₂ : N r₂ n mc lac then
-        have := (ih₂ mc lac hn).mp hr₂; simp [nullable_m_n] at this
-        simp [N, hr₂, nullable_m_n, sem, complement, this]
+    if hr₁ : N r₁ lbc mc lac then
+      if hr₂ : N r₂ lbc mc lac then
+        have := (ih₂ lbc mc lac).mp hr₂; simp [nullable] at this
+        simp [N, hr₂, nullable, sem, complement, this]
       else
-        simp [N, hr₁, hr₂, nullable_m_n, sem, complement]
-        exact ⟨(ih₁ mc lac hn).mp hr₁, mt (ih₂ mc lac hn).mpr hr₂⟩
+        simp [N, hr₁, hr₂, nullable, sem, complement]
+        exact ⟨(ih₁ lbc mc lac).mp hr₁, mt (ih₂ lbc mc lac).mpr hr₂⟩
     else
-      have := mt (ih₁ mc lac hn).mpr hr₁; simp [nullable_m_n] at this
-      simp [N, hr₁, nullable_m_n, sem, complement, this]
+      have := mt (ih₁ lbc mc lac).mpr hr₁; simp [nullable] at this
+      simp [N, hr₁, nullable, sem, complement, this]
   | mult r₁ r₂ ih₁ ih₂ =>
-    intro hn
     constructor
-    . simp [N]; intro n' hn' hr₁ hr₂
-      simp [nullable_m_n, sem]
-      have hl₁ := (ih₁ n' (.sub mc n' + lac) (by simp [Nat.sub_eq]; omega)).mp hr₁;
-      have hl₂ := (ih₂ (.sub mc n') lac (by simp [Nat.sub_eq]; omega)).mp hr₂; simp [nullable_m_n] at hl₁ hl₂
-      exact ⟨.right n' (.sub mc n' + lac) [], .right (.sub mc n') lac [], hl₁, hl₂, n', .sub mc n', by rw [Nat.sub_eq]; omega, rfl, rfl⟩
+    . simp [N]; intro mc' hmc' hr₁ hr₂
+      simp [nullable, sem]
+      have hl₁ := (ih₁ lbc mc' (.add (.sub mc mc') lac)).mp hr₁
+      have hl₂ := (ih₂ (.add lbc mc') (.sub mc mc') lac).mp hr₂; simp [nullable] at hl₁ hl₂
+      exact ⟨.right lbc mc' (.sub mc mc' + lac) [], .right (.add lbc mc') (.sub mc mc') lac [], hl₁, hl₂, mc', .sub mc mc', by rw [Nat.sub_eq]; omega, rfl, rfl⟩
     . rintro ⟨w₁, w₂, hl₁, hl₂, mc₁, mc₂, rfl, rfl, rfl⟩; simp [N]
-      have hr₁ := (ih₁ mc₁ (mc₂ + lac) (by simp [←Nat.add_assoc]; exact hn)).mpr hl₁
-      have hr₂ := (ih₂ mc₂ lac (by omega)).mpr hl₂
+      have hr₁ := (ih₁ lbc mc₁ (mc₂ + lac)).mpr hl₁
+      have hr₂ := (ih₂ (lbc + mc₁) mc₂ lac).mpr hl₂
       exact ⟨mc₁, by omega, by simp; exact hr₁, by simp; exact hr₂⟩
   | star r b ihᵣ ih =>
-    intro hn
     simp only [N, sem]
     constructor
-    . induction mc using Nat.strongRecOn with
+    . intro h
+      induction mc using Nat.strongRecOn generalizing lbc with
       | _ mc ihm =>
-        intro h; rw [NStar, Bool.or_eq_true] at h
+        rw [NStar, Bool.or_eq_true] at h
         rcases h with h | h
-        · exact .inUnit _ ((ih mc lac hn).mp h)
+        · exact .inUnit _ ((ih lbc mc lac).mp h)
         · rw [List.any_eq_true] at h
           obtain ⟨⟨k, hk⟩, _, h⟩ := h
           have hk := List.mem_range.mp hk
-          simp at h; obtain ⟨hr, hstar⟩ := h
-          have hl := (ihᵣ k.succ (.add (.sub mc k.succ) lac) (by simp [Nat.sub_eq]; omega)).mp hr
-          have hs := ihm (.sub mc k.succ) (by simp [Nat.sub_eq]; omega) (by simp [Nat.sub_eq]; omega) hstar
-          exact (nullable_m_n_star (sem r) (sem b)).mpr (.inr ⟨k.succ, Nat.sub mc k.succ, by simp [Nat.sub_eq]; omega, hl, hs⟩)
+          simp only [Bool.and_eq_true] at h; obtain ⟨hr, hstar⟩ := h
+          have hl := (ihᵣ lbc (k + 1) ((mc - (k + 1)) + lac)).mp hr
+          have hs := ihm (mc - (k + 1)) (by omega) (lbc + (k + 1)) hstar
+          exact star_help.inConcat _ _ _ hl hs ⟨k + 1, mc - (k + 1), by omega, rfl, rfl⟩
     . intro h
-      simp [nullable_m_n, star] at h
-      generalize hw : Word.right mc lac [] = w at h
-      induction h generalizing mc with
-      | inUnit _ hb => subst hw; rw [NStar, (ih mc lac hn).mpr hb]; rfl
-      | inConcat w₁ w₂ _ hl _ hwc ih =>
-        subst hw; obtain ⟨mc₁, mc₂, rfl, rfl, rfl⟩ := hwc
-        have hstar := ih mc₂ (by omega) rfl
+      unfold nullable star at h
+      generalize hw : Word.right lbc mc lac [] = w at h
+      induction h generalizing lbc mc with
+      | inUnit _ hb => subst hw; rw [NStar, (ih lbc mc lac).mpr hb]; rfl
+      | inConcat w₁ w₂ _ hl _ hwc ihs =>
+        subst hw; obtain ⟨mc₁, mc₂, rfl, h₁, h₂⟩ := hwc; subst h₁
+        have hstar := ihs (lbc + mc₁) mc₂ h₂.symm
         cases mc₁ with
-        | zero => simp [hstar]
+        | zero => simpa using hstar
         | succ k =>
           rw [NStar, Bool.or_eq_true, List.any_eq_true]; right
-          exact ⟨⟨k, List.mem_range.mpr (by omega)⟩, List.mem_attach _ _, by simp; exact ⟨(ihᵣ k.succ (Nat.add mc₂ lac) (by simp; omega)).mpr hl, hstar⟩⟩
+          refine ⟨⟨k, List.mem_range.mpr (by omega)⟩, List.mem_attach _ _, ?_⟩
+          simp only [Nat.add_sub_cancel_left, Bool.and_eq_true]
+          exact ⟨(ihᵣ lbc (k + 1) (mc₂ + lac)).mpr hl, hstar⟩
   | lb r ih =>
-    intro hn
-    rcases mc with zero | mc.succ
-    . rcases lac with zero | lac.succ
-      . simp [nullable_m_n, sem, lookbehind, N]
-        constructor
-        . intro ⟨mc, hmc, hr⟩; exact ⟨mc, (ih mc 0 (by omega)).mp hr⟩
-        . intro ⟨mc, hl⟩
-          have := ih mc 0
-          refine ⟨mc, ?_⟩
-          simp [sem] at hl
-          
-          sorry
-      . simp [nullable_m_n, sem, lookbehind, N]
-    . simp [nullable_m_n, sem, lookbehind, N]
-  | _ => sorry
+    cases mc with
+    | zero => simp only [N, nullable, sem, lookbehind]; simpa using ih 0 lbc lac
+    | succ mc => simp [N, nullable, sem, lookbehind]
+  | la r ih =>
+    cases mc with
+    | zero => simp only [N, nullable, sem, lookahead]; simpa using ih lbc lac 0
+    | succ mc => simp [N, nullable, sem, lookahead]
+  | lbStep r ih =>
+    cases lbc with
+    | zero => simp [N, nullable, sem, lbStep]
+    | succ lbc => simp only [N, nullable, sem, lbStep]; exact ih lbc mc lac
+  | mStep r ih =>
+    cases mc with
+    | zero => simp [N, nullable, sem, matchStep]
+    | succ mc => simp only [N, nullable, sem, matchStep]; exact ih lbc mc lac
+  | laStep r ih =>
+    cases lac with
+    | zero => simp [N, nullable, sem, laStep]
+    | succ lac => simp only [N, nullable, sem, laStep]; exact ih lbc mc lac

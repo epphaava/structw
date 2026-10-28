@@ -8,40 +8,44 @@ open Expr
 mutual
 def D [DecidableEq α] (a : α) : Expr α → Expr α
   | .empty | .unit | .lb _ | .la _ | .laStep _ => ∅
-  | .top => ↑ₘT - ↑ₗT
-  | .symbol b => if a = b then (↑ₘI - ↑ₗT) else ∅
+  | .top => ↑₂T - ↑₃T
+  | .symbol b => if a = b then (↑₂I - ↑₃T) else ∅
   | .plus r₁ r₂ => (D a r₁) + (D a r₂)
   | .intersection r₁ r₂ => (D a r₁) & (D a r₂)
   | .complement r₁ r₂ => (D a r₁) - (D a r₂)
   | .mult r₁ r₂ => ((D a r₁) • (DLB a r₂)) + ((DLA a r₁) • (D a r₂))
   | .star r b => (Expr.star (DLA a r) I) • ((D a b) + ((D a r) • (Expr.star (DLB a r) (DLB a b))))
-  | .mStep r => ↑ₘ (D a r)
+  | .lbStep r => ↑₁ (D a r)
+  | .mStep r => ↑₂ (D a r)
 
   def DLB [DecidableEq α] (a : α) : Expr α → Expr α
     | .empty | .la _ | .mStep _ | .laStep _ => ∅
-    | .unit => I - ↑ₗI
-    | .top => T - (↑ₘT + ↑ₗT)
-    | .symbol b => #b - (↑ₘ#b + ↑ₗ#b)
+    | .unit => I - ↑₃I
+    | .top => T - (↑₂T + ↑₃T)
+    | .symbol b => #b - (↑₂#b + ↑₃#b)
     | .plus r₁ r₂ => (DLB a r₁) + (DLB a r₂)
     | .intersection r₁ r₂ => (DLB a r₁) & (DLB a r₂)
     | .complement r₁ r₂ => (DLB a r₁) - (DLB a r₂)
     | .mult r₁ r₂ => DLB a r₁ • DLB a r₂
     | .star r b => .star (DLB a r) (DLB a b)
     | .lb r => ◁(D a r)
+    | .lbStep r => ↑₁(DLB a r)
+
 
   def DLA [DecidableEq α] (a : α) : Expr α → Expr α
     | .empty | .symbol _ => ∅
-    | .unit => ↑ₗI
-    | .top => ↑ₗT
+    | .unit => ↑₃I
+    | .top => ↑₃T
     | .plus r₁ r₂ => (DLA a r₁) + (DLA a r₂)
     | .intersection r₁ r₂ => (DLA a r₁) & (DLA a r₂)
     | .complement r₁ r₂ => (DLA a r₁) - (DLA a r₂)
     | .mult r₁ r₂ => (DLA a r₁) • (DLA a r₂)
     | .star r b => .star (DLA a r) (DLA a b)
-    | .lb r => ↑ₗ(◁(DLA a r • ↑ₘI))
+    | .lb r => ↑₃(◁(DLA a r • ↑₂I))
     | .la r => ▷(D a r)
-    | .mStep r => ↑ₘ (DLA a r)
-    | .laStep r => ↑ₗ (DLA a r)
+    | .lbStep r => ↑₁ (DLA a r)
+    | .mStep r => ↑₂ (DLA a r)
+    | .laStep r => ↑₃ (DLA a r)
 
 end
 

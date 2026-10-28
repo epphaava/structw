@@ -8,23 +8,23 @@ open StructuredWords
 
 def wc {α} (u v w : Word α) : Prop :=
   match w with
-  | .left lb main la =>
+  | .left lbc lb main la =>
     ∃ pref suff, main = pref ++ suff ∧
-    u = .left lb pref (suff ++ la) ∧
-    v = .left (lb.1, lb.2 ++ pref) suff la
-  | .middle mcount main la =>
+    u = .left lbc lb pref (suff ++ la) ∧
+    v = .left lbc (lb.1, lb.2 ++ pref) suff la
+  | .middle lbc mc main la =>
     (∃ pref suff, main.2 = pref ++ suff ∧
-    u = .middle mcount (main.1, pref) (suff ++ la) ∧
-    v = .left (main.1, pref) suff la)
+    u = .middle lbc mc (main.1, pref) (suff ++ la) ∧
+    v = .left (lbc + mc) (main.1, pref) suff la)
     ∨
-    ∃ mc₁ mc₂, mc₁ + mc₂ = mcount ∧
-    u = .right mc₁ mc₂ (toList main ++ la) ∧
-    v = .middle mc₂ main la
+    ∃ mc₁ mc₂, mc₁ + mc₂ = mc ∧
+    u = .right lbc mc₁ mc₂ (toList main ++ la) ∧
+    v = .middle (lbc + mc₁) mc₂ main la
 
-  | .right mcount lacount la =>
-    ∃ mc₁ mc₂, mcount = mc₁ + mc₂ ∧
-    u = .right mc₁ (mc₂ + lacount) la ∧
-    v = .right mc₂ lacount la
+  | .right lbc mc lac la =>
+    ∃ mc₁ mc₂, mc = mc₁ + mc₂ ∧
+    u = .right lbc mc₁ (mc₂ + lac) la ∧
+    v = .right (lbc + mc₁) mc₂ lac la
 
 -- Definition 3.3.2 (Language operators).
 def empty {α} : Lang α := λ _ => False
@@ -32,9 +32,9 @@ notation "∅" => empty
 
 def unit : Lang α := λ w =>
   match w with
-  | .left _ main _ => main = []
-  | .middle _ _ _ => False
-  | .right mcount _ _ =>  mcount = 0
+  | .left _ _ main _ => main = []
+  | .middle _ _ _ _ => False
+  | .right _ mcount _ _ =>  mcount = 0
 notation "I" => unit
 
 def top : Lang α := λ _ => True
@@ -42,8 +42,8 @@ notation "T" => top
 
 def symb {α} (a : α) : Lang α := λ w =>
   match w with
-  | .left _ main _ => main = [a]
-  | .middle 0 (y, []) _ => a = y
+  | .left _ _ main _ => main = [a]
+  | .middle _ 0 (y, []) _ => a = y
   | _ => False
 prefix:max "#" => symb
 
@@ -78,32 +78,39 @@ def star (base l : Lang α) : Lang α :=
 
 def lookbehind (l : Lang α) : Lang α := λ w =>
   match w with
-  | .left lb [] la => ∃ mc, l (.middle mc lb la)
-  | .right 0 lac la => ∃ mc, l (.right mc lac la)
+  | .left lbc lb [] la => l (.middle 0 lbc lb la)
+  | .right lbc 0 lac la => l (.right 0 lbc lac la)
   | _ => False
 prefix:max "◁" => lookbehind
 
-
 def lookahead (l : Lang α) : Lang α := λ w =>
   match w with
-  | .right 0 lacount la =>
+  | .right lbc 0 lac la =>
     match la with
-    | [] => l (.right lacount 0 [])
-    | z :: zs => l (.middle lacount (z, zs) [])
+    | [] => l (.right lbc lac 0 [])
+    | z :: zs => l (.middle lbc lac (z, zs) [])
   | _ => False
 prefix:max "▷" => lookahead
 
+def lbStep (l : Lang α) : Lang α := λ w =>
+  match w with
+  | .left (.succ lbc) lb main la => l (.left lbc lb main la)
+  | .middle (.succ lbc) mc main la => l (.middle lbc mc main la)
+  | .right (.succ lbc) mc lac la => l (.right lbc mc lac la)
+  | _ => False
+prefix:max "↑₁" => lbStep
+
 def matchStep (l : Lang α) : Lang α := λ w =>
   match w with
-  | .middle (.succ mcount) main la => l (.middle mcount main la)
-  | .right (.succ mcount) lacount la => l (.right mcount lacount la)
+  | .middle lbc (.succ mcount) main la => l (.middle lbc mcount main la)
+  | .right lbc (.succ mcount) lacount la => l (.right lbc mcount lacount la)
   | _ => False
-prefix:max "▹ₘ" => matchStep
+prefix:max "↑₂" => matchStep
 
-def LAStep (l : Lang α) : Lang α := λ w =>
+def laStep (l : Lang α) : Lang α := λ w =>
   match w with
-  | .right mcount (.succ lacount) la => l (.right mcount lacount la)
+  | .right lbc mcount (.succ lacount) la => l (.right lbc mcount lacount la)
   | _ => False
-prefix:max "▹ₗ" => LAStep
+prefix:max "↑₃" => laStep
 
 end Operators
