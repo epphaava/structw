@@ -2,7 +2,7 @@ import Thesis.Semantics.«1_StructuredWords»
 import Thesis.Semantics.«2_Operators»
 import Thesis.Semantics.«3_Derivatives»
 
-namespace DerLaws
+namespace derLALaws
 
 open StructuredWords
 open Operators
@@ -82,11 +82,11 @@ theorem derLA_concat (a : α) (k l : Lang α) : derLA a (k • l) ≐ derLA a k 
       | succ lacount => exact ⟨.right lbc mc₁ (mc₂ + lacount) (a :: la), .right (lbc + mc₁) mc₂ lacount (a :: la), hk, hl, mc₁, mc₂, rfl, rfl, rfl⟩
 
 theorem derLA_star_right (a : α) (l base : Lang α) : ∀ (lbc mc lac : Nat) (la : List α),
-    star_help base l (.right lbc mc lac (a :: la)) ↔ star_help (derLA a base) (derLA a l) (.right lbc mc (lac + 1) la) := by
+    star_help l base (.right lbc mc lac (a :: la)) ↔ star_help (derLA a l) (derLA a base) (.right lbc mc (lac + 1) la) := by
   intro lbc mc lac la
   constructor
-  · suffices key : ∀ w, star_help base l w → ∀ lbc mc lac la, w = .right lbc mc lac (a :: la) →
-        star_help (derLA a base) (derLA a l) (.right lbc mc (lac + 1) la) from fun h => key _ h lbc mc lac la rfl
+  · suffices key : ∀ w, star_help l base w → ∀ lbc mc lac la, w = .right lbc mc lac (a :: la) →
+        star_help (derLA a l) (derLA a base) (.right lbc mc (lac + 1) la) from fun h => key _ h lbc mc lac la rfl
     intro _ h
     induction h with
     | inUnit w hu => intro _ _ _ _ hw; subst hw; exact star_help.inUnit _ hu
@@ -94,8 +94,8 @@ theorem derLA_star_right (a : α) (l base : Lang α) : ∀ (lbc mc lac : Nat) (l
       intro lbc mc lac la rfl; obtain ⟨mc₁, mc₂, rfl, rfl, rfl⟩ := hwc;
       exact star_help.inConcat (.right lbc mc₁ (mc₂ + (lac + 1)) la) (.right (lbc + mc₁) mc₂ (lac + 1) la) _
         hl (ih (lbc + mc₁) mc₂ lac la rfl) ⟨mc₁, mc₂, rfl, rfl, rfl⟩
-  · suffices key : ∀ w, star_help (derLA a base) (derLA a l) w → ∀ lbc mc lac la, w = .right lbc mc (lac + 1) la →
-        star_help base l (.right lbc mc lac (a :: la)) from fun h => key _ h lbc mc lac la rfl
+  · suffices key : ∀ w, star_help (derLA a l) (derLA a base) w → ∀ lbc mc lac la, w = .right lbc mc (lac + 1) la →
+        star_help l base (.right lbc mc lac (a :: la)) from fun h => key _ h lbc mc lac la rfl
     intro _ h
     induction h with
     | inUnit w hu => intro _ _ _ _ hw; subst hw; exact star_help.inUnit _ hu
@@ -104,7 +104,7 @@ theorem derLA_star_right (a : α) (l base : Lang α) : ∀ (lbc mc lac : Nat) (l
       exact star_help.inConcat (.right lbc mc₁ (mc₂ + lac) (a :: la)) (.right (lbc + mc₁) mc₂ lac (a :: la)) _
         hl (ih (lbc + mc₁) mc₂ lac la rfl) ⟨mc₁, mc₂, rfl, rfl, rfl⟩
 
-theorem derLA_star (a : α) (l base : Lang α) : derLA a (star base l) ≐ star (derLA a base) (derLA a l) := by
+theorem derLA_star (a : α) (l base : Lang α) : derLA a (star l base) ≐ star (derLA a l) (derLA a base) := by
   intro w
   match w with
   | .left _ _ _ _ =>
@@ -114,7 +114,7 @@ theorem derLA_star (a : α) (l base : Lang α) : derLA a (star base l) ≐ star 
     | inConcat w₁ _ _ hl _ hwc => obtain ⟨_, _, _, rfl, _⟩ := hwc; simp [derLA] at hl
   | .middle lbc mcount main la =>
     simp [derLA]
-    suffices key : ∀ w, star_help (derLA a base) (derLA a l) w →
+    suffices key : ∀ w, star_help (derLA a l) (derLA a base) w →
         ∀ lbc mcount main la, w = .middle lbc mcount main la → False from
       fun h => key _ h lbc mcount main la rfl
     intro _ h
@@ -129,7 +129,7 @@ theorem derLA_star (a : α) (l base : Lang α) : derLA a (star base l) ≐ star 
     cases lacount with
     | zero =>
       simp [derLA]
-      suffices key : ∀ w, star_help (derLA a base) (derLA a l) w →
+      suffices key : ∀ w, star_help (derLA a l) (derLA a base) w →
           ∀ lbc mcount la, w = .right lbc mcount 0 la → False from
         fun h => key _ h lbc mcount la rfl
       intro _ h

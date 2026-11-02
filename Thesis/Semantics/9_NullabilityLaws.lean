@@ -26,8 +26,8 @@ theorem nullable_concat : nullable (k • l) lbc mc lac ↔ (∃ mc₁ mc₂, mc
   . rintro ⟨w₁, w₂, hk, hl, mc₁, mc₂, hn, rfl, rfl⟩; exact ⟨mc₁, mc₂, hn, hk, hl⟩
   . intro ⟨mc₁, mc₂, hn, hk, hl⟩; exact ⟨.right lbc mc₁ (mc₂ + lac) [], .right (lbc + mc₁) mc₂ lac [], hk, hl, mc₁, mc₂, hn, rfl, rfl⟩
 
-theorem nullable_star (l base : Lang α) : nullable (star base l) lbc mc lac ↔
-    nullable base lbc mc lac ∨ ∃ mc₁ mc₂, mc = mc₁ + mc₂ ∧ nullable l lbc mc₁ (mc₂ + lac) ∧ nullable (star base l) (lbc + mc₁) mc₂ lac := by
+theorem nullable_star (l base : Lang α) : nullable (star l base) lbc mc lac ↔
+    nullable base lbc mc lac ∨ ∃ mc₁ mc₂, mc = mc₁ + mc₂ ∧ nullable l lbc mc₁ (mc₂ + lac) ∧ nullable (star l base) (lbc + mc₁) mc₂ lac := by
   constructor
   . intro h; unfold star at h
     cases h with
@@ -86,7 +86,7 @@ theorem xnullable_concat : xnullable (k • l) ↔ (∃ lbc mc₁ mc₂ lac, nul
   . intro ⟨lbc, mc₁, mc₂, lacount, hk, hl⟩
     exact ⟨lbc, mc₁ + mc₂, lacount, nullable_concat.mpr ⟨mc₁, mc₂, rfl, hk, hl⟩⟩
 
-theorem xnullable_star (l base : Lang α) : xnullable (star base l) ↔ xnullable base := by
+theorem xnullable_star (l base : Lang α) : xnullable (star l base) ↔ xnullable base := by
   constructor
   . intro ⟨lbcount, mcount, lacount, h⟩
     unfold star nullable at h

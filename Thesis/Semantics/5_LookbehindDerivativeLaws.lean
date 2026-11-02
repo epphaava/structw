@@ -2,7 +2,7 @@ import Thesis.Semantics.«1_StructuredWords»
 import Thesis.Semantics.«2_Operators»
 import Thesis.Semantics.«3_Derivatives»
 
-namespace derLBws
+namespace derLBLaws
 
 open StructuredWords
 open Operators
@@ -118,12 +118,12 @@ theorem derLB_concat (a : α) (k l : Lang α) : derLB a (k • l) ≐ derLB a k 
 
 
 theorem derLB_star_left (a : α) (l base : Lang α) : ∀ (lbcount : Nat) (x : α) (xs main la : List α),
-    star_help base l (.left lbcount (a, x :: xs) main la) ↔ star_help (derLB a base) (derLB a l) (.left lbcount.succ (x, xs) main la) := by
+    star_help l base (.left lbcount (a, x :: xs) main la) ↔ star_help (derLB a l) (derLB a base) (.left lbcount.succ (x, xs) main la) := by
   intro lbcount x xs main la
   constructor
-  · suffices key : ∀ w, star_help base l w →
+  · suffices key : ∀ w, star_help l base w →
         ∀ lbcount x xs main la, w = .left lbcount (a, x :: xs) main la →
-          star_help (derLB a base) (derLB a l) (.left lbcount.succ (x, xs) main la) by
+          star_help (derLB a l) (derLB a base) (.left lbcount.succ (x, xs) main la) by
       intro h; exact key _ h lbcount x xs main la rfl
     intro _ h
     induction h with
@@ -133,9 +133,9 @@ theorem derLB_star_left (a : α) (l base : Lang α) : ∀ (lbcount : Nat) (x : �
       obtain ⟨pref, suff, hmain, h₁, h₂⟩ := hwc; subst h₁ h₂
       exact star_help.inConcat (.left lbc.succ (x, xs) pref (suff ++ la)) (.left lbc.succ (x, xs ++ pref) suff la) _
         hl (ih lbc x (xs ++ pref) suff la rfl) ⟨pref, suff, hmain, rfl, rfl⟩
-  · suffices key : ∀ w, star_help (derLB a base) (derLB a l) w →
+  · suffices key : ∀ w, star_help (derLB a l) (derLB a base) w →
         ∀ lbcount x xs main la, w = .left lbcount.succ (x, xs) main la →
-          star_help base l (.left lbcount (a, x :: xs) main la) by
+          star_help l base (.left lbcount (a, x :: xs) main la) by
       intro h; exact key _ h lbcount x xs main la rfl
     intro _ h
     induction h with
@@ -147,12 +147,12 @@ theorem derLB_star_left (a : α) (l base : Lang α) : ∀ (lbcount : Nat) (x : �
         hl (ih lbc x (xs ++ pref) suff la rfl) ⟨pref, suff, hmain, rfl, rfl⟩
 
 theorem derLB_star_middle (a : α) (l base : Lang α) : ∀ (lbcount : Nat) (main : NEList α) (la : List α),
-    star_help base l (.left lbcount (a, []) (toList main) la) ↔ star_help (derLB a base) (derLB a l) (.middle lbcount.succ 0 main la) := by
+    star_help l base (.left lbcount (a, []) (toList main) la) ↔ star_help (derLB a l) (derLB a base) (.middle lbcount.succ 0 main la) := by
   intro lbcount main la
   constructor
-  · suffices key : ∀ w, star_help base l w →
+  · suffices key : ∀ w, star_help l base w →
         ∀ lbcount (main : NEList α) la, w = .left lbcount (a, []) (toList main) la →
-          star_help (derLB a base) (derLB a l) (.middle lbcount.succ 0 main la) by
+          star_help (derLB a l) (derLB a base) (.middle lbcount.succ 0 main la) by
       intro h; exact key _ h lbcount main la rfl
     intro _ h
     induction h with
@@ -167,9 +167,9 @@ theorem derLB_star_middle (a : α) (l base : Lang α) : ∀ (lbcount : Nat) (mai
         exact star_help.inConcat (.middle lbc.succ 0 (y, ys) (suff ++ la)) (.left lbc.succ (y, ys) suff la) _
           hl ((derLB_star_left a l base lbc y ys suff la).mp hstar)
           (Or.inl ⟨ys, suff, hys, by simp [hy], by simp [hy]⟩)
-  · suffices key : ∀ w, star_help (derLB a base) (derLB a l) w →
+  · suffices key : ∀ w, star_help (derLB a l) (derLB a base) w →
         ∀ lbcount (main : NEList α) la, w = .middle lbcount.succ 0 main la →
-          star_help base l (.left lbcount (a, []) (toList main) la) by
+          star_help l base (.left lbcount (a, []) (toList main) la) by
       intro h; exact key _ h lbcount main la rfl
     intro _ h
     induction h with
@@ -186,12 +186,12 @@ theorem derLB_star_middle (a : α) (l base : Lang α) : ∀ (lbcount : Nat) (mai
         exact ih lbc main la hw₂
 
 theorem derLB_star_right (a : α) (l base : Lang α) : ∀ (lbcount : Nat) (la : List α),
-    star_help base l (.left lbcount (a, []) [] la) ↔ star_help (derLB a base) (derLB a l) (.right lbcount.succ 0 0 la) := by
+    star_help l base (.left lbcount (a, []) [] la) ↔ star_help (derLB a l) (derLB a base) (.right lbcount.succ 0 0 la) := by
   intro lbcount la
   constructor
-  · suffices key : ∀ w, star_help base l w →
+  · suffices key : ∀ w, star_help l base w →
         ∀ lbcount la, w = .left lbcount (a, []) [] la →
-          star_help (derLB a base) (derLB a l) (.right lbcount.succ 0 0 la) by
+          star_help (derLB a l) (derLB a base) (.right lbcount.succ 0 0 la) by
       intro h; exact key _ h lbcount la rfl
     intro _ h
     induction h with
@@ -201,9 +201,9 @@ theorem derLB_star_right (a : α) (l base : Lang α) : ∀ (lbcount : Nat) (la :
       obtain ⟨pref, suff, hmain, h₁, h₂⟩ := hwc; subst h₁ h₂
       obtain ⟨rfl, rfl⟩ := List.append_eq_nil_iff.mp hmain.symm
       exact star_help.inConcat (.right lbc.succ 0 0 la) (.right lbc.succ 0 0 la) _ hl (ih lbc la rfl) ⟨0, 0, rfl, rfl, rfl⟩
-  · suffices key : ∀ w, star_help (derLB a base) (derLB a l) w →
+  · suffices key : ∀ w, star_help (derLB a l) (derLB a base) w →
         ∀ lbcount la, w = .right lbcount.succ 0 0 la →
-          star_help base l (.left lbcount (a, []) [] la) by
+          star_help l base (.left lbcount (a, []) [] la) by
       intro h; exact key _ h lbcount la rfl
     intro _ h
     induction h with
@@ -215,7 +215,7 @@ theorem derLB_star_right (a : α) (l base : Lang α) : ∀ (lbcount : Nat) (la :
       subst h₁
       exact star_help.inConcat (.left lbc (a, []) [] la) (.left lbc (a, []) [] la) _ hl (ih lbc la h₂) ⟨[], [], rfl, rfl, rfl⟩
 
-theorem derLB_star (a : α) (l base : Lang α) : derLB a (star base l) ≐ star (derLB a base) (derLB a l) := by
+theorem derLB_star (a : α) (l base : Lang α) : derLB a (star l base) ≐ star (derLB a l) (derLB a base) := by
   intro w
   match w with
   | .left lbcount (x, xs) main la =>

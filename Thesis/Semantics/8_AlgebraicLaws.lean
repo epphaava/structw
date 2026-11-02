@@ -151,7 +151,7 @@ theorem empty_concat_right (L : Lang α) : L • ∅ ≐ ∅ := by
   | .right _ _ _ _ => simp [concat, empty]
 
 -- Equation (3.15)
-theorem star_unfold (base l : Lang α) : (star base l) ≐ base ∪ (l • (star base l)) := by
+theorem star_unfold (base l : Lang α) : (star l base) ≐ base ∪ (l • (star l base)) := by
   intro w; constructor
   . intro h
     cases h with

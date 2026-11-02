@@ -9,4 +9,3 @@ open StructuredWords
 open Operators
 
 
-
