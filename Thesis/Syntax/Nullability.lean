@@ -33,6 +33,9 @@ abbrev Tbl := Array (Array (Array Bool))
 def Tbl.get (t : Tbl) (lbc mc lac : Nat) : Bool :=
   (t[lbc]? >>= (·[lac]?) >>= (·[mc]?)).getD false
 
+instance : Membership (Nat × Nat × Nat) Tbl where
+  mem t p := t.get p.1 p.2.1 p.2.2 = true
+
 def Tbl.build (n : Nat) (f : Nat → Nat → Nat → Bool) : Tbl :=
   (Array.range (n + 1)).map fun lbc =>
     (Array.range ((n + 1) - lbc)).map fun lac =>

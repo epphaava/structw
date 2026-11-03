@@ -9,19 +9,11 @@ open Expr
 open ExprDerivatives
 open NullabilityCorrect
 
-/-- Definition 5.1.1 — bounded match positions as implemented (`matchesUpTo`). -/
-def matchesUpTo (m : MatchSet) (n : Nat) : List Nat :=
-  match m with
-  | .inl included => included.filter (fun k => Nat.ble k n)
-  | .inr excluded => (List.range (n + 1)).filter (fun k => !(List.elem k excluded))
+
 
 -- Definition 5.1.2 (Matching algorithm).
-def findAllMatches [DecidableEq α] (r : Expr α) (w : List α) : List Nat := matchesUpTo (N (xD w r)) w.length
+def findAllMatches [DecidableEq α] (r : Expr α) (w : List α) : Tbl := (NT (xD w r)) w.length
 
-def matchSetMembership (m : MatchSet) (n : Nat) : Prop :=
-  match m with
-  | .inl included => n ∈ included
-  | .inr excluded => n ∉ excluded
 
 theorem matchesUpTo_iff (m : MatchSet) (w : List α) (k : Nat) :
     k ∈ Algorithm.matchesUpTo m w.length ↔ k ∈ m ∧ k ≤ w.length := by
@@ -51,10 +43,9 @@ theorem matchesUpTo_iff (m : MatchSet) (w : List α) (k : Nat) :
       · exact False.elim (hnd (List.mem_of_elem_eq_true h))
 
 -- Theorem 5.1.1 — correctness of `findAllMatches` / `matchesUpTo` vs semantic nullability
-theorem algorithm_correctness [DecidableEq α] (r : Expr α) (w : List α) (n : Nat) :
-    n ∈ findAllMatches r w ↔ nullable_n (sem (xD w r)) n ∧ n ≤ w.length := by
-  simp only [findAllMatches]
-  rw [matchesUpTo_iff]
-  simp only [nullability_correct]
+-- Theorem 5.1.1 — correctness of `findAllMatches` / `matchesUpTo` vs semantic nullability
+theorem algorithm_correctness [DecidableEq α] (r : Expr α) (w : List α) (lbc mc lac : Nat) :
+    (lbc, mc, lac) ∈ findAllMatches r w ↔ nullable (sem (xD w r)) lbc mc lac  := by
+  simp [findAllMatches]
 
 end Algorithm
