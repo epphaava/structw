@@ -1,4 +1,4 @@
-import Thesis.Syntax.Expressions
+import Thesis.SyntaxOld.Expressions
 
 namespace ExprDerivatives
 

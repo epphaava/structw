@@ -1,7 +1,7 @@
-import Thesis.Syntax.Expressions
-import Thesis.Syntax.Derivatives
-import Thesis.Syntax.Nullability
-import Thesis.Syntax.NullabilityCorrectness
+import Thesis.SyntaxOld.Expressions
+import Thesis.SyntaxOld.Derivatives
+import Thesis.SyntaxOld.Nullability
+import Thesis.SyntaxOld.NullabilityCorrectness
 import Thesis.Semantics.«3_Derivatives»
 import Thesis.Semantics.«5_LookbehindDerivativeLaws»
 import Thesis.Semantics.«6_LookaheadDerivativeLaws»

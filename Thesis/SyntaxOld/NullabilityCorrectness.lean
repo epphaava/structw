@@ -1,5 +1,5 @@
-import Thesis.Syntax.Expressions
-import Thesis.Syntax.Nullability
+import Thesis.SyntaxOld.Expressions
+import Thesis.SyntaxOld.Nullability
 import Thesis.Semantics.«9_NullabilityLaws»
 import Thesis.Semantics.«1_StructuredWords»
 

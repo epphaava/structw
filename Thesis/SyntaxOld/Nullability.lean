@@ -1,4 +1,4 @@
-import Thesis.Syntax.Expressions
+import Thesis.SyntaxOld.Expressions
 import Thesis.Semantics.«2_Operators»
 
 open Expr
