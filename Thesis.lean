@@ -7,8 +7,8 @@ import Thesis.Semantics.«7_DerivativeLaws»
 import Thesis.Semantics.«8_AlgebraicLaws»
 import Thesis.Semantics.«10_Decomposition»
 import Thesis.Semantics.«9_NullabilityLaws»
-import Thesis.Syntax.Expressions
-import Thesis.Syntax.Derivatives
+import Thesis.Syntax.«1_Expressions»
+import Thesis.Syntax.«2_Derivatives»
 import Thesis.Syntax.Nullability
 import Thesis.Syntax.DerivativeCorrectness
 import Thesis.Syntax.NullabilityCorrectness

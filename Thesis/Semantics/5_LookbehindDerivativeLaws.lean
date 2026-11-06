@@ -290,12 +290,12 @@ theorem derLB_lb (a : α) (l : Lang α) : derLB a (◁ l) ≐ ◁ (der a l)  := 
   | .middle lbcount mcount main la  => cases lbcount <;> cases mcount <;> simp [derLB, lookbehind, toList]
   | .right lbcount mcount lacount la => cases lbcount <;> cases mcount <;> cases lacount <;> cases la <;> simp [derLB, lookbehind, der]
 
-theorem derLB_la (a : α) (l : Lang α) : derLB a (▷ l) ≐ ∅ := by
+theorem derLB_la (a : α) (l : Lang α) : derLB a (▷ l) ≐ ▷ (derLB a l) := by
   intro w
   match w with
-  | .left lbcount _ _ _  => cases lbcount <;> simp [derLB, lookahead, empty]
-  | .middle lbcount mcount _ _  => cases lbcount <;> cases mcount <;> simp [derLB, lookahead, empty]
-  | .right lbcount mcount lacount la => cases lbcount <;> cases mcount <;> cases lacount <;> cases la <;> simp [derLB, lookahead, empty]
+  | .left lbcount _ main _  => cases lbcount <;> cases main <;> simp [derLB, lookahead]
+  | .middle lbcount mcount _ _  => cases lbcount <;> cases mcount <;> simp [derLB, lookahead, toList]
+  | .right lbcount mcount lacount la => cases lbcount <;> cases mcount <;> cases lacount <;> cases la <;> simp [derLB, lookahead, toList]
 
 theorem derLB_lbStep (a : α) (l : Lang α) : derLB a (↑₁ l) ≐ ↑₁ (derLB a l) := by
   intro w

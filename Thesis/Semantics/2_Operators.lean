@@ -85,6 +85,7 @@ prefix:max "◁" => lookbehind
 
 def lookahead (l : Lang α) : Lang α := λ w =>
   match w with
+  | .left lbc lb [] la => l (.left lbc lb la [])
   | .right lbc 0 lac la =>
     match la with
     | [] => l (.right lbc lac 0 [])

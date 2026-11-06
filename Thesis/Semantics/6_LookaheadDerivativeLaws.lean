@@ -149,7 +149,7 @@ theorem derLA_lb (a : α) (l : Lang α) : derLA a (◁ l) ≐ (◁ (derLA a l)) 
 theorem derLA_la (a : α) (l : Lang α) : derLA a (▷ l) ≐ ▷ (der a l)  := by
   intro w
   match w with
-  | .left _ _ _ _ => simp [derLA, lookahead]
+  | .left _ _ main _ => cases main <;> simp [derLA, lookahead, der]
   | .middle _ _ _ _ => simp [derLA, lookahead]
   | .right _ mcount lacount la => cases mcount <;> cases lacount <;> cases la <;> simp [derLA, lookahead, der, toList]
 
