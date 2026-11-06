@@ -30,23 +30,23 @@ inductive Word1 α where
 | right (w : Right α) : Word1 α
 
 inductive Word (α : Type) where
-  | left  (lbCount : Nat) (lb : NEList α) (main : List α) (la : List α)
-  | middle (lbCount : Nat) (matchCount : Nat) (main : NEList α) (la : List α)
-  | right (lbCount : Nat) (matchCount : Nat) (laCount : Nat) (la : List α)
+  | left (lb : NEList α) (main : List α) (la : List α)
+  | middle (matchCount : Nat) (main : NEList α) (la : List α)
+  | right (matchCount : Nat) (laCount : Nat) (la : List α)
 
 def Word.word_to_list {α} : Word α → List α
-  | .left _ lb main la => toList lb ++ main ++ la
-  | .middle _ _ main la => toList main ++ la
-  | .right _ _ _ la => la
+  | .left lb main la => toList lb ++ main ++ la
+  | .middle _ main la => toList main ++ la
+  | .right _ _ la => la
 
 
-def mk_mcount_word : Nat → Nat → List α → List α → Word α
-  | m, n, [], la => .right m n 0 la
-  | m, n, x :: xs, la => .middle m n (x, xs) la
+def mk_mcount_word : Nat → List α → List α → Word α
+  | n, [], la => .right n 0 la
+  | n, x :: xs, la => .middle n (x, xs) la
 
-def mk_word : Nat → List α → List α → List α → Word α
-  | lbcount, [], main, la => mk_mcount_word lbcount 0 main la
-  | lbcount, x :: xs, main, la => .left lbcount (x, xs) main la
+def mk_word : List α → List α → List α → Word α
+  | [], main, la => mk_mcount_word 0 main la
+  | x :: xs, main, la => .left (x, xs) main la
 
 export Word (word_to_list)
 

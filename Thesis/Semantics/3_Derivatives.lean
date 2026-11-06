@@ -7,22 +7,22 @@ open Operators
 -- Lookbehind derivative
 def derLB {α} (a : α) (l : Lang α) : Lang α := λ w =>
   match w with
-  | .left (.succ lbc) lb main la => l (.left lbc (a, toList lb) main la)
-  | .middle (.succ lbc) 0 main la => l (.left lbc (a, []) (toList main) la)
-  | .right (.succ lbc) 0 0 la => l (.left lbc (a, []) [] la)
+  | .left lb main la => l (.left (a, toList lb) main la)
+  | .middle 0 main la => l (.left (a, []) (toList main) la)
+  | .right 0 0 la => l (.left (a, []) [] la)
   | _ => False
 
 -- Match derivative
 def der {α} (a : α) (l : Lang α) : Lang α := λ w =>
   match w with
-  | .middle lbc (.succ mcount) main la => l (.middle lbc mcount (a, toList main) la)
-  | .right lbc (.succ mcount) 0 la => l (.middle lbc mcount (a, []) la)
+  | .middle (.succ mcount) main la => l (.middle mcount (a, toList main) la)
+  | .right (.succ mcount) 0 la => l (.middle mcount (a, []) la)
   | _ => False
 
 -- Lookahead derivative
 def derLA (a : α) (l : Lang α) : Lang α := λ w =>
   match w with
-  | .right lbc mcount (.succ lacount) la => l (.right lbc mcount lacount (a :: la))
+  | .right mcount (.succ lacount) la => l (.right mcount lacount (a :: la))
   | _ => False
 
 -- Definition 3.2.3 (Iterated derivatives).
@@ -44,12 +44,23 @@ def derLA_word (w : List α) (l : Lang α) : Lang α :=
 
 
 
- /-- Definition 3.2.4 (Indexed nullability). -/
-def nullable (l : Lang α) (lbcount mcount lacount : Nat)  : Prop := l (.right lbcount mcount lacount [])
+/-- `l` is nullable at the index pair `(mcount, lacount)`. -/
+def nullableAt (l : Lang α) (mcount lacount : Nat) : Prop := l (.right mcount lacount [])
+
+open Classical in
+/-- Definition 3.2.4 (Indexed nullability): all nullable index pairs with both indices ≤ n.
+Noncomputable: membership in an arbitrary `Lang` is not decidable. -/
+noncomputable def nullable (l : Lang α) (n : Nat) : List (Nat × Nat) :=
+  ((List.range (n + 1)).flatMap fun mc => (List.range (n + 1)).map fun lac => (mc, lac)).filter
+    fun p => decide (nullableAt l p.1 p.2)
+
+theorem mem_nullable {l : Lang α} {n mc lac : Nat} :
+    (mc, lac) ∈ nullable l n ↔ mc ≤ n ∧ lac ≤ n ∧ nullableAt l mc lac := by
+  simp [nullable, List.mem_filter, List.mem_flatMap, Nat.lt_succ_iff, and_assoc]
 
  /-- Existential nullability. -/
 def xnullable (l : Lang α) : Prop :=
-  ∃ lbcount mcount lacount, nullable l lbcount mcount lacount
+  ∃ mcount lacount, nullableAt l mcount lacount
 
 
  -- Definition 3.2.5 (Existential derivative).
@@ -63,23 +74,23 @@ def xder (w : List α) (l : Lang α) : Lang α :=
 theorem derLB_der_empty (L : Lang α) : derLB a (der a L) ≐ ∅ := by
   intro w
   match w with
-  | .left lbc _ _ _ => cases lbc <;> simp [derLB, der, empty]
-  | .middle lbc mcount _ _ => cases lbc <;> cases mcount <;> simp [derLB, der, empty]
-  | .right lbc mcount lacount _ => cases lbc <;> cases mcount <;> cases lacount <;> simp [derLB, der, empty]
+  | .left _ _ _ => simp [derLB, der, empty]
+  | .middle mcount _ _ => cases mcount <;> simp [derLB, der, empty]
+  | .right mcount lacount _ => cases mcount <;> cases lacount <;> simp [derLB, der, empty]
 
 theorem der_derLA_empty (L : Lang α) : der a (derLA a L) ≐ ∅ := by
   intro w
   match w with
-  | .left lbc _ _ _ => cases lbc <;> simp [der, empty]
-  | .middle lbc mcount _ _ => cases lbc <;> cases mcount <;> simp [derLA, der, empty]
-  | .right lbc mcount lacount _ => cases lbc <;> cases mcount <;> cases lacount <;> simp [derLA, der, empty]
+  | .left _ _ _ => simp [der, empty]
+  | .middle mcount _ _ => cases mcount <;> simp [derLA, der, empty]
+  | .right mcount lacount _ => cases mcount <;> cases lacount <;> simp [derLA, der, empty]
 
 theorem derLB_derLA_empty (L : Lang α) : derLB a (derLA a L) ≐ ∅ := by
   intro w
   match w with
-  | .left lbc _ _ _ => cases lbc <;> simp [derLB, derLA, empty]
-  | .middle lbc mcount _ _ => cases lbc <;> cases mcount <;> simp [derLB, derLA, empty]
-  | .right lbc mcount lacount _ => cases lbc <;> cases mcount <;> cases lacount <;> simp [derLB, derLA, empty]
+  | .left _ _ _ => simp [derLB, derLA, empty]
+  | .middle mcount _ _ => cases mcount <;> simp [derLB, derLA, empty]
+  | .right mcount lacount _ => cases mcount <;> cases lacount <;> simp [derLB, derLA, empty]
 
 
 /-- Helper for Theorem 4.2.3 (`xder_correct`). -/
