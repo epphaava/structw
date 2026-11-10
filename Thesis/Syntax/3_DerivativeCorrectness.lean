@@ -33,21 +33,21 @@ theorem der_correct {α} [DecidableEq α] (a : α) (r : SRegex α) : der a (sem 
     | cons s ss ih =>
       refine (der_union a _ _ w).trans ?_
       simp [union, empty, ih] at ih ⊢
-      rcases w with ⟨⟩ | ⟨_, _ | _, _, _⟩ | ⟨_, _ | _, _ | _, _⟩ <;> simp [der, sem.steps, unit]
+      rcases w with ⟨⟩ | ⟨_ | _, _, _⟩ | ⟨_ | _, _ | _, _⟩ <;> simp [der, sem.steps, unit]
   | .top ss =>
     simp only [D, sem, Steps.mStep, Steps.laStep, complement, atom_map_iff]
-    rcases w with ⟨⟩ | ⟨lbc, _ | mc, main, la⟩ | ⟨lbc, _ | mc, _ | lac, la⟩ <;> simp [der, atom_iff, filterD, sem.steps, Steps.mStepHelp, Steps.laStepHelp, top]
+    rcases w with ⟨⟩ | ⟨_ | mc, main, la⟩ | ⟨_ | mc, _ | lac, la⟩ <;> simp [der, atom_iff, filterD, sem.steps, Steps.mStepHelp, Steps.laStepHelp, top]
     · exact ⟨fun ⟨s, hs⟩ => ⟨s, by simp_all⟩, fun ⟨s, hs⟩ => ⟨s, by simp_all⟩⟩
     · exact ⟨fun ⟨s, hs⟩ => ⟨s, by simp_all⟩, fun ⟨s, hs⟩ => ⟨s, by simp_all⟩⟩
-    · intro s hs h0 h1 h2 _; exact ⟨s, hs, h0, h1, by omega, by omega⟩
+    · intro s hs h1 h2 _; exact ⟨s, hs, h1, by omega, by omega⟩
   | .symbol b ss =>
     by_cases h : a = b
     · subst h
       simp [D, sem, Steps.mStep, Steps.laStep, complement, atom_map_iff]
-      rcases w with ⟨⟩ | ⟨lbc, _ | mc, main, la⟩ | ⟨lbc, _ | mc, _ | lac, la⟩ <;> simp [der, atom_iff, filterD, sem.steps, Steps.mStepHelp, Steps.laStepHelp, top, unit, toList]
+      rcases w with ⟨⟩ | ⟨_ | mc, main, la⟩ | ⟨_ | mc, _ | lac, la⟩ <;> simp [der, atom_iff, filterD, sem.steps, Steps.mStepHelp, Steps.laStepHelp, top, unit, toList]
       · exact ⟨fun ⟨s, hs⟩ => ⟨s, by simp_all⟩, fun ⟨s, hs⟩ => ⟨s, by simp_all⟩⟩
-      · intro s hs h0 h1 h2 _ _; exact ⟨s, hs, h0, h1, by omega, by omega⟩
-    · simp [D, h, sem]; rcases w with ⟨⟩ | ⟨lbc, _ | mc, main, la⟩ | ⟨lbc, _ | mc, _ | lac, la⟩ <;> simp [der, atom_iff, sem.steps, empty, Ne.symm h]
+      · intro s hs h1 h2 _ _; exact ⟨s, hs, h1, by omega, by omega⟩
+    · simp [D, h, sem]; rcases w with ⟨⟩ | ⟨_ | mc, main, la⟩ | ⟨_ | mc, _ | lac, la⟩ <;> simp [der, atom_iff, sem.steps, empty, Ne.symm h]
   | .plus r₁ r₂ => rw [D, SRegex.sem, SRegex.sem, der_union a (SRegex.sem r₁) (SRegex.sem r₂), union, union, der_correct a r₁, der_correct a r₂]
   | .intersection r₁ r₂ => rw [D, SRegex.sem, SRegex.sem, der_intersection a (SRegex.sem r₁) (SRegex.sem r₂), intersection, intersection, der_correct a r₁, der_correct a r₂]
   | .complement r₁ r₂ => rw [D, SRegex.sem, SRegex.sem, der_complement a (SRegex.sem r₁) (SRegex.sem r₂), complement, complement, der_correct a r₁, der_correct a r₂]
@@ -72,23 +72,23 @@ theorem derLB_correct {α} [DecidableEq α] (a : α) (r : SRegex α) : derLB a (
   match r with
   | .empty => rw [DLB, sem, derLB_empty a]
   | .unit ss =>
-    simp only [DLB, sem, Steps.lbStep, Steps.laStep, complement, atom_map_iff]
-    rcases w with ⟨_ | lbc, lb, main, la⟩ | ⟨_ | lbc, _ | mc, main, la⟩ | ⟨_ | lbc, _ | mc, _ | lac, la⟩ <;> simp [derLB, atom_iff, filterDLB, sem.steps, Steps.lbStepHelp, Steps.laStepHelp, unit, toList]
-    · exact ⟨fun ⟨s, hs⟩ => ⟨s, by simp_all⟩, fun ⟨s, hs⟩ => ⟨s, by simp_all⟩⟩
-    · exact ⟨fun ⟨s, hs⟩ => ⟨s, by simp_all⟩, fun ⟨s, hs⟩ => ⟨s, by simp_all⟩⟩
-    · intro s hs h0 h1 h2 _ _; exact ⟨s, hs, h0, h1, by omega, h0, by omega⟩
-    all_goals intros; omega
+    simp only [DLB, sem, Steps.laStep, complement, atom_map_iff]
+    rcases w with ⟨lb, main, la⟩ | ⟨_ | mc, main, la⟩ | ⟨_ | mc, _ | lac, la⟩ <;> simp [derLB, atom_iff, filterDLB, sem.steps, Steps.laStepHelp, unit, toList]
+    all_goals first
+      | exact ⟨fun ⟨s, hs⟩ => ⟨s, by simp_all⟩, fun ⟨s, hs⟩ => ⟨s, by simp_all⟩⟩
+      | (intro s hs; intros; refine ⟨s, hs, ?_⟩; omega)
+      | (intros; omega)
   | .top ss =>
-    simp only [DLB, sem, Steps.lbStep, Steps.mStep, Steps.laStep, complement, union, atom_map_iff]
-    rcases w with ⟨_ | lbc, lb, main, la⟩ | ⟨_ | lbc, _ | mc, main, la⟩ | ⟨_ | lbc, _ | mc, _ | lac, la⟩ <;>
-      simp [derLB, atom_iff, filterDLB, sem.steps, Steps.lbStepHelp, Steps.mStepHelp, Steps.laStepHelp, top]
+    simp only [DLB, sem, Steps.mStep, Steps.laStep, complement, union, atom_map_iff]
+    rcases w with ⟨lb, main, la⟩ | ⟨_ | mc, main, la⟩ | ⟨_ | mc, _ | lac, la⟩ <;>
+      simp [derLB, atom_iff, filterDLB, sem.steps, Steps.mStepHelp, Steps.laStepHelp, top]
     all_goals first
       | exact ⟨fun ⟨s, hs⟩ => ⟨s, by simp_all⟩, fun ⟨s, hs⟩ => ⟨s, by simp_all⟩⟩
       | intro s hs; intros; exact ⟨s, hs, by omega⟩
   | .symbol b ss =>
-    simp only [DLB, sem, Steps.lbStep, Steps.mStep, Steps.laStep, complement, union, atom_map_iff]
-    rcases w with ⟨_ | lbc, lb, main, la⟩ | ⟨_ | lbc, _ | mc, ⟨y, l⟩, la⟩ | ⟨_ | lbc, _ | mc, _ | lac, la⟩ <;>
-      simp [derLB, atom_iff, filterDLB, sem.steps, Steps.lbStepHelp, Steps.mStepHelp, Steps.laStepHelp, toList]
+    simp only [DLB, sem, Steps.mStep, Steps.laStep, complement, union, atom_map_iff]
+    rcases w with ⟨lb, main, la⟩ | ⟨_ | mc, ⟨y, l⟩, la⟩ | ⟨_ | mc, _ | lac, la⟩ <;>
+      simp [derLB, atom_iff, filterDLB, sem.steps, Steps.mStepHelp, Steps.laStepHelp, toList]
     all_goals first
       | exact ⟨fun ⟨s, hs⟩ => ⟨s, by simp_all⟩, fun ⟨s, hs⟩ => ⟨s, by simp_all⟩⟩
       | intro s hs; intros; exact ⟨s, hs, by omega⟩
@@ -104,13 +104,14 @@ theorem derLB_correct {α} [DecidableEq α] (a : α) (r : SRegex α) : derLB a (
   | .lb r =>
     refine (derLB_lb a (SRegex.sem r) w).trans ?_
     match w with
-    | .left _ _ [] _ | .right _ 0 _ _ => exact der_correct a r _
-    | .left _ _ (_ :: _) _ | .middle _ _ _ _ | .right _ (_ + 1) _ _ => simp [SRegex.sem, DLB, lookbehind]
+    | .left _ [] _ | .right 0 _ _ =>
+      simp only [SRegex.sem, DLB, lookbehind]; exact exists_congr fun _ => der_correct a r _
+    | .left _ (_ :: _) _ | .middle _ _ _ | .right (_ + 1) _ _ => simp [SRegex.sem, DLB, lookbehind]
   | .la r =>
     refine (derLB_la a (SRegex.sem r) w).trans ?_
     match w with
-    | .left _ _ [] _ | .right _ 0 _ [] | .right _ 0 _ (_ :: _) => simp only [SRegex.sem, DLB, lookahead]; exact derLB_correct a r _
-    | .left _ _ (_ :: _) _ | .middle _ _ _ _ | .right _ (_ + 1) _ _ => simp [SRegex.sem, DLB, lookahead]
+    | .left _ [] _ | .right 0 _ [] | .right 0 _ (_ :: _) => simp only [SRegex.sem, DLB, lookahead]; exact derLB_correct a r _
+    | .left _ (_ :: _) _ | .middle _ _ _ | .right (_ + 1) _ _ => simp [SRegex.sem, DLB, lookahead]
 
 theorem derLA_correct {α} [DecidableEq α] (a : α) (r : SRegex α) : derLA a (sem r) ≐ sem (DLA a r) := by
   intro w
@@ -118,13 +119,13 @@ theorem derLA_correct {α} [DecidableEq α] (a : α) (r : SRegex α) : derLA a (
   | .empty => rw [DLA, sem, derLA_empty a]
   | .unit ss =>
     simp only [DLA, sem, Steps.laStep, atom_map_iff]
-    rcases w with ⟨⟩ | ⟨⟩ | ⟨lbc, mc, _ | lac, la⟩ <;> simp [derLA, atom_iff, sem.steps, Steps.laStepHelp, unit]
+    rcases w with ⟨⟩ | ⟨⟩ | ⟨mc, _ | lac, la⟩ <;> simp [derLA, atom_iff, sem.steps, Steps.laStepHelp, unit]
   | .top ss =>
     simp only [DLA, sem, Steps.laStep, atom_map_iff]
-    rcases w with ⟨⟩ | ⟨⟩ | ⟨lbc, mc, _ | lac, la⟩ <;> simp [derLA, atom_iff, sem.steps, Steps.laStepHelp, top]
+    rcases w with ⟨⟩ | ⟨⟩ | ⟨mc, _ | lac, la⟩ <;> simp [derLA, atom_iff, sem.steps, Steps.laStepHelp, top]
   | .symbol b ss =>
     simp only [DLA, sem]
-    rcases w with ⟨⟩ | ⟨⟩ | ⟨lbc, mc, _ | lac, la⟩ <;> simp [derLA, atom_iff, sem.steps, empty]
+    rcases w with ⟨⟩ | ⟨⟩ | ⟨mc, _ | lac, la⟩ <;> simp [derLA, atom_iff, sem.steps, empty]
   | .plus r₁ r₂ => rw [DLA, SRegex.sem, SRegex.sem, derLA_union a (SRegex.sem r₁) (SRegex.sem r₂), union, union, derLA_correct a r₁, derLA_correct a r₂]
   | .intersection r₁ r₂ => rw [DLA, SRegex.sem, SRegex.sem, derLA_intersection a (SRegex.sem r₁) (SRegex.sem r₂), intersection, intersection, derLA_correct a r₁, derLA_correct a r₂]
   | .complement r₁ r₂ => rw [DLA, SRegex.sem, SRegex.sem, derLA_complement a (SRegex.sem r₁) (SRegex.sem r₂), complement, complement, derLA_correct a r₁, derLA_correct a r₂]
@@ -138,13 +139,14 @@ theorem derLA_correct {α} [DecidableEq α] (a : α) (r : SRegex α) : derLA a (
     rw [sem, DLA, sem]
     refine (derLA_lb a (sem r) w).trans ?_
     match w with
-    | .left _ _ [] _ | .right _ 0 _ _ => simp only [lookbehind]; exact derLA_correct a r _
-    | .left _ _ (_ :: _) _ | .middle _ _ _ _ | .right _ (_ + 1) _ _ => simp [lookbehind]
+    | .left _ [] _ | .right 0 _ _ =>
+      simp only [lookbehind]; exact exists_congr fun _ => derLA_correct a r _
+    | .left _ (_ :: _) _ | .middle _ _ _ | .right (_ + 1) _ _ => simp [lookbehind]
   | .la r =>
     refine (derLA_la a (sem r) w).trans ?_
     match w with
-    | .left _ _ [] _ | .right _ 0 _ [] | .right _ 0 _ (_ :: _) => simp only [DLA, sem, lookahead]; exact der_correct a r _
-    | .left _ _ (_ :: _) _ | .middle _ _ _ _ | .right _ (_ + 1) _ _ => simp [DLA, sem, lookahead]
+    | .left _ [] _ | .right 0 _ [] | .right 0 _ (_ :: _) => simp only [DLA, sem, lookahead]; exact der_correct a r _
+    | .left _ (_ :: _) _ | .middle _ _ _ | .right (_ + 1) _ _ => simp [DLA, sem, lookahead]
 
 end
 
@@ -163,10 +165,7 @@ theorem der_word_correct {α} [DecidableEq α] (w : List α) (r : SRegex α) : (
       | cons y ys ih₂ =>
         intro u'; simp [der_word]
         have : der y l₁ ≐ der y l₂ := by
-          intro v
-          match v with
-          | .middle _ (_ + 1) _ _ | .right _ (_ + 1) 0 _ => exact h _
-          | .left _ _ _ _ | .middle _ 0 _ _ | .right _ 0 _ _ | .right _ (_ + 1) (_ + 1) _ => exact Iff.rfl
+          intro v; simp only [der]; split <;> first | exact h _ | exact Iff.rfl
         exact ih₂ (der y l₁) (der y l₂) this u'
     exact Iff.trans (der_word_congr wtl (der whd (SRegex.sem r)) (SRegex.sem (D whd r)) hder u) (ih (D whd r) u)
 
@@ -185,10 +184,7 @@ theorem derLB_word_correct {α} [DecidableEq α] (w : List α) (r : SRegex α) :
       | cons y ys ih₂ =>
         intro u'; simp [derLB_word]
         have : derLB y l₁ ≐ derLB y l₂ := by
-          intro v
-          match v with
-          | .left (_ + 1) _ _ _ | .middle (_ + 1) 0 _ _ | .right (_ + 1) 0 0 _ => exact h _
-          | .left 0 _ _ _ | .middle 0 _ _ _ | .middle (_ + 1) (_ + 1) _ _ | .right 0 _ _ _ | .right (_ + 1) (_ + 1) _ _ | .right (_ + 1) 0 (_ + 1) _ => exact Iff.rfl
+          intro v; simp only [derLB]; split <;> first | exact h _ | exact Iff.rfl
         exact ih₂ (derLB y l₁) (derLB y l₂) this u'
     exact Iff.trans (der_word_congr wtl (derLB whd (SRegex.sem r)) (SRegex.sem (DLB whd r)) hderLB u) (ih (DLB whd r) u)
 
@@ -208,10 +204,7 @@ theorem derLA_word_correct {α} [DecidableEq α] (w : List α) (r : SRegex α) :
         intro u'
         simp [derLA_word]
         have : derLA y l₁ ≐ derLA y l₂ := by
-          intro v
-          match v with
-          | .right _ _ (_ + 1) _ => exact h _
-          | .left _ _ _ _ | .middle _ _ _ _ | .right _ _ 0 _ => exact Iff.rfl
+          intro v; simp only [derLA]; split <;> first | exact h _ | exact Iff.rfl
         exact ih₂ (derLA y l₁) (derLA y l₂) this u'
     exact Iff.trans (derLA_word_congr wtl (derLA whd (SRegex.sem r)) (SRegex.sem (DLA whd r)) hderLA u) (ih (DLA whd r) u)
 

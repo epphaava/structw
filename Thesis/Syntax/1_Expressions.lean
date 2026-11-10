@@ -33,23 +33,8 @@ postfix:max "*" => Regex.star
 prefix:max "◁" => Regex.lb
 prefix:max "▷" => Regex.la
 
-/- -- Definition 4.1.2 (Denotational semantics ⟦·⟧).
-def sem [DecidableEq α] (r : Regex α) : Lang α :=
-  match r with
-  | .empty => ∅
-  | .unit => I
-  | .top => T
-  | .symbol x => # x
-  | .plus r₁ r₂ => (sem r₁) ∪ (sem r₂)
-  | .intersection r₁ r₂ => (sem r₁) ∩ (sem r₂)
-  | .complement r₁ r₂ => (sem r₁) - (sem r₂)
-  | .mult r₁ r₂ => (sem r₁) • (sem r₂)
-  | .star r b => Operators.star (sem r) (sem b)
-  | .lb r => lookbehind (sem r)
-  | .la r => lookahead (sem r) -/
 
 structure Steps where
-  lb : Nat := 0
   m  : Nat := 0
   la : Nat := 0
 deriving Repr, DecidableEq
@@ -58,12 +43,8 @@ namespace Steps
 
 def zeroSteps : Steps := {}
 
-def addSteps (s₁ s₂ : Steps) : Steps := ⟨s₁.lb + s₂.lb, s₁.m + s₂.m, s₁.la + s₂.la⟩
+def addSteps (s₁ s₂ : Steps) : Steps := ⟨s₁.m + s₂.m, s₁.la + s₂.la⟩
 -- instance : Add Steps := ⟨addSteps⟩
-
-def lbStepHelp (s : Steps) : Steps := {s with lb := s.lb.succ}
-def lbStep (ss : List Steps) : List Steps := ss.map lbStepHelp
-prefix:max "↑₁" => lbStep
 
 
 def mStepHelp (s : Steps) : Steps := {s with m := s.m.succ}
@@ -75,7 +56,7 @@ def laStepHelp (s : Steps) : Steps := {s with la := s.la.succ}
 def laStep (ss : List Steps) : List Steps := ss.map laStepHelp
 prefix:max "↑₃" => laStep
 
-def stepsSum (s : Steps) : Nat := .add (.add s.lb s.m) s.la
+def stepsSum (s : Steps) : Nat := .add s.m s.la
 
 def maxSum : List Steps → Nat
   | [] => 0
@@ -83,27 +64,6 @@ def maxSum : List Steps → Nat
 
 end Steps
 
-/- namespace Expr
-
-def Expr (α : Type) := List (Regex α × List Steps)
-
-def regexToExpr (r : Regex α) : Expr α := [(r, [.zeroSteps])]
-
-def mapSteps (f : Steps → Steps) (e : Expr α) : Expr α :=
-  e.map fun (r, steps) => (r, steps.map f)
-
-def lbStep : Expr α → Expr α := mapSteps Steps.lbStepHelp
-prefix:max "↑₁" => lbStep
-
-def mStep : Expr α → Expr α := mapSteps Steps.mStepHelp
-prefix:max "↑₂" => mStep
-
-def laStep : Expr α → Expr α := mapSteps Steps.laStepHelp
-prefix:max "↑₃" => laStep
-
-
-
-end Expr -/
 
 
 inductive SRegex (α : Type) : Type
@@ -149,12 +109,12 @@ def sem [DecidableEq α] (r : SRegex α) : Lang α :=
   where
     steps (s : Steps) (l : Lang α) : Lang α := fun w =>
       match w with
-      | .left lbc lb main la =>
-          s.m = 0 ∧ s.la = 0 ∧ s.lb ≤ lbc ∧ l (.left (lbc - s.lb) lb main la)
-      | .middle lbc mc main la =>
-          s.la = 0 ∧ s.lb ≤ lbc ∧ s.m ≤ mc ∧ l (.middle (lbc - s.lb) (mc - s.m) main la)
-      | .right lbc mc lac la =>
-          s.lb ≤ lbc ∧ s.m ≤ mc ∧ s.la ≤ lac ∧ l (.right (lbc - s.lb) (mc - s.m) (lac - s.la) la)
+      | .left lb main la =>
+          s.m = 0 ∧ s.la = 0 ∧ l (.left lb main la)
+      | .middle mc main la =>
+          s.la = 0 ∧ s.m ≤ mc ∧ l (.middle (mc - s.m) main la)
+      | .right mc lac la =>
+          s.m ≤ mc ∧ s.la ≤ lac ∧ l (.right (mc - s.m) (lac - s.la) la)
     atom : List Steps → Lang α → Lang α
       | [], _ => ∅
       | s :: rest, l => (steps s l) ∪ (atom rest l)

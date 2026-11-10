@@ -44,13 +44,13 @@ theorem star_congr {α} {l₁ l₂ b₁ b₂ : Lang α} (hl : l₁ ≐ l₂) (hb
     | inUnit w hu => exact star_help.inUnit w ((hb w).mpr hu)
     | inConcat w₁ w₂ w h₁ _ hwc ih => exact star_help.inConcat w₁ w₂ w ((hl w₁).mpr h₁) ih hwc
 
-@[simp] theorem symb_left {α} (a : α) (lbc : Nat) (lb : NEList α) (main la : List α) :
-    symb a (.left lbc lb main la) ↔ main = [a] := by simp [symb]
+@[simp] theorem symb_left {α} (a : α) (lb : NEList α) (main la : List α) :
+    symb a (.left lb main la) ↔ main = [a] := by simp [symb]
 
-@[simp] theorem symb_middle {α} (a y : α) (lbc mc : Nat) (l la : List α) : symb a (.middle lbc mc (y, l) la) ↔ mc = 0 ∧ l = [] ∧ a = y := by
+@[simp] theorem symb_middle {α} (a y : α) (mc : Nat) (l la : List α) : symb a (.middle mc (y, l) la) ↔ mc = 0 ∧ l = [] ∧ a = y := by
   rcases mc with _ | _ <;> rcases l with _ | _ <;> simp [symb]
 
-@[simp] theorem symb_right {α} (a : α) (lbc mc lac : Nat) (la : List α) :
-    ¬ symb a (.right lbc mc lac la) := by simp [symb]
+@[simp] theorem symb_right {α} (a : α) (mc lac : Nat) (la : List α) :
+    ¬ symb a (.right mc lac la) := by simp [symb]
 
 end DerCorrectHelp

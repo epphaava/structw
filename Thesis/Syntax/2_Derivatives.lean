@@ -22,9 +22,9 @@ def D [DecidableEq α] (a : α) : SRegex α → SRegex α
 
 def DLB [DecidableEq α] (a : α) : SRegex α → SRegex α
   | .empty => ∅
-  | .unit ss => I ↑₁(filterDLB ss) - I ↑₃(filterDLB ss)
-  | .top ss => T ↑₁(filterDLB ss) - (T ↑₂(filterDLB ss) + T ↑₃(filterDLB ss))
-  | .symbol b ss => #b ↑₁(filterDLB ss) - (#b ↑₂(filterDLB ss) + #b ↑₃(filterDLB ss))
+  | .unit ss => I (filterDLB ss) - I ↑₃(filterDLB ss)
+  | .top ss => T (filterDLB ss) - (T ↑₂(filterDLB ss) + T ↑₃(filterDLB ss))
+  | .symbol b ss => #b (filterDLB ss) - (#b ↑₂(filterDLB ss) + #b ↑₃(filterDLB ss))
   | .plus r₁ r₂ => (DLB a r₁) + (DLB a r₂)
   | .intersection r₁ r₂ => (DLB a r₁) & (DLB a r₂)
   | .complement r₁ r₂ => (DLB a r₁) - (DLB a r₂)
