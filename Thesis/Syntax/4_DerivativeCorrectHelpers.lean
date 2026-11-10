@@ -14,12 +14,14 @@ open DerLaws
 open StructuredWords
 open Operators
 
-theorem atom_iff {α} [DecidableEq α] (ss : List Steps) (l : Lang α) (w : Word α) : sem.atom ss l w ↔ ∃ s ∈ ss, sem.steps s l w := by
+theorem atom_iff {α} [DecidableEq α] (n : Nat) (ss : List Steps) (l : Lang α) (w : Word α) :
+    sem.atom n ss l w ↔ ∃ s ∈ ss, sem.steps n s l w := by
   induction ss with
   | nil => simp [sem.atom, empty]
   | cons s ss ih => simp [sem.atom, union, ih]
 
-theorem atom_map_iff {α} [DecidableEq α] (f : Steps → Steps) (ss : List Steps) (l : Lang α) (w : Word α) : sem.atom (ss.map f) l w ↔ ∃ s ∈ ss, sem.steps (f s) l w := by
+theorem atom_map_iff {α} [DecidableEq α] (n : Nat) (f : Steps → Steps) (ss : List Steps) (l : Lang α) (w : Word α) :
+    sem.atom n (ss.map f) l w ↔ ∃ s ∈ ss, sem.steps n (f s) l w := by
   induction ss with
   | nil => simp [sem.atom, empty]
   | cons s ss ih => simp [sem.atom, union, ih]
@@ -44,13 +46,13 @@ theorem star_congr {α} {l₁ l₂ b₁ b₂ : Lang α} (hl : l₁ ≐ l₂) (hb
     | inUnit w hu => exact star_help.inUnit w ((hb w).mpr hu)
     | inConcat w₁ w₂ w h₁ _ hwc ih => exact star_help.inConcat w₁ w₂ w ((hl w₁).mpr h₁) ih hwc
 
-@[simp] theorem symb_left {α} (a : α) (lb : NEList α) (main la : List α) :
-    symb a (.left lb main la) ↔ main = [a] := by simp [symb]
+@[simp] theorem symb_left {α} (a : α) (lbc : Nat) (lb : NEList α) (main la : List α) :
+    symb a (.left lbc lb main la) ↔ main = [a] := by simp [symb]
 
-@[simp] theorem symb_middle {α} (a y : α) (mc : Nat) (l la : List α) : symb a (.middle mc (y, l) la) ↔ mc = 0 ∧ l = [] ∧ a = y := by
+@[simp] theorem symb_middle {α} (a y : α) (lbc mc : Nat) (l la : List α) : symb a (.middle lbc mc (y, l) la) ↔ mc = 0 ∧ l = [] ∧ a = y := by
   rcases mc with _ | _ <;> rcases l with _ | _ <;> simp [symb]
 
-@[simp] theorem symb_right {α} (a : α) (mc lac : Nat) (la : List α) :
-    ¬ symb a (.right mc lac la) := by simp [symb]
+@[simp] theorem symb_right {α} (a : α) (lbc mc lac : Nat) (la : List α) :
+    ¬ symb a (.right lbc mc lac la) := by simp [symb]
 
 end DerCorrectHelp

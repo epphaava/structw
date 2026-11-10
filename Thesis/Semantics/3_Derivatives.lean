@@ -7,22 +7,22 @@ open Operators
 -- Lookbehind derivative
 def derLB {α} (a : α) (l : Lang α) : Lang α := λ w =>
   match w with
-  | .left lb main la => l (.left (a, toList lb) main la)
-  | .middle  0 main la => l (.left (a, []) (toList main) la)
-  | .right 0 0 la => l (.left (a, []) [] la)
+  | .left (.succ lbc) lb main la => l (.left lbc (a, toList lb) main la)
+  | .middle (.succ lbc) 0 main la => l (.left lbc (a, []) (toList main) la)
+  | .right (.succ lbc) 0 0 la => l (.left lbc (a, []) [] la)
   | _ => False
 
 -- Match derivative
 def der {α} (a : α) (l : Lang α) : Lang α := λ w =>
   match w with
-  | .middle (.succ mcount) main la => l (.middle mcount (a, toList main) la)
-  | .right (.succ mcount) 0 la => l (.middle mcount (a, []) la)
+  | .middle lbc (.succ mcount) main la => l (.middle lbc mcount (a, toList main) la)
+  | .right lbc (.succ mcount) 0 la => l (.middle lbc mcount (a, []) la)
   | _ => False
 
 -- Lookahead derivative
 def derLA (a : α) (l : Lang α) : Lang α := λ w =>
   match w with
-  | .right mcount (.succ lacount) la => l (.right mcount lacount (a :: la))
+  | .right lbc mcount (.succ lacount) la => l (.right lbc mcount lacount (a :: la))
   | _ => False
 
 -- Definition 3.2.3 (Iterated derivatives).
@@ -45,11 +45,11 @@ def derLA_word (w : List α) (l : Lang α) : Lang α :=
 
 
  /-- Definition 3.2.4 (Indexed nullability). -/
-def nullable (l : Lang α) (mcount lacount : Nat)  : Prop := l (.right mcount lacount [])
+def nullable (l : Lang α) (lbcount mcount lacount : Nat)  : Prop := l (.right lbcount mcount lacount [])
 
  /-- Existential nullability. -/
 def xnullable (l : Lang α) : Prop :=
-  ∃ mcount lacount, nullable l mcount lacount
+  ∃ lbcount mcount lacount, nullable l lbcount mcount lacount
 
 
  -- Definition 3.2.5 (Existential derivative).
@@ -62,15 +62,24 @@ def xder (w : List α) (l : Lang α) : Lang α :=
 -- Lemma 3.2.1.
 theorem derLB_der_empty (L : Lang α) : derLB a (der a L) ≐ ∅ := by
   intro w
-  rcases w with ⟨⟩ | ⟨_ | _⟩ | ⟨_ | _, _ | _⟩ <;> simp [derLB, der, empty]
+  match w with
+  | .left lbc _ _ _ => cases lbc <;> simp [derLB, der, empty]
+  | .middle lbc mcount _ _ => cases lbc <;> cases mcount <;> simp [derLB, der, empty]
+  | .right lbc mcount lacount _ => cases lbc <;> cases mcount <;> cases lacount <;> simp [derLB, der, empty]
 
 theorem der_derLA_empty (L : Lang α) : der a (derLA a L) ≐ ∅ := by
   intro w
-  rcases w with ⟨⟩ | ⟨_ | _⟩ | ⟨_ | _, _ | _⟩ <;> simp [derLA, der, empty]
+  match w with
+  | .left lbc _ _ _ => cases lbc <;> simp [der, empty]
+  | .middle lbc mcount _ _ => cases lbc <;> cases mcount <;> simp [derLA, der, empty]
+  | .right lbc mcount lacount _ => cases lbc <;> cases mcount <;> cases lacount <;> simp [derLA, der, empty]
 
 theorem derLB_derLA_empty (L : Lang α) : derLB a (derLA a L) ≐ ∅ := by
   intro w
-  rcases w with ⟨⟩ | ⟨_ | _⟩ | ⟨_ | _, _ | _⟩ <;> simp [derLB, derLA, empty]
+  match w with
+  | .left lbc _ _ _ => cases lbc <;> simp [derLB, derLA, empty]
+  | .middle lbc mcount _ _ => cases lbc <;> cases mcount <;> simp [derLB, derLA, empty]
+  | .right lbc mcount lacount _ => cases lbc <;> cases mcount <;> cases lacount <;> simp [derLB, derLA, empty]
 
 
 /-- Helper for Theorem 4.2.3 (`xder_correct`). -/
@@ -79,13 +88,42 @@ theorem xder_congr {α} (s : List α) (l₁ l₂ : Lang α) : l₁ ≐ l₂ → 
   induction s generalizing l₁ l₂ with
   | nil => simp [xder]; trivial
   | cons a tl ih =>
-    -- Each derivative either looks `l` up at a single word or is `False`, so congruence is immediate.
     have hderLB : derLB a l₁ ≐ derLB a l₂ := by
-      intro w; simp only [derLB]; split <;> first | exact h _ | exact Iff.rfl
+      intro w; match w with
+      | .left lbc lb main la => cases lbc with | zero => simp [derLB]; | succ lbc => exact h (.left lbc (a, toList lb) main la)
+      | .middle lbc mcount main la =>
+        cases lbc with | zero => simp [derLB]; | succ lbc => cases mcount with
+        | zero => exact h (.left lbc (a, []) (toList main) la)
+        | succ mcount => simp [derLB]
+      | .right lbc mcount lacount la =>
+        cases lbc with | zero => simp [derLB]; | succ lbc => cases mcount with
+        | zero =>
+          cases lacount with
+          | zero => exact h (.left lbc (a, []) [] la)
+          | succ lacount => simp [derLB]
+        | succ mcount => simp [derLB]
     have hder : der a l₁ ≐ der a l₂ := by
-      intro w; simp only [der]; split <;> first | exact h _ | exact Iff.rfl
+      intro w; match w with
+      | .left _ _ _ _ => simp [der]
+      | .middle lbc mcount main la =>
+        cases mcount with
+        | zero => simp [der]
+        | succ mcount => exact h (.middle lbc mcount (a, toList main) la)
+      | .right lbc mcount lacount la =>
+        cases mcount with
+        | zero => simp [der]
+        | succ mcount =>
+          cases lacount with
+          | zero => exact h (.middle lbc mcount (a, []) la)
+          | succ lacount => simp [der]
     have hderLA : derLA a l₁ ≐ derLA a l₂ := by
-      intro w; simp only [derLA]; split <;> first | exact h _ | exact Iff.rfl
+      intro w; match w with
+      | .left _ _ _ _ => simp [derLA]
+      | .middle _ _ _ _ => simp [derLA]
+      | .right lbc mcount lacount la =>
+        cases lacount with
+        | zero => simp [derLA]
+        | succ lacount => exact h (.right lbc mcount lacount (a :: la))
     have hunion : (derLB a l₁ ∪ der a l₁ ∪ derLA a l₁) ≐ (derLB a l₂ ∪ der a l₂ ∪ derLA a l₂) := by
       intro u; simp [union, hderLB u, hder u, hderLA u]
     exact ih (derLB a l₁ ∪ der a l₁ ∪ derLA a l₁) (derLB a l₂ ∪ der a l₂ ∪ derLA a l₂) hunion

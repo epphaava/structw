@@ -93,31 +93,32 @@ postfix:max "*" => SRegex.star
 prefix:max "◁" => SRegex.lb
 prefix:max "▷" => SRegex.la
 
-def sem [DecidableEq α] (r : SRegex α) : Lang α :=
+def sem [DecidableEq α] (r : SRegex α) (n : Nat) : Lang α :=
   match r with
   | .empty => ∅
-  | .unit ss => atom ss I
-  | .top ss => atom ss T
-  | .symbol a ss => atom ss #a
-  | .plus r₁ r₂ => (sem r₁) ∪ (sem r₂)
-  | .intersection r₁ r₂ => (sem r₁) ∩ (sem r₂)
-  | .complement r₁ r₂ => (sem r₁) - (sem r₂)
-  | .mult r₁ r₂ => (sem r₁) • (sem r₂)
-  | .star r b => Operators.star (sem r) (sem b)
-  | .lb r => lookbehind (sem r)
-  | .la r => lookahead (sem r)
+  | .unit ss => atom n ss I
+  | .top ss => atom n ss T
+  | .symbol a ss => atom n ss #a
+  | .plus r₁ r₂ => (sem r₁ n) ∪ (sem r₂ n)
+  | .intersection r₁ r₂ => (sem r₁ n) ∩ (sem r₂ n)
+  | .complement r₁ r₂ => (sem r₁ n) - (sem r₂ n)
+  | .mult r₁ r₂ => (sem r₁ n) • (sem r₂ n)
+  | .star r b => Operators.star (sem r n) (sem b n)
+  | .lb r => lookbehind (sem r n)
+  | .la r => lookahead (sem r n)
   where
-    steps (s : Steps) (l : Lang α) : Lang α := fun w =>
+    steps (n : Nat) (s : Steps) (l : Lang α) : Lang α := fun w =>
+      let k := .sub n (.add s.m s.la)
       match w with
-      | .left lb main la =>
-          s.m = 0 ∧ s.la = 0 ∧ l (.left lb main la)
-      | .middle mc main la =>
-          s.la = 0 ∧ s.m ≤ mc ∧ l (.middle (mc - s.m) main la)
-      | .right mc lac la =>
-          s.m ≤ mc ∧ s.la ≤ lac ∧ l (.right (mc - s.m) (lac - s.la) la)
-    atom : List Steps → Lang α → Lang α
+      | .left lbc lb main la =>
+          s.m = 0 ∧ s.la = 0 ∧ k ≤ lbc ∧ l (.left (lbc - k) lb main la)
+      | .middle lbc mc main la =>
+          s.la = 0 ∧ k ≤ lbc ∧ s.m ≤ mc ∧ l (.middle (lbc - k) (mc - s.m) main la)
+      | .right lbc mc lac la =>
+          k ≤ lbc ∧ s.m ≤ mc ∧ s.la ≤ lac ∧ l (.right (lbc - k) (mc - s.m) (lac - s.la) la)
+    atom (n : Nat) : List Steps → Lang α → Lang α
       | [], _ => ∅
-      | s :: rest, l => (steps s l) ∪ (atom rest l)
+      | s :: rest, l => (steps n s l) ∪ (atom n rest l)
 
 
 def regexToSRegex : Regex α → SRegex α
