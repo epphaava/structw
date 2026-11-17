@@ -4,6 +4,7 @@ import Thesis.Semantics.«3_Derivatives»
 import Thesis.Semantics.«8_AlgebraicLaws»
 import Thesis.Semantics.«6_LookaheadDerivativeLaws»
 import Thesis.Semantics.«5_LookbehindDerivativeLaws»
+import Thesis.Semantics.Helpers.«7_DerivativeLaws»
 
 
 namespace DerLaws
@@ -12,10 +13,10 @@ open StructuredWords
 open Operators
 open derLBLaws
 open derLALaws
+open DerLawsHelpers
 
 -- Proposition 3.4.1 (Derivative laws for structured languages).
 
--- ======== DER ==========
 theorem der_empty (a : α) : der a ∅ ≐ ∅ := by
   intro w
   match w with
@@ -175,34 +176,6 @@ theorem der_concat (a : α) (k l : Lang α) :
         · cases mc₂ <;> simp [der] at hl
 
 
-theorem der_mono (a : α) {k l : Lang α} (h : ∀ w, k w → l w) : ∀ w, der a k w → der a l w := by
-  intro w hw
-  match w with
-  | .left _ _ _ _ => simp [der] at hw
-  | .middle _ mcount _ _ => cases mcount <;> first | exact h _ hw | simp [der] at hw
-  | .right _ mcount lacount _ => cases mcount <;> cases lacount <;> first | exact h _ hw | simp [der] at hw
-
-theorem derLA_mono (a : α) {k l : Lang α} (h : ∀ w, k w → l w) : ∀ w, derLA a k w → derLA a l w := by
-  intro w hw
-  match w with
-  | .left _ _ _ _ => simp [derLA] at hw
-  | .middle _ _ _ _ => simp [derLA] at hw
-  | .right _ _ lacount _ => cases lacount <;> first | exact h _ hw | simp [derLA] at hw
-
-theorem derLB_mono (a : α) {k l : Lang α} (h : ∀ w, k w → l w) : ∀ w, derLB a k w → derLB a l w := by
-  intro w hw
-  match w with
-  | .left lbc _ _ _ => cases lbc <;> first | exact h _ hw | simp [derLB] at hw
-  | .middle lbc mcount _ _ => cases lbc <;> cases mcount <;> first | exact h _ hw | simp [derLB] at hw
-  | .right lbc mcount lacount _ => cases lbc <;> cases mcount <;> cases lacount <;> first | exact h _ hw | simp [derLB] at hw
-
-theorem der_helper (a : α) (k : Lang α) : ∀ w, der a k w → ∃ w', k w' ∧ ∀ l : Lang α, l w' → der a l w := by
-  intro w hw
-  match w with
-  | .left _ _ _ _ => simp [der] at hw
-  | .middle _ mcount _ _ => cases mcount <;> first | exact ⟨_, hw, fun _ h => h⟩ | simp [der] at hw
-  | .right _ mcount lacount _ => cases mcount <;> cases lacount <;> first | exact ⟨_, hw, fun _ h => h⟩ | simp [der] at hw
-
 theorem der_star_base (a : α) (l base : Lang α) : der a (star l base) ≐ star (derLA a l) ((der a base) ∪ ((der a l) • star (derLB a l) (derLB a base))) := by
   intro w
   constructor
@@ -213,7 +186,7 @@ theorem der_star_base (a : α) (l base : Lang α) : der a (star l base) ≐ star
     | inUnit w' hb => exact star_help.inUnit _ (.inl (hd _ hb))
     | inConcat w₁ w₂ w' hl hstar hwc ih =>
       have hc : der a ((· = w₁) • (· = w₂)) w := hd _ ⟨w₁, w₂, rfl, rfl, hwc⟩
-      rcases (DerLaws.der_concat a _ _ w).mp hc with ⟨u, v, hu, hv, huv⟩ | ⟨u, v, hu, hv, huv⟩
+      rcases (der_concat a _ _ w).mp hc with ⟨u, v, hu, hv, huv⟩ | ⟨u, v, hu, hv, huv⟩
       · have hu' := der_mono a (fun x hx => hx ▸ hl) u hu
         have hv' := (derLB_star a l base v).mp (derLB_mono a (fun x hx => hx ▸ hstar) v hv)
         exact star_help.inUnit _ (Or.inr ⟨u, v, hu', hv', huv⟩)
@@ -226,35 +199,9 @@ theorem der_star_base (a : α) (l base : Lang α) : der a (star l base) ≐ star
       rcases hx with hb | ⟨u, v, hu, hv, huv⟩
       · exact der_mono a (fun v hv => star_help.inUnit v hv) w hb
       · have hv' := (derLB_star a l base v).mpr hv
-        exact der_mono a hsub w ((DerLaws.der_concat a l (star l base) w).mpr (Or.inl ⟨u, v, hu, hv', huv⟩))
+        exact der_mono a hsub w ((der_concat a l (star l base) w).mpr (Or.inl ⟨u, v, hu, hv', huv⟩))
     | inConcat u v w hu _ huv ih =>
-      exact der_mono a hsub w ((DerLaws.der_concat a l (star l base) w).mpr (Or.inr ⟨u, v, hu, ih, huv⟩))
-
-theorem concat_mono {k k' l l' : Lang α} (hk : ∀ v, k v → k' v) (hl : ∀ v, l v → l' v) : ∀ w, (k • l) w → (k' • l') w := by
-  intro _ ⟨x, y, hx, hy, hxy⟩; exact ⟨x, y, hk x hx, hl y hy, hxy⟩
-
-theorem star_unit_concat (base l : Lang α) : star l base ≐ star l I • base := by
-  intro w
-  constructor
-  · intro h
-    induction h with
-    | inUnit w hb => exact concat_mono (fun v hv => star_help.inUnit v hv) (fun _ h => h) w ((AlgebraicLaws.concat_left_identity base w).mpr hb)
-    | inConcat u v w hu _ huv ih =>
-      have h1 : (l • (star l I • base)) w := ⟨u, v, hu, ih, huv⟩
-      exact concat_mono (fun x ⟨p, q, hp, hq, hpq⟩ => star_help.inConcat p q x hp hq hpq) (fun _ h => h) w ((AlgebraicLaws.concat_assoc l (star l I) base w).mp h1)
-  · intro ⟨u, v, hu, hv, huv⟩
-    suffices key : ∀ u, star l I u → ∀ w, ((· = u) • base) w → star l base w from
-      key u hu w ⟨u, v, rfl, hv, huv⟩
-    intro u hu
-    induction hu with
-    | inUnit u hI =>
-      intro w hw
-      exact star_help.inUnit w ((AlgebraicLaws.concat_left_identity base w).mp (concat_mono (fun x hx => hx ▸ hI) (fun _ h => h) w hw))
-    | inConcat u₁ u₂ u hu₁ _ hwc ih =>
-      intro w hw
-      have h1 : (((· = u₁) • (· = u₂)) • base) w := concat_mono (fun x hx => hx ▸ ⟨u₁, u₂, rfl, rfl, hwc⟩) (fun _ h => h) w hw
-      obtain ⟨p, q, rfl, hq, hpq⟩ := (AlgebraicLaws.concat_assoc _ _ _ w).mpr h1
-      exact star_help.inConcat p q w hu₁ (ih q hq) hpq
+      exact der_mono a hsub w ((der_concat a l (star l base) w).mpr (Or.inr ⟨u, v, hu, ih, huv⟩))
 
 theorem der_star (a : α) (l base : Lang α) : der a (star l base) ≐ star (derLA a l) I • ((der a base) ∪ ((der a l) • star (derLB a l) (derLB a base))) := by
   intro w; exact (der_star_base a l base w).trans (star_unit_concat _ _ w)

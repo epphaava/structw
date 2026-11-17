@@ -5,7 +5,7 @@ import Thesis.Semantics.«5_LookbehindDerivativeLaws»
 import Thesis.Semantics.«6_LookaheadDerivativeLaws»
 import Thesis.Semantics.«7_DerivativeLaws»
 
-namespace DerCorrectHelp
+namespace DerCorrectHelpers
 
 open SRegex
 open SRegexDerivatives
@@ -55,4 +55,4 @@ theorem star_congr {α} {l₁ l₂ b₁ b₂ : Lang α} (hl : l₁ ≐ l₂) (hb
 @[simp] theorem symb_right {α} (a : α) (lbc mc lac : Nat) (la : List α) :
     ¬ symb a (.right lbc mc lac la) := by simp [symb]
 
-end DerCorrectHelp
+end DerCorrectHelpers

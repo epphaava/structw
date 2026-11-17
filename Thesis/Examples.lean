@@ -1,6 +1,6 @@
 import Thesis.Syntax.«1_Expressions»
 import Thesis.Syntax.«2_Derivatives»
-import Thesis.Syntax.«4_DerivativeCorrectHelpers»
+import Thesis.Syntax.Helpers.«4_DerivativeCorrectness»
 import Thesis.Syntax.«5_Nullability»
 import Thesis.Syntax.«3_DerivativeCorrectness»
 import Thesis.Algorithm
@@ -10,10 +10,11 @@ open SRegex
 open StructuredWords
 open Operators
 open NullabilityLaws
-open DerCorrectHelp
+open DerCorrectHelpers
 open SRegexDerivatives
 open SRegexDerivatives
 open Nullability
+open NullabilityHelpers
 open DerCorrect
 open SRegexDerivatives
 

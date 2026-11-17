@@ -9,8 +9,7 @@ import Thesis.Semantics.«10_Decomposition»
 import Thesis.Semantics.«9_NullabilityLaws»
 import Thesis.Syntax.«1_Expressions»
 import Thesis.Syntax.«2_Derivatives»
-import Thesis.Syntax.Nullability
-import Thesis.Syntax.DerivativeCorrectness
-import Thesis.Syntax.NullabilityCorrectness
+import Thesis.Syntax.«5_Nullability»
+import Thesis.Syntax.«3_DerivativeCorrectness»
 import Thesis.Algorithm
 import Thesis.Examples

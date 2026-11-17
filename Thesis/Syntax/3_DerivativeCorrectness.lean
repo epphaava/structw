@@ -1,6 +1,6 @@
 import Thesis.Syntax.«1_Expressions»
 import Thesis.Syntax.«2_Derivatives»
-import Thesis.Syntax.«4_DerivativeCorrectHelpers»
+import Thesis.Syntax.Helpers.«4_DerivativeCorrectness»
 import Thesis.Semantics.«3_Derivatives»
 import Thesis.Semantics.«5_LookbehindDerivativeLaws»
 import Thesis.Semantics.«6_LookaheadDerivativeLaws»
@@ -18,7 +18,7 @@ open derLALaws
 open StructuredWords
 open Operators
 
-open DerCorrectHelp
+open DerCorrectHelpers
 
 
 mutual
@@ -176,8 +176,6 @@ theorem derLA_correct {α} [DecidableEq α] (a : α) (r : SRegex α) (n : Nat) :
 end
 
 
-/-- Each of `derLB`, `der`, `derLA` either looks `l` up at one word or is `False`,
-so they all respect language equality. -/
 theorem der_congr {α} (a : α) {l₁ l₂ : Lang α} (h : l₁ ≐ l₂) : der a l₁ ≐ der a l₂ := by
   intro v; simp only [der]; split <;> first | exact h _ | exact Iff.rfl
 
