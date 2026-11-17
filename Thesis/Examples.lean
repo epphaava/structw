@@ -38,76 +38,91 @@ example : derLB 'a' L_3_2_1 ((.middle 1 0 ('b', [])  ['c', 'd'] )) := by
   simp [derLB, L_3_2_1, toList]
 
 
--- Example 3.4.1
-
-def K_3_4_1 : Lang Char := λ w => w = Sum.inl (('a', []), ['b', 'c', 'd'])
-
-def L_3_4_1 : Lang Char := λ w => w = Sum.inl (('b', ['c']), ['d'])
-
-example : der 'a' K_3_4_1 (Sum.inr (0, ['b', 'c', 'd'])) := by
-  simp [der, K_3_4_1]; trivial
-
-example : derLA_word ['b', 'c'] (der 'a' K_3_4_1) (Sum.inr (2, ['d'])) := by
-  simp [derLA_word, derLA, der, K_3_4_1]; trivial
-
-example : der_word ['b', 'c'] L_3_4_1 (Sum.inr (0, ['d'])) := by
-  simp [der_word, der, L_3_4_1]; trivial
-
-example : derLA 'd' (der_word ['a', 'b', 'c'] (K_3_4_1 • L_3_4_1)) (Sum.inr (1, [])) := by
-  simp [derLA, der_word, der, concat, K_3_4_1, L_3_4_1, wc]
-  exists [], 'b', ['c']
-
 
 -- Example 4.1.1
 
-def r_4_1_1_exact : Expr Char := #'a' • ▷#'b'
-def r_4_1_1_prefix : Expr Char := #'a' • ▷(#'b' • T)
+def r_4_1_1_exact : SRegex Char :=
+  regexToSRegex (#'a' • ▷#'b' : Regex Char)
 
-example : sem r_4_1_1_exact (Sum.inl (('a', []), ['b'])) := by
-  exists (Sum.inl (('a', []), ['b'])); simp [sem, la, symb, wc]; trivial
+def r_4_1_1_prefix : SRegex Char :=
+  regexToSRegex (#'a' • ▷(#'b' • T) : Regex Char)
 
-example : sem r_4_1_1_prefix (Sum.inl (('a', []), ['b', 'c'])) := by
-  exists (Sum.inl (('a', []), ['b', 'c'])); simp [sem, la, symb, wc, concat, top];
-  constructor
-  . exists (Sum.inl (('b', []), ['c'])); simp
-    exists (Sum.inl (('c', []), [])); right;
-    exists [], 'c', []
-  . trivial
+example : sem r_4_1_1_exact 0 (.middle 0 0 ('a', []) ['b']) := by
+  simp [r_4_1_1_exact, regexToSRegex, sem, sem.atom, sem.steps, Steps.zeroSteps, concat, wc, lookahead, union, empty]
+  exact ⟨.middle 0 0 ('a', []) ['b'], by simp, .left 0 ('a', []) [] ['b'], by simp, by simp⟩
 
-example : ¬ sem r_4_1_1_exact (Sum.inl (('a', []), ['b', 'c'])) := by
-  intro h
-  obtain ⟨x, y, hx, hy, hwc⟩ := h
-  match x with
-  | Sum.inl ((hd, tl), v) =>
-    cases hwc with
-    | inl hwc => obtain ⟨_, h, _⟩ := hwc; simp at h
-    | inr hwc =>
-      cases hwc with
-      | inl hwc => obtain ⟨_, _⟩ := hwc; subst y; simp [sem, la, symb] at hy
-      | inr hwc => obtain ⟨xs, z, zs, htl, _, _⟩ := hwc; simp at htl
-  | Sum.inr (n, v) => cases n <;> simp [sem, symb] at hx
+example : sem r_4_1_1_prefix 0 (.middle 0 0 ('a', []) ['b', 'c']) := by
+  simp [r_4_1_1_prefix, regexToSRegex, sem, sem.atom, sem.steps, Steps.zeroSteps,
+    concat, wc, lookahead, union, empty, top]
+  refine ⟨.middle 0 0 ('a', []) ['b', 'c'], ?_, .left 0 ('a', []) [] ['b', 'c'], ?_, ?_⟩
+  · simp [symb]
+  · exact ⟨.left 0 ('a', []) ['b'] ['c'], by simp, .left 0 ('a', ['b']) ['c'] [], by simp,
+      ['b'], ['c'], by simp⟩
+  · simp
+
+example : ¬ sem r_4_1_1_exact 0 (.middle 0 0 ('a', []) ['b', 'c']) := by
+  simp [r_4_1_1_exact, regexToSRegex, sem, sem.atom, sem.steps, Steps.zeroSteps,
+    concat, wc, lookahead, union, empty]
+  intro x hx y hy
+  constructor <;> rintro rfl rfl <;> simp at hx hy
 
 
 -- Example 4.2.1
 
 def r_4_2_1 : Regex Char := #'a' • ▷#'b'
 
-example : D 'a' (regexToSRegex r_4_2_1) =
-    .plus ((I [⟨0, 1, 0⟩] - T [⟨0, 0, 1⟩]) • ▷(#'b' [⟨1, 0, 0⟩] - SRegex.plus (#'b' [⟨0, 1, 0⟩]) (#'b' [⟨0, 0, 1⟩]))) (∅ • ∅) := by
-  simp [r_4_2_1, regexToSRegex, D, DLB, DLA, filterD, filterDLB, Steps.lbStep, Steps.mStep, Steps.laStep,
-    Steps.lbStepHelp, Steps.mStepHelp, Steps.laStepHelp, Steps.zeroSteps]
+theorem D_4_2_1 : D 'a' (regexToSRegex r_4_2_1) =
+    SRegex.plus
+      (SRegex.mult
+        (SRegex.complement (I [⟨1, 0⟩]) (T [⟨0, 1⟩]))
+        (▷(SRegex.complement (#'b' [⟨0, 0⟩]) (SRegex.plus (#'b' [⟨1, 0⟩]) (#'b' [⟨0, 1⟩])))))
+      (SRegex.mult ∅ ∅) := by
+  simp [r_4_2_1, regexToSRegex, D, DLB, DLA, filterD, filterDLB, Steps.mStep, Steps.laStep,
+    Steps.mStepHelp, Steps.laStepHelp, Steps.zeroSteps]
 
 example : DLA 'a' (regexToSRegex r_4_2_1) = ∅ • DLA 'a' (regexToSRegex ▷ #'b') := by
   simp [r_4_2_1, regexToSRegex, DLA]
 
-example : sem (D 'a' r_4_2_1) ≐ sem ((ε // ▹ε) • ▷#'b') := by
+example (n : Nat) : sem (DLA 'a' (regexToSRegex r_4_2_1)) n ≐ ∅ := by
   intro w
-  simp [sem, r_4_2_1, D, union, DLA, concat, empty]
-
-example : sem (DLA 'a' r_4_2_1) ≐ ∅ := by
-  intro w
-  simp [r_4_2_1, empty]; intro h
-  simp [DLA, sem, concat, empty] at h
+  simp [r_4_2_1, regexToSRegex, DLA, sem, concat, empty]
 
 -- Example 5.3
 #eval findAllMatches (α := Char) ((Regex.star (#'a') I • ▷(Regex.star (#'a') I) : Regex Char)) ['a']
+
+-- a* ▷a* kõik matchid m + la ≤ 3
+#eval findAllMatches (α := Char) ((Regex.star (#'a') I • ▷(Regex.star (#'a') I) : Regex Char)) ['a', 'a', 'a']
+
+-- (a + b)* b ▷c : "b", "bb", "abb", followed by "c"
+#eval findAllMatches (α := Char) ((Regex.star (#'a' + #'b') I • #'b' • ▷#'c' : Regex Char)) ['a', 'b', 'b', 'c']
+
+-- a* ▷(b* c) : the lookahead is "c", "bc" or "bbc"
+#eval findAllMatches (α := Char) ((Regex.star (#'a') I • ▷(Regex.star (#'b') (#'c')) : Regex Char)) ['a', 'a', 'b', 'b', 'c']
+
+-- ◁(a + b) c* ▷(a b)
+#eval findAllMatches (α := Char) ((◁(#'a' + #'b') • Regex.star (#'c') I • ▷(#'a' • #'b') : Regex Char)) ['b', 'c', 'c', 'a', 'b']
+
+
+-- ◁a* a* ▷a*
+#eval findAllMatches (α := Char) ((◁(Regex.star (#'a') I) • Regex.star (#'a') I • ▷(Regex.star (#'a') I) : Regex Char)) ['a', 'a']
+
+-- ◁a a ▷T
+#eval findAllMatches (α := Char) ((◁#'a' • #'a' • ▷T : Regex Char)) ['a', 'a', 'a']
+
+-- ◁b a* ▷c
+#eval findAllMatches (α := Char) ((◁#'b' • Regex.star (#'a') I • ▷#'c' : Regex Char)) ['a', 'b', 'a', 'a', 'c']
+
+-- ◁(T b) a* ▷c
+#eval findAllMatches (α := Char) ((◁(T • #'b') • Regex.star (#'a') I • ▷#'c' : Regex Char)) ['a', 'b', 'a', 'a', 'c']
+
+-- ◁(T b) a* ▷T
+#eval findAllMatches (α := Char) ((◁(T • #'b') • Regex.star (#'a') I • ▷T : Regex Char)) ['b', 'a', 'a']
+
+
+#eval findAllMatches (α := Char) ((◁(T - (T • #'a')) • #'a' • ▷T : Regex Char)) ['a', 'a', 'b', 'a']
+
+#eval findAllMatches (α := Char) ((◁(Regex.star (#'a') I & (T • #'a')) • #'b' • ▷T : Regex Char)) ['a', 'a', 'b', 'b']
+
+#eval findAllMatches (α := Char) (((Regex.star (#'a' + #'b') I & (T • #'b')) • ▷#'a' : Regex Char)) ['a', 'b', 'b', 'a']
+
+#eval findAllMatches (α := Char) (((T - (T • #'b' • #'b' • T)) • ▷#'a' : Regex Char)) ['a', 'b', 'a', 'b', 'b', 'a']

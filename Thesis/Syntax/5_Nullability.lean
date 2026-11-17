@@ -12,7 +12,7 @@ open Operators
 open NullabilityLaws
 open DerCorrectHelp
 open SRegexDerivatives
-
+open Steps
 
 def compose (s₁ s₂ : Steps) : Option Steps :=
   if s₁.la = s₂.m + s₂.la then some ⟨s₁.m + s₂.m, s₂.la⟩ else none
@@ -27,30 +27,51 @@ def starN (nr : List Steps) : Nat → List Steps → List Steps
   | k + 1, acc => starN nr k (starStep nr acc)
 
 
-def N {α} (r : SRegex α) (n : Nat) : List Steps :=
+def N {α} (r : SRegex α) : List Steps :=
   match r with
   | .empty => []
   | .unit ss => ss
   | .top ss => ss
   | .symbol _ _ => []
-  | .plus r₁ r₂ => N r₁ n ++ N r₂ n
-  | .intersection r₁ r₂ => (N r₁ n).filter fun s => (N r₂ n).contains s
-  | .complement r₁ r₂ => (N r₁ n).filter fun s => !(N r₂ n).contains s
-  | .mult r₁ r₂ => concatN (N r₁ n) (N r₂ n)
-  | .star r b => starN (N r n) (n + 1) (N b n)
-  | .lb r => (N r n).filterMap fun s => if s.stepsSum = n then some ⟨0, s.la⟩ else none
-  | .la r => (N r n).filterMap fun s => if s.la = 0 then some ⟨0, s.m⟩ else none
+  | .plus r₁ r₂ => N r₁ ++ N r₂
+  | .intersection r₁ r₂ => (N r₁).filter fun s => (N r₂).contains s
+  | .complement r₁ r₂ => (N r₁).filter fun s => !(N r₂).contains s
+  | .mult r₁ r₂ => concatN (N r₁) (N r₂)
+  | .star r b => starN (N r) (max (Steps.maxSum (N r)) (Steps.maxSum (N b)) + 1) (N b)
+  | .lb r => (N r).map fun s => ⟨0, s.la⟩
+  | .la r => (N r).filterMap fun s => if s.la = 0 then some ⟨0, s.m⟩ else none
 
-/-- Every step in `r` fits in the `n` characters read so far. -/
-def ssLe {α} : SRegex α → Nat → Prop
+
+mutual
+def Full {α} : SRegex α → Nat → Prop
+  | .empty, _ => True
+  | .unit ss, n | .top ss, n | .symbol _ ss, n => ∀ s ∈ ss, s.stepsSum = n
+  | .plus r₁ r₂, n | .intersection r₁ r₂, n | .complement r₁ r₂, n => Full r₁ n ∧ Full r₂ n
+  | .mult r₁ _, n => Full r₁ n
+  | .star r b, n => Full r n ∧ Full b n
+  | .lb r, n => LAOnly r n
+  | .la r, n => Full r n
+
+def LAOnly {α} : SRegex α → Nat → Prop
+  | .empty, _ => True
+  | .unit ss, n | .top ss, n | .symbol _ ss, n => ∀ s ∈ ss, s.m = 0 ∧ s.la = n
+  | .plus r₁ r₂, n | .intersection r₁ r₂, n | .complement r₁ r₂, n
+  | .mult r₁ r₂, n | .star r₁ r₂, n => LAOnly r₁ n ∧ LAOnly r₂ n
+  | .lb r, n => LAOnly r n
+  | .la r, n => Full r n
+end
+
+def WF {α} : SRegex α → Nat → Prop
   | .empty, _ => True
   | .unit ss, n | .top ss, n | .symbol _ ss, n => ∀ s ∈ ss, s.stepsSum ≤ n
   | .plus r₁ r₂, n | .intersection r₁ r₂, n | .complement r₁ r₂, n
-  | .mult r₁ r₂, n | .star r₁ r₂, n => ssLe r₁ n ∧ ssLe r₂ n
-  | .lb r, n | .la r, n => ssLe r n
+  | .mult r₁ r₂, n | .star r₁ r₂, n => WF r₁ n ∧ WF r₂ n
+  | .lb r, n => WF r n ∧ Full r n
+  | .la r, n => WF r n
 
 
-theorem compose_eq {s₁ s₂ t : Steps} : compose s₁ s₂ = some t ↔ s₁.la = s₂.m + s₂.la ∧ t = ⟨s₁.m + s₂.m, s₂.la⟩ := by
+theorem compose_eq {s₁ s₂ t : Steps} :
+    compose s₁ s₂ = some t ↔ s₁.la = s₂.m + s₂.la ∧ t = ⟨s₁.m + s₂.m, s₂.la⟩ := by
   simp [compose, eq_comm]
 
 theorem mem_concatN {n₁ n₂ : List Steps} {t : Steps} : t ∈ concatN n₁ n₂ ↔ ∃ s₁ ∈ n₁, ∃ s₂ ∈ n₂, compose s₁ s₂ = some t := by
@@ -102,7 +123,23 @@ theorem starN_induct (nr : List Steps) (P : Steps → Prop)
     · obtain ⟨s₁, h₁, s₂, h₂, hc'⟩ := mem_concatN.mp ht
       exact hc s₁ s₂ t h₁ (h s₂ h₂) hc'
 
-theorem N_sum {α} (r : SRegex α) (n : Nat) (hwf : ssLe r n) : ∀ t ∈ N r n, t.stepsSum ≤ n := by
+theorem le_maxSum {ss : List Steps} {s : Steps} (h : s ∈ ss) : s.stepsSum ≤ Steps.maxSum ss := by
+  induction ss with
+  | nil => simp at h
+  | cons x xs ih =>
+    simp only [Steps.maxSum]
+    rcases List.mem_cons.mp h with rfl | h
+    · exact Nat.le_max_left _ _
+    · exact Nat.le_trans (ih h) (Nat.le_max_right _ _)
+
+theorem starN_sum_le (nr nb : List Steps) (k : Nat) : ∀ t ∈ starN nr k nb, t.stepsSum ≤ max (Steps.maxSum nr) (Steps.maxSum nb) := by
+  apply starN_induct
+  · intro s₁ s₂ t h₁ _ hc
+    have := le_maxSum h₁
+    rw [← (compose_sum hc).1]; omega
+  · intro t ht; have := le_maxSum ht; omega
+
+theorem N_sum {α} (r : SRegex α) (n : Nat) (hwf : WF r n) : ∀ t ∈ N r, t.stepsSum ≤ n := by
   induction r with
   | empty => simp [N]
   | unit ss | top ss => exact hwf
@@ -112,48 +149,118 @@ theorem N_sum {α} (r : SRegex α) (n : Nat) (hwf : ssLe r n) : ∀ t ∈ N r n,
     rcases List.mem_append.mp ht with ht | ht
     · exact ih₁ hwf.1 t ht
     · exact ih₂ hwf.2 t ht
-  | intersection r₁ r₂ ih₁ _ | complement r₁ r₂ ih₁ _ =>
-    intro t ht; exact ih₁ hwf.1 t (List.mem_filter.mp ht).1
+  | intersection r₁ r₂ ih₁ _ | complement r₁ r₂ ih₁ _ => intro t ht; exact ih₁ hwf.1 t (List.mem_filter.mp ht).1
   | mult r₁ r₂ ih₁ _ =>
     intro t ht
     obtain ⟨s₁, h₁, s₂, _, hc⟩ := mem_concatN.mp ht
-    exact (compose_sum hc).1 ▸ ih₁ hwf.1 s₁ h₁
+    have hsum := (compose_sum hc).1
+    have hn := ih₁ hwf.1 s₁ h₁
+    exact hsum ▸ hn
   | star r b ihr ihb =>
     apply starN_induct _ (fun t => t.stepsSum ≤ n)
     · intro s₁ s₂ t h₁ _ hc; exact (compose_sum hc).1 ▸ ihr hwf.1 s₁ h₁
     · exact ihb hwf.2
   | lb r ih =>
     intro t ht
-    simp only [N, List.mem_filterMap] at ht
-    obtain ⟨s, hs, h⟩ := ht
-    split at h <;> simp at h
-    have := ih hwf s hs; subst h; simp only [Steps.stepsSum, Nat.add_eq] at *; omega
+    obtain ⟨s, hs, rfl⟩ := List.mem_map.mp ht
+    have := ih hwf.1 s hs; simp [Steps.stepsSum, Nat.add_eq] at *; omega
   | la r ih =>
     intro t ht
     simp only [N, List.mem_filterMap] at ht
     obtain ⟨s, hs, h⟩ := ht
     split at h <;> simp at h
-    have := ih hwf s hs; subst h; simp only [Steps.stepsSum, Nat.add_eq] at *; omega
+    have := ih hwf s hs; subst h; simp [Steps.stepsSum, Nat.add_eq] at *; omega
+
+mutual
+theorem N_full {α} (r : SRegex α) (n : Nat) (h : Full r n) : ∀ t ∈ N r, t.stepsSum = n := by
+  match r, n, h with
+  | .empty, _, _ => simp [N]
+  | .unit _, _, h | .top _, _, h => exact h
+  | .symbol _ _, _, _ => simp [N]
+  | .plus r₁ r₂, n, h =>
+    intro t ht
+    rcases List.mem_append.mp ht with ht | ht
+    · exact N_full r₁ n h.1 t ht
+    · exact N_full r₂ n h.2 t ht
+  | .intersection r₁ _, n, h | .complement r₁ _, n, h => intro t ht; exact N_full r₁ n h.1 t (List.mem_filter.mp ht).1
+  | .mult r₁ _, n, h =>
+    intro t ht
+    obtain ⟨s₁, h₁, s₂, _, hc⟩ := mem_concatN.mp ht
+    exact (compose_sum hc).1 ▸ N_full r₁ n h s₁ h₁
+  | .star r b, n, h =>
+    apply starN_induct _ (fun t => t.stepsSum = n)
+    · intro s₁ s₂ t h₁ _ hc; exact (compose_sum hc).1 ▸ N_full r n h.1 s₁ h₁
+    · exact N_full b n h.2
+  | .lb r, n, h =>
+    intro t ht
+    obtain ⟨s, hs, rfl⟩ := List.mem_map.mp ht
+    have := (N_laOnly r n h s hs).2
+    simp [Steps.stepsSum, Nat.add_eq]; exact this
+  | .la r, n, h =>
+    intro t ht
+    simp only [N, List.mem_filterMap] at ht
+    obtain ⟨s, hs, hst⟩ := ht
+    split at hst <;> simp at hst
+    have := N_full r n h s hs; subst hst; simp [Steps.stepsSum, Nat.add_eq] at *; omega
+
+theorem N_laOnly {α} (r : SRegex α) (n : Nat) (h : LAOnly r n) : ∀ t ∈ N r, t.m = 0 ∧ t.la = n := by
+  match r, n, h with
+  | .empty, _, _ => simp [N]
+  | .unit _, _, h | .top _, _, h => exact h
+  | .symbol _ _, _, _ => simp [N]
+  | .plus r₁ r₂, n, h =>
+    intro t ht
+    rcases List.mem_append.mp ht with ht | ht
+    · exact N_laOnly r₁ n h.1 t ht
+    · exact N_laOnly r₂ n h.2 t ht
+  | .intersection r₁ _, n, h | .complement r₁ _, n, h => intro t ht; exact N_laOnly r₁ n h.1 t (List.mem_filter.mp ht).1
+  | .mult r₁ r₂, n, h =>
+    intro t ht
+    obtain ⟨s₁, h₁, s₂, h₂, hc⟩ := mem_concatN.mp ht
+    obtain ⟨e, rfl⟩ := compose_eq.mp hc
+    have := N_laOnly r₁ n h.1 s₁ h₁; have := N_laOnly r₂ n h.2 s₂ h₂
+    simp; omega
+  | .star r b, n, h =>
+    apply starN_induct _ (fun t => t.m = 0 ∧ t.la = n)
+    · intro s₁ s₂ t h₁ h₂ hc
+      obtain ⟨e, rfl⟩ := compose_eq.mp hc
+      have := N_laOnly r n h.1 s₁ h₁
+      simp only; omega
+    · exact N_laOnly b n h.2
+  | .lb r, n, h =>
+    intro t ht
+    obtain ⟨s, hs, rfl⟩ := List.mem_map.mp ht
+    exact ⟨rfl, (N_laOnly r n h s hs).2⟩
+  | .la r, n, h =>
+    intro t ht
+    simp only [N, List.mem_filterMap] at ht
+    obtain ⟨s, hs, hst⟩ := ht
+    split at hst <;> simp at hst
+    have := N_full r n h s hs; subst hst
+    refine ⟨rfl, ?_⟩
+    simp [Steps.stepsSum, Nat.add_eq] at this ⊢; omega
+end
 
 
-/-- The lookbehind count of a pair is whatever the match and lookahead leave of `n`. -/
-abbrev lbOf (n : Nat) (t : Steps) : Nat := n - t.stepsSum
+def lbOf (n : Nat) (t : Steps) : Nat := n - t.stepsSum
 
 theorem star_N {α : Type} (l base : Lang α) (nr nb : List Steps) (n : Nat)
     (hr : ∀ t : Steps, t.stepsSum ≤ n → (nullable l (lbOf n t) t.m t.la ↔ t ∈ nr))
     (hb : ∀ t : Steps, t.stepsSum ≤ n → (nullable base (lbOf n t) t.m t.la ↔ t ∈ nb))
     (hnr : ∀ t ∈ nr, t.stepsSum ≤ n) (t : Steps) (ht : t.stepsSum ≤ n) :
-    nullable (star l base) (lbOf n t) t.m t.la ↔ t ∈ starN nr (n + 1) nb := by
+    nullable (star l base) (lbOf n t) t.m t.la ↔
+      t ∈ starN nr (max (Steps.maxSum nr) (Steps.maxSum nb) + 1) nb := by
   constructor
   · intro h
     suffices key : ∀ w, star_help l base w → ∀ t : Steps, w = .right (lbOf n t) t.m t.la [] →
         t.stepsSum ≤ n → t ∈ starN nr t.m nb by
-      exact starN_mono nr (by simp only [Steps.stepsSum, Nat.add_eq] at ht; omega) nb (key _ h t rfl ht)
+      have hm := key _ h t rfl ht
+      have := starN_sum_le nr nb t.m t hm
+      exact starN_mono nr (Nat.le_succ_of_le (Nat.le_trans (Nat.le_add_right t.m t.la) this)) nb hm
     intro w hw
     induction hw with
     | inUnit w hbase =>
-      intro t hwt ht
-      subst hwt
+      intro t hwt ht; subst hwt
       exact subset_starN nr _ nb ((hb t ht).mp hbase)
     | inConcat w₁ w₂ w h₁ _ hwc ih =>
       intro t hwt ht
@@ -165,148 +272,115 @@ theorem star_N {α : Type} (l base : Lang α) (nr nb : List Steps) (n : Nat)
       have hc : compose s₁ s₂ = some t := by
         rw [compose_eq]; obtain ⟨_, _⟩ := t; simp_all [s₁, s₂]
       have h₂ : s₂ ∈ starN nr s₂.m nb :=
-        ih s₂ (by simp only [s₂, Word.right.injEq, and_true]; omega) (by simp only [s₂]; omega)
+        ih s₂ (by simp [s₂]; omega) (by simp [s₂]; omega)
       have hs₁ : s₁ ∈ nr := by
-        refine (hr s₁ (by simp only [s₁, Steps.stepsSum, Nat.add_eq]; omega)).mp ?_
-        have e : (n - (t.m + t.la)) = (n - (s₁.m + s₁.la)) := by simp only [s₁]; omega
-        simp only [nullable, lbOf, Steps.stepsSum, Nat.add_eq]; rw [← e]; exact h₁
+        refine (hr s₁ (by simp [s₁, Steps.stepsSum]; omega)).mp ?_
+        have e : (n - (t.m + t.la)) = (n - (s₁.m + s₁.la)) := by simp [s₁]; omega
+        simp [nullable, lbOf, Steps.stepsSum, ←e]; exact h₁
       by_cases hz : mc₁ = 0
-      · rw [compose_m_zero hc hz]
-        exact starN_mono nr (by simp only [s₂]; omega) nb h₂
-      · exact starN_mono nr (by simp only [s₂]; omega) nb (starN_compose nr _ nb hs₁ h₂ hc)
+      · rw [compose_m_zero hc hz]; exact starN_mono nr (by simp [s₂]) nb h₂
+      · exact starN_mono nr (by simp [s₂]; omega) nb (starN_compose nr _ nb hs₁ h₂ hc)
   · intro hmem
     refine starN_induct nr (fun t => t.stepsSum ≤ n → nullable (star l base) (lbOf n t) t.m t.la) ?_ _ nb ?_ t hmem ht
     · intro s₁ s₂ t h₁ h₂ hc ht
       have hs₁ := hnr s₁ h₁
       obtain ⟨e1, rfl⟩ := compose_eq.mp hc
-      simp only [Steps.stepsSum, Nat.add_eq] at ht hs₁
+      simp [Steps.stepsSum] at ht hs₁
       refine (nullable_star l base).mpr (.inr ⟨s₁.m, s₂.m, rfl, ?_, ?_⟩)
-      · have := (hr s₁ (by simp only [Steps.stepsSum, Nat.add_eq]; omega)).mpr h₁
+      · have := (hr s₁ (by simp [Steps.stepsSum]; omega)).mpr h₁
         have e : lbOf n s₁ = (n - ((s₁.m + s₂.m) + s₂.la)) := by
-          simp only [lbOf, Steps.stepsSum, Nat.add_eq]; omega
-        simp only [lbOf, Steps.stepsSum, Nat.add_eq] at this e ⊢
+          simp [lbOf, Steps.stepsSum]; omega
+        simp [lbOf, Steps.stepsSum] at this e ⊢
         rw [e, e1] at this; exact this
-      · have := h₂ (by simp only [Steps.stepsSum, Nat.add_eq]; omega)
+      · have := h₂ (by simp [Steps.stepsSum]; omega)
         have e : lbOf n s₂ = ((n - ((s₁.m + s₂.m) + s₂.la)) + s₁.m) := by
-          simp only [lbOf, Steps.stepsSum, Nat.add_eq]; omega
-        simp only [lbOf, Steps.stepsSum, Nat.add_eq] at this e ⊢
+          simp [lbOf, Steps.stepsSum]; omega
+        simp [lbOf, Steps.stepsSum] at this e ⊢
         rw [e] at this; exact this
-    · intro t ht hn
-      exact (nullable_star l base).mpr (.inl ((hb t hn).mpr ht))
+    · intro t ht hn; exact (nullable_star l base).mpr (.inl ((hb t hn).mpr ht))
 
 variable {α : Type} [DecidableEq α]
 
-/-- Nullability is computed exactly by `N`, for steps that fit in the `n` characters read. -/
-theorem N_correct (r : SRegex α) (n : Nat) (hwf : ssLe r n) (t : Steps) (ht : t.stepsSum ≤ n) :
-    nullable (sem r n) (lbOf n t) t.m t.la ↔ t ∈ N r n := by
+
+theorem N_correct (r : SRegex α) (n : Nat) (hwf : WF r n) (t : Steps) (ht : t.stepsSum ≤ n) :
+    nullable (sem r n) (lbOf n t) t.m t.la ↔ t ∈ N r := by
   induction r generalizing t with
   | empty => simp [nullable, sem, N, empty]
   | unit ss =>
-    simp only [nullable, sem, N, atom_iff]
+    simp [nullable, sem, atom_iff]
     constructor
-    · rintro ⟨s, hs, h⟩
-      have hs' := hwf s hs
-      simp only [sem.steps, unit, lbOf, Steps.stepsSum, Nat.add_eq, Nat.sub_eq] at h hs' ht
-      obtain ⟨s_m, s_la⟩ := s; obtain ⟨t_m, t_la⟩ := t
-      simp only at *
+    . intro ⟨s, hs, h⟩
+      have := hwf s hs
+      simp [sem.steps, unit, lbOf, stepsSum] at h ht this
+      obtain ⟨s_m, s_la⟩ := s; obtain ⟨t_m, t_la⟩ := t; simp at *
       obtain rfl : t_m = s_m := by omega
       obtain rfl : t_la = s_la := by omega
       exact hs
-    · intro h
-      exact ⟨t, h, by simp [sem.steps, unit, lbOf, Steps.stepsSum]⟩
+    . intro h; exact ⟨t, h, by simp [sem.steps, unit, lbOf, stepsSum]⟩
   | top ss =>
-    simp only [nullable, sem, N, atom_iff]
+    simp [nullable, sem, atom_iff]
     constructor
-    · rintro ⟨s, hs, h⟩
-      have hs' := hwf s hs
-      simp only [sem.steps, top, lbOf, Steps.stepsSum, Nat.add_eq, Nat.sub_eq, and_true] at h hs' ht
-      obtain ⟨s_m, s_la⟩ := s; obtain ⟨t_m, t_la⟩ := t
-      simp only at *
+    . intro ⟨s, hs, h⟩
+      have := hwf s hs
+      simp [sem.steps, top, lbOf, stepsSum] at h ht this
+      obtain ⟨s_m, s_la⟩ := s; obtain ⟨t_m, t_la⟩ := t; simp at *
       obtain rfl : t_m = s_m := by omega
       obtain rfl : t_la = s_la := by omega
       exact hs
-    · intro h
-      exact ⟨t, h, by simp [sem.steps, top, lbOf, Steps.stepsSum]⟩
-  | symbol b ss => simp [nullable, sem, N, atom_iff, sem.steps]
-  | plus r₁ r₂ ih₁ ih₂ =>
-    simp only [sem, N, List.mem_append]
-    exact (nullable_union).trans (or_congr (ih₁ hwf.1 t ht) (ih₂ hwf.2 t ht))
-  | intersection r₁ r₂ ih₁ ih₂ =>
-    simp only [sem, N, List.mem_filter, List.contains_iff_mem]
-    exact (nullable_intersection).trans (and_congr (ih₁ hwf.1 t ht) (ih₂ hwf.2 t ht))
-  | complement r₁ r₂ ih₁ ih₂ =>
-    simp [sem, N, List.mem_filter, ← Bool.not_eq_true]
-    exact (nullable_diff).trans (and_congr (ih₁ hwf.1 t ht) (not_congr (ih₂ hwf.2 t ht)))
+    . intro h; exact ⟨t, h, by simp [sem.steps, top, lbOf, stepsSum]⟩
+  | symbol b ss => simp [nullable, sem, atom_iff, sem.steps, N]
+  | plus r₁ r₂ ih₁ ih₂ => simp [sem, N]; exact nullable_union.trans (or_congr (ih₁ hwf.1 t ht) (ih₂ hwf.2 t ht))
+  | intersection r₁ r₂ ih₁ ih₂ => simp [sem, N]; exact nullable_intersection.trans (and_congr (ih₁ hwf.1 t ht) (ih₂ hwf.2 t ht))
+  | complement r₁ r₂ ih₁ ih₂ => simp [sem, N]; exact nullable_diff.trans (and_congr (ih₁ hwf.1 t ht) (not_congr (ih₂ hwf.2 t ht)))
   | mult r₁ r₂ ih₁ ih₂ =>
-    simp only [sem, N, nullable_concat, mem_concatN]
-    simp only [lbOf, Steps.stepsSum, Nat.add_eq] at ht ⊢
+    simp [sem, N, nullable_concat, mem_concatN]
+    simp [stepsSum] at ht
     constructor
-    · rintro ⟨mc₁, mc₂, hmc, h₁, h₂⟩
+    . intro ⟨mc₁, mc₂, hmc, h₁, h₂⟩
       let s₁ : Steps := ⟨mc₁, mc₂ + t.la⟩
       let s₂ : Steps := ⟨mc₂, t.la⟩
-      have hs₁ : s₁.stepsSum ≤ n := by simp only [s₁, Steps.stepsSum, Nat.add_eq]; omega
-      have hs₂ : s₂.stepsSum ≤ n := by simp only [s₂, Steps.stepsSum, Nat.add_eq]; omega
-      have e₁ : (n - (t.m + t.la)) = lbOf n s₁ := by simp only [lbOf, s₁, Steps.stepsSum, Nat.add_eq]; omega
-      have e₂ : ((n - (t.m + t.la)) + mc₁) = lbOf n s₂ := by simp only [lbOf, s₂, Steps.stepsSum, Nat.add_eq]; omega
-      rw [e₁] at h₁; rw [e₂] at h₂
-      refine ⟨s₁, (ih₁ hwf.1 s₁ hs₁).mp h₁, s₂, (ih₂ hwf.2 s₂ hs₂).mp h₂, ?_⟩
-      rw [compose_eq]; obtain ⟨_, _⟩ := t; simp_all [s₁, s₂]
-    · rintro ⟨s₁, h₁, s₂, h₂, hc⟩
+      have hs₁ : s₁.stepsSum ≤ n := by simp [s₁, stepsSum]; omega
+      have hs₂ : s₂.stepsSum ≤ n := by simp [s₂, stepsSum]; omega
+      have hlb₁ : (n - (t.m + t.la)) = lbOf n s₁ := by simp [lbOf, s₁, stepsSum]; omega;
+      simp [lbOf, stepsSum, hlb₁] at h₁
+      have hlb₂ : ((n - (t.m + t.la)) + mc₁) = lbOf n s₂ := by simp [lbOf, s₂, stepsSum]; omega
+      simp [lbOf, stepsSum, hlb₂] at h₂
+      obtain ⟨_, _⟩ := t
+      exact ⟨s₁, (ih₁ hwf.1 s₁ hs₁).mp h₁, s₂, (ih₂ hwf.2 s₂ hs₂).mp h₂, by simp [compose, s₁, s₂] at ⊢ hmc; exact hmc.symm⟩
+    . intro ⟨s₁, h₁, s₂, h₂, hc⟩
       obtain ⟨hs₁, hs₂⟩ := compose_sum hc
-      obtain ⟨e1, rfl⟩ := compose_eq.mp hc
-      simp only [Steps.stepsSum, Nat.add_eq] at hs₁ hs₂ ht
+      obtain ⟨hsla₁, rfl⟩ := compose_eq.mp hc
+      simp [Steps.stepsSum, Nat.add_eq] at hs₁ hs₂ ht
       refine ⟨s₁.m, s₂.m, rfl, ?_, ?_⟩
-      · have := (ih₁ hwf.1 s₁ (by simp only [Steps.stepsSum, Nat.add_eq]; omega)).mpr h₁
-        have e : lbOf n s₁ = (n - ((s₁.m + s₂.m) + s₂.la)) := by simp only [lbOf, Steps.stepsSum, Nat.add_eq]; omega
-        rw [e, e1] at this; exact this
-      · have := (ih₂ hwf.2 s₂ (by simp only [Steps.stepsSum, Nat.add_eq]; omega)).mpr h₂
-        have e : lbOf n s₂ = ((n - ((s₁.m + s₂.m) + s₂.la)) + s₁.m) := by simp only [lbOf, Steps.stepsSum, Nat.add_eq]; omega
-        rw [e] at this; exact this
-  | star r b ihr ihb =>
-    simp only [N, sem]
-    exact star_N _ _ _ _ n (fun t ht => ihr hwf.1 t ht) (fun t ht => ihb hwf.2 t ht) (N_sum r n hwf.1) t ht
+      . have ih₁ := (ih₁ hwf.1 s₁ (by simp [Steps.stepsSum]; omega)).mpr h₁
+        have : lbOf n s₁ = (n - ((s₁.m + s₂.m) + s₂.la)) := by simp [lbOf, stepsSum]; omega
+        rw [this, hsla₁] at ih₁; exact ih₁
+      . have ih₂ := (ih₂ hwf.2 s₂ (by simp [Steps.stepsSum]; omega)).mpr h₂
+        have : lbOf n s₂ = ((n - ((s₁.m + s₂.m) + s₂.la)) + s₁.m) := by simp [lbOf, stepsSum]; omega
+        rw [this] at ih₂; exact ih₂
+  | star r b ihr ihb => simp [N, sem]; exact star_N _ _ _ _ n (fun t ht => ihr hwf.1 t ht) (fun t ht => ihb hwf.2 t ht) (N_sum r n hwf.1) t ht
   | lb r ih =>
-    simp only [sem, N, List.mem_filterMap, nullable_lookbehind]
+    simp [sem, N, nullable_lookbehind]
     constructor
-    · rintro ⟨hm, h⟩
-      -- the content's match is the whole lookbehind: the pair `(n - la, la)`
+    . intro ⟨hm, h⟩
       let s : Steps := ⟨lbOf n t, t.la⟩
-      have hs : s.stepsSum ≤ n := by simp only [s, lbOf, Steps.stepsSum, Nat.add_eq] at ht ⊢; omega
-      have e : lbOf n s = 0 := by simp only [s, lbOf, Steps.stepsSum, Nat.add_eq] at ht ⊢; omega
-      refine ⟨s, (ih hwf s hs).mp (by simp only [nullable, e]; exact h), ?_⟩
-      have hsum : s.stepsSum = n := by
-        simp only [s, lbOf, Steps.stepsSum, Nat.add_eq] at ht ⊢; omega
-      rw [if_pos hsum]
-      obtain ⟨t_m, t_la⟩ := t; simp only at hm; subst hm; rfl
-    · rintro ⟨s, hs, h⟩
-      split at h <;> simp at h
-      rename_i hsum
-      subst h
-      have hs' := (ih hwf s (by omega)).mpr hs
-      refine ⟨rfl, ?_⟩
+      have : lbOf n s = 0 := by simp [s, lbOf, Steps.stepsSum] at ht ⊢; omega
+      obtain ⟨_, _⟩ := t
+      exact ⟨s, (ih hwf.1 s (by simp [s, lbOf, stepsSum] at ⊢ ht; omega)).mp (by simp [nullable, this]; exact h), by simp at hm; subst hm; rfl⟩
+    . rintro ⟨s, hs, rfl⟩
+      have hsum := N_full r n hwf.2 s hs
+      have hs' := (ih hwf.1 s (by omega)).mpr hs
       have e₁ : lbOf n s = 0 := by simp only [lbOf]; omega
       have e₂ : lbOf n ⟨0, s.la⟩ = s.m := by simp only [lbOf, Steps.stepsSum, Nat.add_eq] at hsum ⊢; omega
-      simp only [nullable, e₁] at hs'
-      rw [e₂]; exact hs'
+      simp [nullable, e₁] at hs'
+      rw [e₂]; simp; exact hs'
   | la r ih =>
-    simp only [sem, N, List.mem_filterMap, nullable_lookahead]
+    simp [sem, N, nullable_lookahead]
     constructor
-    · rintro ⟨hm, h⟩
-      -- the content's match is the outer lookahead: the pair `(la, 0)`
-      let s : Steps := ⟨t.la, 0⟩
-      have hs : s.stepsSum ≤ n := by simp only [s, Steps.stepsSum, Nat.add_eq] at ht ⊢; omega
-      have e : lbOf n s = lbOf n t := by simp only [s, lbOf, Steps.stepsSum, Nat.add_eq]; omega
-      refine ⟨s, (ih hwf s hs).mp (by simp only [nullable, e]; exact h), ?_⟩
-      obtain ⟨t_m, t_la⟩ := t; simp only at hm; subst hm; simp [s]
-    · rintro ⟨s, hs, h⟩
-      split at h <;> simp at h
-      rename_i hla
-      subst h
-      have hs' := (ih hwf s (N_sum r n hwf s hs)).mpr hs
-      refine ⟨rfl, ?_⟩
-      have e : lbOf n s = lbOf n ⟨0, s.m⟩ := by simp only [lbOf, Steps.stepsSum, Nat.add_eq, hla]; omega
-      simp only [nullable] at hs'
-      obtain ⟨s_m, s_la⟩ := s; simp only at hla e hs' ⊢; subst hla
-      rw [← e]; exact hs'
+    . intro ⟨hm, h⟩; let s : Steps := ⟨t.la, 0⟩;
+      exact ⟨s, (ih hwf s (by simp [s, stepsSum] at ht ⊢; omega)).mp (by simp [nullable, s, lbOf, stepsSum, hm] at ⊢ h; exact h), by obtain ⟨_, _⟩ := t; simp at hm; simp [hm, s]⟩
+    . rintro ⟨⟨sm, sla⟩, hs, ⟨hla, rfl⟩⟩; simp at hla ⊢; subst hla
+      have := (ih hwf ⟨sm, 0⟩ (N_sum r n hwf ⟨sm, 0⟩ hs)).mpr hs
+      simp [nullable, lbOf, stepsSum] at ⊢ this; exact this
 
 end Nullability
