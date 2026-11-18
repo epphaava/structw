@@ -25,7 +25,7 @@ def findAllMatches [DecidableEq α] (r : Regex α) (w : List α) : List Steps :=
 
 
 theorem algorithm_correctness [DecidableEq α] (r : Regex α) (w : List α) (s : Steps) :
-    s ∈ findAllMatches r w ↔ s.stepsSum ≤ w.length ∧ nullable (xder w (sem (regexToSRegex r) 0)) (w.length - s.stepsSum) s.m s.la := by
+    s ∈ findAllMatches r w ↔ ∃ k, Nat.add k s.stepsSum = w.length ∧ nullable (xder w (sem (regexToSRegex r) 0)) k s.m s.la := by
   have hwf := wf_findAllMatches r w
   have hx : ∀ u, xder w (sem (regexToSRegex r) 0) u ↔ sem (xD w (regexToSRegex r)) w.length u := by
     intro u; have := xder_correct w (regexToSRegex r) 0 u
@@ -33,8 +33,11 @@ theorem algorithm_correctness [DecidableEq α] (r : Regex α) (w : List α) (s :
   constructor
   · intro h
     have hs := N_sum _ _ hwf s h
-    exact ⟨hs, (hx _).mpr ((N_correct _ _ hwf s hs).mpr h)⟩
-  · intro ⟨hs, hn⟩
+    exact ⟨w.length - s.stepsSum, by simp; omega, (hx _).mpr ((N_correct _ _ hwf s hs).mpr h)⟩
+  · intro ⟨k, hk, hn⟩
+    simp at hk
+    have hs : s.stepsSum ≤ w.length := by omega
+    obtain rfl : k = w.length - s.stepsSum := by omega
     exact (N_correct _ _ hwf s hs).mp ((hx _).mp hn)
 
 end Algorithm
