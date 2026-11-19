@@ -20,31 +20,31 @@ open DerLawsHelpers
 theorem der_empty (a : α) : der a ∅ ≐ ∅ := by
   intro w
   match w with
-  | .left _ _ _ _ => simp [der, empty]
-  | .middle _ mcount _ _ => cases mcount <;> simp [der, empty]
-  | .right _ mcount lacount _ => cases mcount <;> cases lacount <;> simp [der, empty]
+  | .left _ _ _ => simp [der, empty]
+  | .middle mcount _ _ => cases mcount <;> simp [der, empty]
+  | .right mcount lacount _ => cases mcount <;> cases lacount <;> simp [der, empty]
 
 theorem der_unit (a : α) : der a I ≐ ∅ := by
   intro w
   match w with
-  | .left _ _ _ _ => simp [der, empty]
-  | .middle _ mcount _ _ => cases mcount <;> simp [der, unit, empty]
-  | .right _ mcount lacount _ => cases mcount <;> cases lacount <;> simp [der, unit, empty]
+  | .left _ _ _ => simp [der, empty]
+  | .middle mcount _ _ => cases mcount <;> simp [der, unit, empty]
+  | .right mcount lacount _ => cases mcount <;> cases lacount <;> simp [der, unit, empty]
 
 theorem der_top (a : α): (der a T) ≐ (↑₂ T - ↑₃ T) := by
   intro w
   match w with
-  | .left _ _ _ _ => simp [complement, der, matchStep]
-  | .middle _ mcount _ _ => cases mcount <;> simp [complement, der, matchStep, laStep, top]
-  | .right _ mcount lacount _ => cases mcount <;> cases lacount <;> simp [complement, der, matchStep, laStep, top]
+  | .left _ _ _ => simp [complement, der, matchStep]
+  | .middle mcount _ _ => cases mcount <;> simp [complement, der, matchStep, laStep, top]
+  | .right mcount lacount _ => cases mcount <;> cases lacount <;> simp [complement, der, matchStep, laStep, top]
 
 
 theorem der_symb_match (a b: α) (h : a = b) : der b (#a) ≐ (↑₂ I - ↑₃ T) := by
   intro w
   match w with
-  | .left _ _ _ _ => simp [complement, der, matchStep, laStep]
-  | .middle _ mcount _ _ => cases mcount <;> simp [complement, der, matchStep, laStep, symb, unit, toList]
-  | .right _ mcount lacount _ =>
+  | .left _ _ _ => simp [complement, der, matchStep, laStep]
+  | .middle mcount _ _ => cases mcount <;> simp [complement, der, matchStep, laStep, symb, unit, toList]
+  | .right mcount lacount _ =>
     cases mcount with
     | zero => cases lacount <;> simp [complement, der, matchStep, laStep]
     | succ mcount => cases mcount <;> cases lacount <;> simp [complement, der, matchStep, laStep, symb, unit, h, top]
@@ -52,9 +52,9 @@ theorem der_symb_match (a b: α) (h : a = b) : der b (#a) ≐ (↑₂ I - ↑₃
 theorem der_symb_no_match (a b: α) (h : ¬ (a = b)) : der b (#a) ≐ ∅ := by
   intro w
   match w with
-  | .left _ _ _ _ => simp [der, empty]
-  | .middle _ mcount _ _ => cases mcount <;> simp [der, symb, empty, toList]
-  | .right _ mcount lacount _ =>
+  | .left _ _ _ => simp [der, empty]
+  | .middle mcount _ _ => cases mcount <;> simp [der, symb, empty, toList]
+  | .right mcount lacount _ =>
     cases mcount with
     | zero => cases lacount <;> simp [der, empty]
     | succ mcount => cases mcount <;> cases lacount <;> simp [der, symb, empty, h]
@@ -62,35 +62,35 @@ theorem der_symb_no_match (a b: α) (h : ¬ (a = b)) : der b (#a) ≐ ∅ := by
 theorem der_union (a : α) (k l : Lang α): der a (k ∪ l) ≐ (der a k) ∪ (der a l) := by
   intro w
   match w with
-  | .left _ _ _ _ => simp [der, union]
-  | .middle _ mcount _ _ => cases mcount <;> simp [der, union]
-  | .right _ mcount lacount _ => cases mcount <;> cases lacount <;> simp [der, union]
+  | .left _ _ _ => simp [der, union]
+  | .middle mcount _ _ => cases mcount <;> simp [der, union]
+  | .right mcount lacount _ => cases mcount <;> cases lacount <;> simp [der, union]
 
 theorem der_intersection (a : α) (k l : Lang α): der a (k ∩ l) ≐ (der a k) ∩ (der a l) := by
   intro w
   match w with
-  | .left _ _ _ _ => simp [der, intersection]
-  | .middle _ mcount _ _ => cases mcount <;> simp [der, intersection]
-  | .right _ mcount lacount _ => cases mcount <;> cases lacount <;> simp [der, intersection]
+  | .left _ _ _ => simp [der, intersection]
+  | .middle mcount _ _ => cases mcount <;> simp [der, intersection]
+  | .right mcount lacount _ => cases mcount <;> cases lacount <;> simp [der, intersection]
 
 theorem der_complement (a : α) (k l : Lang α): der a (k - l) ≐ ((der a k) - (der a l)) := by
   intro w
   match w with
-  | .left _ _ _ _ => simp [der, complement]
-  | .middle _ mcount _ _ => cases mcount <;> simp [der, complement]
-  | .right _ mcount lacount _ => cases mcount <;> cases lacount <;> simp [der, complement]
+  | .left _ _ _ => simp [der, complement]
+  | .middle mcount _ _ => cases mcount <;> simp [der, complement]
+  | .right mcount lacount _ => cases mcount <;> cases lacount <;> simp [der, complement]
 
 theorem der_concat (a : α) (k l : Lang α) :
   der a (concat k l) ≐  ((der a k) • (derLB a l)) ∪ ((derLA a k) • (der a l)) := by
   intro w
   match w with
-  | .left _ _ _ _ =>
+  | .left _ _ _ =>
     constructor
     . simp [der]
     . rintro (⟨_, _, hk, _, _, _, _, rfl, _⟩ | ⟨_, _, hk, _, _, _, _, rfl, _⟩)
       · simp [der] at hk
       · simp [derLA] at hk
-  | .middle lbc mcount main la =>
+  | .middle mcount main la =>
     constructor
     . cases mcount with
       | zero => simp [der]
@@ -100,11 +100,11 @@ theorem der_concat (a : α) (k l : Lang α) :
         · left; cases pref with
           | nil =>
             simp at hmain; subst suff
-            exact ⟨.right lbc mc.succ 0 (toList main ++ la), .middle (lbc + mc.succ) 0 main la, hk, hl, Or.inr ⟨mc.succ, 0, rfl, rfl, rfl⟩⟩
+            exact ⟨.right mc.succ 0 (toList main ++ la), .middle 0 main la, hk, hl, Or.inr ⟨mc.succ, 0, rfl, rfl, rfl⟩⟩
           | cons u us =>
             simp [toList] at hmain
-            exact ⟨.middle lbc mc.succ (u, us) (suff ++ la), .left (lbc + mc.succ) (u, us) suff la, hk, hl, Or.inl ⟨us, suff, hmain.2, by simp [hmain.1], by simp [hmain.1]⟩⟩
-        · exact Or.inr ⟨.right lbc mc₁ mc₂.succ (toList main ++ la), .middle (lbc + mc₁) mc₂.succ main la, hk, hl, Or.inr ⟨mc₁, mc₂.succ, by omega, rfl, rfl⟩⟩
+            exact ⟨.middle mc.succ (u, us) (suff ++ la), .left (u, us) suff la, hk, hl, Or.inl ⟨us, suff, hmain.2, by simp [hmain.1], by simp [hmain.1]⟩⟩
+        · exact Or.inr ⟨.right mc₁ mc₂.succ (toList main ++ la), .middle mc₂.succ main la, hk, hl, Or.inr ⟨mc₁, mc₂.succ, by omega, rfl, rfl⟩⟩
     . intro h
       cases mcount with
       | zero =>
@@ -120,7 +120,7 @@ theorem der_concat (a : α) (k l : Lang α) :
       | succ mc =>
         rcases h with ⟨w₁, w₂, hk, hl, h⟩ | ⟨w₁, w₂, hk, hl, h⟩
         · rcases h with ⟨pref, suff, hmain, rfl, rfl⟩ | ⟨mc₁, mc₂, hmcount, rfl, rfl⟩
-          · exact ⟨.middle lbc mc (a, main.1 :: pref) (suff ++ la), .left (lbc + mc) (a, main.1 :: pref) suff la, hk, hl,
+          · exact ⟨.middle mc (a, main.1 :: pref) (suff ++ la), .left (a, main.1 :: pref) suff la, hk, hl,
               Or.inl ⟨main.1 :: pref, suff, by simp [toList, hmain], rfl, rfl⟩⟩
           · cases mc₁ with
             | zero => simp [der] at hk
@@ -129,14 +129,14 @@ theorem der_concat (a : α) (k l : Lang α) :
               | succ mc₂ => simp [der] at hk
               | zero =>
                 obtain rfl : mc₁ = mc := by omega
-                exact ⟨.middle lbc mc₁ (a, []) (toList main ++ la), .left (lbc + mc₁) (a, []) (toList main) la, hk, hl, Or.inl ⟨[], toList main, rfl, rfl, rfl⟩⟩
+                exact ⟨.middle mc₁ (a, []) (toList main ++ la), .left (a, []) (toList main) la, hk, hl, Or.inl ⟨[], toList main, rfl, rfl, rfl⟩⟩
         · rcases h with ⟨_, _, _, rfl, _⟩ | ⟨mc₁, mc₂, hmcount, h₁, h₂⟩
           · simp [derLA] at hk
           · subst h₁ h₂
             cases mc₂ with
             | zero => simp [der] at hl
-            | succ mc₂ => exact ⟨.right lbc mc₁ mc₂ (a :: toList main ++ la), .middle (lbc + mc₁) mc₂ (a, toList main) la, hk, hl, Or.inr ⟨mc₁, mc₂, by omega, rfl, rfl⟩⟩
-  | .right lbc mcount lacount la =>
+            | succ mc₂ => exact ⟨.right mc₁ mc₂ (a :: toList main ++ la), .middle mc₂ (a, toList main) la, hk, hl, Or.inr ⟨mc₁, mc₂, by omega, rfl, rfl⟩⟩
+  | .right mcount lacount la =>
     cases lacount with
     | zero =>
       constructor
@@ -145,8 +145,8 @@ theorem der_concat (a : α) (k l : Lang α) :
         | succ mc =>
           rintro ⟨w₁, w₂, hk, hl, h⟩
           rcases h with ⟨pref, suff, hmain, rfl, rfl⟩ | ⟨mc₁, mc₂, hmcount, rfl, rfl⟩
-          · obtain ⟨rfl, rfl⟩ := List.append_eq_nil_iff.mp hmain.symm; exact Or.inl ⟨.right lbc mc.succ 0 la, .right (lbc + mc.succ) 0 0 la, hk, hl, mc.succ, 0, rfl, rfl, rfl⟩
-          · exact Or.inr ⟨.right lbc mc₁ mc₂.succ la, .right (lbc + mc₁) mc₂.succ 0 la, hk, hl, mc₁, mc₂.succ, by omega, rfl, rfl⟩
+          · obtain ⟨rfl, rfl⟩ := List.append_eq_nil_iff.mp hmain.symm; exact Or.inl ⟨.right mc.succ 0 la, .right 0 0 la, hk, hl, mc.succ, 0, rfl, rfl, rfl⟩
+          · exact Or.inr ⟨.right mc₁ mc₂.succ la, .right mc₂.succ 0 la, hk, hl, mc₁, mc₂.succ, by omega, rfl, rfl⟩
       . intro h
         cases mcount with
         | zero =>
@@ -164,10 +164,10 @@ theorem der_concat (a : α) (k l : Lang α) :
               | succ mc₂ => simp [der] at hk
               | zero =>
                 obtain rfl : mc₁ = mc := by omega
-                exact ⟨.middle lbc mc₁ (a, []) la, .left (lbc + mc₁) (a, []) [] la, hk, hl, Or.inl ⟨[], [], rfl, rfl, rfl⟩⟩
+                exact ⟨.middle mc₁ (a, []) la, .left (a, []) [] la, hk, hl, Or.inl ⟨[], [], rfl, rfl, rfl⟩⟩
           · cases mc₂ with
             | zero => simp [der] at hl
-            | succ mc₂ => exact ⟨.right lbc mc₁ mc₂ (a :: la), .middle (lbc + mc₁) mc₂ (a, []) la, hk, hl, Or.inr ⟨mc₁, mc₂, by omega, rfl, rfl⟩⟩
+            | succ mc₂ => exact ⟨.right mc₁ mc₂ (a :: la), .middle mc₂ (a, []) la, hk, hl, Or.inr ⟨mc₁, mc₂, by omega, rfl, rfl⟩⟩
     | succ m =>
       constructor
       . cases mcount <;> simp [der]
@@ -209,34 +209,34 @@ theorem der_star (a : α) (l base : Lang α) : der a (star l base) ≐ star (der
 theorem der_lb (a : α) (l : Lang α) : der a (◁ l) ≐ ∅  := by
   intro w
   match w with
-  | .left _ _ _ _ => simp [der, empty]
-  | .middle _ mcount _ _ => cases mcount <;> simp [der, lookbehind, empty]
-  | .right _ mcount lacount _ => cases mcount <;> cases lacount <;> simp [der, lookbehind, empty]
+  | .left _ _ _ => simp [der, empty]
+  | .middle mcount _ _ => cases mcount <;> simp [der, lookbehind, empty]
+  | .right mcount lacount _ => cases mcount <;> cases lacount <;> simp [der, lookbehind, empty]
 
 theorem der_la (a : α) (l : Lang α) : der a (▷ l) ≐ ∅  := by
   intro w
   match w with
-  | .left _ _ _ _ => simp [der, empty]
-  | .middle _ mcount _ _ => cases mcount <;> simp [der, empty, lookahead]
-  | .right _ mcount lacount _ => cases mcount <;> cases lacount <;> simp [der, lookahead, empty]
+  | .left _ _ _ => simp [der, empty]
+  | .middle mcount _ _ => cases mcount <;> simp [der, empty, lookahead]
+  | .right mcount lacount _ => cases mcount <;> cases lacount <;> simp [der, lookahead, empty]
 
-theorem der_lbStep (a : α) (l : Lang α) : der a (↑₁ l) ≐ ↑₁ (der a l) := by
+/- theorem der_lbStep (a : α) (l : Lang α) : der a (↑₁ l) ≐ ↑₁ (der a l) := by
   intro w
   match w with
   | .left lbc _ _ _ => cases lbc <;> simp [der, lbStep]
   | .middle lbc mcount _ _ => cases lbc <;> rcases mcount with _ | _ | _ <;> simp [der, lbStep]
-  | .right lbc mcount lacount _ => cases lbc <;> rcases mcount with _ | _ | _ <;> cases lacount <;> simp [der, lbStep]
+  | .right lbc mcount lacount _ => cases lbc <;> rcases mcount with _ | _ | _ <;> cases lacount <;> simp [der, lbStep] -/
 
 theorem der_matchStep (a : α) (l : Lang α) : der a (↑₂ l) ≐ ↑₂ (der a l) := by
   intro w
   match w with
-  | .left _ _ _ _ => simp [der, matchStep]
-  | .middle _ mcount _ _ => rcases mcount with _ | _ | _ <;> simp [der, matchStep]
-  | .right _ mcount lacount _ => rcases mcount with _ | _ | _ <;> cases lacount <;> simp [der, matchStep]
+  | .left _ _ _ => simp [der, matchStep]
+  | .middle mcount _ _ => rcases mcount with _ | _ | _ <;> simp [der, matchStep]
+  | .right mcount lacount _ => rcases mcount with _ | _ | _ <;> cases lacount <;> simp [der, matchStep]
 
 theorem der_laStep (a : α) (l : Lang α) : der a (↑₃ l) ≐ ∅ := by
   intro w
   match w with
-  | .left _ _ _ _ => simp [der, empty]
-  | .middle _ mcount _ _ => cases mcount <;> simp [der, laStep, empty]
-  | .right _ mcount lacount _ => cases mcount <;> cases lacount <;> simp [der, laStep, empty]
+  | .left _ _ _ => simp [der, empty]
+  | .middle mcount _ _ => cases mcount <;> simp [der, laStep, empty]
+  | .right mcount lacount _ => cases mcount <;> cases lacount <;> simp [der, laStep, empty]

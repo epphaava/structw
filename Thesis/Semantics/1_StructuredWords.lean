@@ -9,23 +9,37 @@ def toList (l : NEList α) := l.fst :: l.snd
 -- Definition 3.1.1 (Structured words).
 
 inductive Word (α : Type) where
-  | left  (lbCount : Nat) (lb : NEList α) (main : List α) (la : List α)
-  | middle (lbCount : Nat) (matchCount : Nat) (main : NEList α) (la : List α)
-  | right (lbCount : Nat) (matchCount : Nat) (laCount : Nat) (la : List α)
+  | left  (lb : NEList α) (main : List α) (la : List α)
+  | middle (matchCount : Nat) (main : NEList α) (la : List α)
+  | right (matchCount : Nat) (laCount : Nat) (la : List α)
 
 def Word.word_to_list {α} : Word α → List α
-  | .left _ lb main la => toList lb ++ main ++ la
-  | .middle _ _ main la => toList main ++ la
-  | .right _ _ _ la => la
+  | .left lb main la => toList lb ++ main ++ la
+  | .middle _ main la => toList main ++ la
+  | .right _ _ la => la
 
+def Word.word_steps : Word α → Nat
+  | .left _ _ _ => 0
+  | .middle mc _ _ => mc
+  | .right mc lac _ => mc + lac
 
-def mk_mcount_word : Nat → Nat → List α → List α → Word α
-  | m, n, [], la => .right m n 0 la
-  | m, n, x :: xs, la => .middle m n (x, xs) la
+-- The (match, lookahead) counts a word ends with once all of its letters are read.
+def Word.final_counts : Word α → Nat × Nat
+  | .left _ main la => (main.length, la.length)
+  | .middle mc main la => (mc + (toList main).length, la.length)
+  | .right mc lac la => (mc, lac + la.length)
 
-def mk_word : Nat → List α → List α → List α → Word α
-  | lbcount, [], main, la => mk_mcount_word lbcount 0 main la
-  | lbcount, x :: xs, main, la => .left lbcount (x, xs) main la
+-- `u` splits the plain word `w` and ends with counts `mc`, `lac`.
+def is_split (w : List α) (mc lac : Nat) (u : Word α) : Prop :=
+  u.word_to_list = w ∧ u.final_counts = (mc, lac)
+
+def mk_mcount_word : Nat → List α → List α → Word α
+  | n, [], la => .right n 0 la
+  | n, x :: xs, la => .middle n (x, xs) la
+
+def mk_word : List α → List α → List α → Word α
+  | [], main, la => mk_mcount_word 0 main la
+  | x :: xs, main, la => .left (x, xs) main la
 
 export Word (word_to_list)
 
@@ -34,6 +48,9 @@ export Word (word_to_list)
 
 def Lang (α : Type) : Type := Word α → Prop
 
+def kLang (α : Type) (k : Nat) : Type := { l : Lang α // ∀ w, l w → w.word_steps ≤ k }
+
+instance : CoeFun (kLang α k) (fun _ => Word α → Prop) := ⟨Subtype.val⟩
 
 -- Subset and equality relations on Lang -------------------
 

@@ -18,30 +18,30 @@ open derLALaws
 theorem der_mono (a : α) {k l : Lang α} (h : ∀ w, k w → l w) : ∀ w, der a k w → der a l w := by
   intro w hw
   match w with
-  | .left _ _ _ _ => simp [der] at hw
-  | .middle _ mcount _ _ => cases mcount <;> first | exact h _ hw | simp [der] at hw
-  | .right _ mcount lacount _ => cases mcount <;> cases lacount <;> first | exact h _ hw | simp [der] at hw
+  | .left _ _ _ => simp [der] at hw
+  | .middle mcount _ _ => cases mcount <;> first | exact h _ hw | simp [der] at hw
+  | .right mcount lacount _ => cases mcount <;> cases lacount <;> first | exact h _ hw | simp [der] at hw
 
 theorem derLA_mono (a : α) {k l : Lang α} (h : ∀ w, k w → l w) : ∀ w, derLA a k w → derLA a l w := by
   intro w hw
   match w with
-  | .left _ _ _ _ => simp [derLA] at hw
-  | .middle _ _ _ _ => simp [derLA] at hw
-  | .right _ _ lacount _ => cases lacount <;> first | exact h _ hw | simp [derLA] at hw
+  | .left _ _ _ => simp [derLA] at hw
+  | .middle _ _ _ => simp [derLA] at hw
+  | .right _ lacount _ => cases lacount <;> first | exact h _ hw | simp [derLA] at hw
 
 theorem derLB_mono (a : α) {k l : Lang α} (h : ∀ w, k w → l w) : ∀ w, derLB a k w → derLB a l w := by
   intro w hw
   match w with
-  | .left lbc _ _ _ => cases lbc <;> first | exact h _ hw | simp [derLB] at hw
-  | .middle lbc mcount _ _ => cases lbc <;> cases mcount <;> first | exact h _ hw | simp [derLB] at hw
-  | .right lbc mcount lacount _ => cases lbc <;> cases mcount <;> cases lacount <;> first | exact h _ hw | simp [derLB] at hw
+  | .left _ _ _ => first | exact h _ hw | simp [derLB] at hw
+  | .middle mcount _ _ => cases mcount <;> first | exact h _ hw | simp [derLB] at hw
+  | .right mcount lacount _ => cases mcount <;> cases lacount <;> first | exact h _ hw | simp [derLB] at hw
 
 theorem der_helper (a : α) (k : Lang α) : ∀ w, der a k w → ∃ w', k w' ∧ ∀ l : Lang α, l w' → der a l w := by
   intro w hw
   match w with
-  | .left _ _ _ _ => simp [der] at hw
-  | .middle _ mcount _ _ => cases mcount <;> first | exact ⟨_, hw, fun _ h => h⟩ | simp [der] at hw
-  | .right _ mcount lacount _ => cases mcount <;> cases lacount <;> first | exact ⟨_, hw, fun _ h => h⟩ | simp [der] at hw
+  | .left _ _ _ => simp [der] at hw
+  | .middle mcount _ _ => cases mcount <;> first | exact ⟨_, hw, fun _ h => h⟩ | simp [der] at hw
+  | .right mcount lacount _ => cases mcount <;> cases lacount <;> first | exact ⟨_, hw, fun _ h => h⟩ | simp [der] at hw
 
 theorem concat_mono {k k' l l' : Lang α} (hk : ∀ v, k v → k' v) (hl : ∀ v, l v → l' v) : ∀ w, (k • l) w → (k' • l') w := by
   intro _ ⟨x, y, hx, hy, hxy⟩; exact ⟨x, y, hk x hx, hl y hy, hxy⟩
