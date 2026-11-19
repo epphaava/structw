@@ -7,49 +7,80 @@ namespace NullabilityLaws
 open StructuredWords
 open Operators
 
-theorem nullable_empty : ¬ nullable (∅ : Lang α)  lbc mc lac := by simp [nullable, empty]
+theorem nullable_empty : ¬ nullable (⟨∅, h⟩ : kLang α k) mc lac := by simp [nullable, empty]
 
-theorem nullable_unit : nullable (I : Lang α) lbc mc lac ↔ mc = 0 := by simp [nullable, unit];
+theorem nullable_unit : nullable (⟨I, h⟩ : kLang α k) mc lac ↔ mc = 0 := by simp [nullable, unit];
 
-theorem nullable_top : nullable (T : Lang α) lbc mc lac := by simp [nullable, top]
+theorem nullable_top : nullable (⟨T, h⟩ : kLang α k) mc lac := by simp [nullable, top]
 
-theorem nullable_symb (a : α) : ¬ nullable (#a : Lang α) lbc mc lac := by simp [nullable, symb]
+theorem nullable_symb a h : ¬ nullable (⟨#a, h⟩ : kLang α k) mc lac := by simp [nullable, symb]
 
-theorem nullable_union : nullable (k ∪ l) lbc mc lac ↔ (nullable k lbc mc lac) ∨ (nullable l lbc mc lac) := by simp [nullable, union]
+theorem nullable_union: nullable (⟨k ∪ l, fun w hw => hw.elim (h₁ w) (h₂ w)⟩ : kLang α n) mc lac ↔ nullable (⟨k, h₁⟩) mc lac ∨ nullable (⟨l, h₂⟩) mc lac := by
+  simp [nullable, union]
 
-theorem nullable_intersection : nullable (k ∩ l) lbc mc lac ↔ nullable k lbc mc lac ∧ nullable l lbc mc lac := by simp [nullable, intersection]
+theorem nullable_intersection : nullable (⟨k ∩ l, fun w hw => h₁ w hw.1⟩) mc lac ↔ nullable (⟨k, h₁⟩) mc lac ∧ nullable (⟨l, h₂⟩) mc lac := by
+  simp [nullable, intersection]
 
-theorem nullable_diff : nullable (k - l) lbc mc lac ↔ nullable k lbc mc lac ∧ ¬ nullable l lbc mc lac := by simp [nullable, complement]
+theorem nullable_diff :
+    nullable (⟨k - l, fun w hw => h₁ w hw.1⟩) mc lac ↔ nullable (⟨k, h₁⟩) mc lac ∧ ¬ nullable (⟨l, h₂⟩) mc lac := by
+  simp [nullable, complement]
 
-theorem nullable_concat : nullable (k • l) lbc mc lac ↔ (∃ mc₁ mc₂, mc = mc₁ + mc₂ ∧ nullable k lbc mc₁ (mc₂ + lac) ∧ nullable l (lbc + mc₁) mc₂ lac) := by
+theorem nullable_concat :
+    nullable (⟨k • l, fun w hw => by
+        obtain ⟨u, v, hu, _, hwc⟩ := hw
+        have hb := h₁ u hu
+        cases w with
+        | left => simp [Word.word_steps]
+        | middle mc main la =>
+          rcases hwc with ⟨_, _, _, rfl, rfl⟩ | ⟨mc₁, mc₂, hmc, rfl, rfl⟩
+          · exact hb
+          · simp [Word.word_steps] at hb ⊢; omega
+        | right mc lac la =>
+          obtain ⟨mc₁, mc₂, hmc, rfl, rfl⟩ := hwc
+          simp [Word.word_steps] at hb ⊢; omega⟩ : kLang α n) mc lac ↔
+      (∃ mc₁ mc₂, mc = mc₁ + mc₂ ∧ nullable (⟨k, h₁⟩ : kLang α n) mc₁ (mc₂ + lac) ∧ nullable (⟨l, h₂⟩ : kLang α n) mc₂ lac) := by
   constructor
   . rintro ⟨w₁, w₂, hk, hl, mc₁, mc₂, hn, rfl, rfl⟩; exact ⟨mc₁, mc₂, hn, hk, hl⟩
-  . intro ⟨mc₁, mc₂, hn, hk, hl⟩; exact ⟨.right lbc mc₁ (mc₂ + lac) [], .right (lbc + mc₁) mc₂ lac [], hk, hl, mc₁, mc₂, hn, rfl, rfl⟩
+  . intro ⟨mc₁, mc₂, hn, hk, hl⟩; exact ⟨.right mc₁ (mc₂ + lac) [], .right mc₂ lac [], hk, hl, mc₁, mc₂, hn, rfl, rfl⟩
 
-theorem nullable_star (l base : Lang α) : nullable (star l base) lbc mc lac ↔
-    nullable base lbc mc lac ∨ ∃ mc₁ mc₂, mc = mc₁ + mc₂ ∧ nullable l lbc mc₁ (mc₂ + lac) ∧ nullable (star l base) (lbc + mc₁) mc₂ lac := by
+theorem nullable_star : nullable (⟨star l base, h⟩) mc lac ↔
+    nullable (⟨base, h₂⟩) mc lac ∨ ∃ mc₁ mc₂, mc = mc₁ + mc₂ ∧ nullable (⟨l, h₁⟩) mc₁ (mc₂ + lac) ∧ nullable (⟨star l base, h⟩) mc₂ lac := by
   constructor
-  . intro h; unfold star at h
-    cases h with
+  . intro hs; unfold nullable star at hs
+    cases hs with
     | inUnit _ hbase => exact .inl hbase
     | inConcat w₁ w₂ _ hl hs hwc => obtain ⟨mc₁, mc₂, hn, rfl, rfl⟩ := hwc; exact .inr ⟨mc₁, mc₂, hn, hl, hs⟩
   . rintro (hbase | ⟨mc₁, mc₂, hn, hl, hs⟩)
     . exact .inUnit _ hbase
     . exact .inConcat _ _ _ hl hs ⟨mc₁, mc₂, hn, rfl, rfl⟩
 
-theorem nullable_lookbehind (l : Lang α) : nullable (◁ l) lbc mc lac ↔ mc = 0 ∧ l (.right 0 lbc lac []) := by cases mc <;> simp [nullable, lookbehind]
+theorem nullable_lookbehind :
+    nullable (⟨◁ l, h⟩ : kLang α n) mc lac ↔ mc = 0 ∧ ∃ lbc ≤ n, nullable (⟨l, h₁⟩ : kLang α n) lbc lac := by
+  cases mc with
+  | succ => simp [nullable, lookbehind]
+  | zero =>
+    simp only [nullable, lookbehind, true_and]
+    constructor
+    · rintro ⟨lbc, hl⟩
+      have hb := h₁ _ hl
+      simp only [Word.word_steps] at hb
+      exact ⟨lbc, by omega, hl⟩
+    · rintro ⟨lbc, _, hl⟩; exact ⟨lbc, hl⟩
 
-theorem nullable_lookahead (l : Lang α) : nullable (▷ l) lbc mc lac ↔ mc = 0 ∧ l (.right lbc lac 0 []) := by cases mc <;> simp [nullable, lookahead]
+theorem nullable_lookahead : nullable (⟨▷ l, h⟩) mc lac ↔ mc = 0 ∧ nullable (⟨l, h₁⟩) lac 0 := by
+  cases mc <;> simp [nullable, lookahead]
 
-theorem nullable_lbStep : nullable (↑₁l) (.succ lbc) mc lac ↔ nullable l lbc mc lac := by simp [nullable, lbStep]
+/- theorem nullable_lbStep : nullable (↑₁l) (.succ lbc) mc lac ↔ nullable l lbc mc lac := by simp [nullable, lbStep] -/
 
-theorem nullable_matchStep : nullable (↑₂l) lbc (.succ mc) lac ↔ nullable l lbc mc lac := by simp only [nullable, matchStep]
+theorem nullable_matchStep : nullable (⟨↑₂l, h⟩) (.succ mc) lac ↔ nullable (⟨l, h₁⟩) mc lac := by
+  simp only [nullable, matchStep]
 
-theorem nullable_LAStep : nullable (↑₃l) lbc mc (.succ lac) ↔ nullable l lbc mc lac := by simp only [nullable, laStep]
+theorem nullable_LAStep : nullable (⟨↑₃l, h⟩) mc (.succ lac) ↔ nullable (⟨l, h₁⟩) mc lac := by
+  simp only [nullable, laStep]
 
 
 
-
+/-
 
 theorem xnullable_empty : ¬ xnullable (∅ : Lang α) := by simp [xnullable, nullable, empty]
 
@@ -138,3 +169,4 @@ theorem xnullable_LAStep : xnullable (↑₃l) ↔ xnullable l  := by
     | zero => simp [nullable, laStep] at h
     | succ lac => exact ⟨lbc, mc, lac, h⟩
   . intro ⟨lbc, mc, lac, h⟩; exact ⟨lbc, mc, lac.succ, h⟩
+ -/
