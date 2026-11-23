@@ -1,11 +1,12 @@
-import Thesis.Semantics.«1_StructuredWords»
-import Thesis.Semantics.«2_Operators»
-import Thesis.Semantics.«3_Derivatives»
+import Thesis.Semantics.Lang.«1_StructuredWords»
+import Thesis.Semantics.Lang.«2_Operators»
+import Thesis.Semantics.Lang.«3_Derivatives»
 
 namespace derLBLawsHelpers
 
 open StructuredWords
 open Operators
+open Derivatives
 
 theorem exists_der_middle (a : α) (l : Lang α) (main : NEList α) (la : List α) :
     (∃ n, der a l (.middle n main la)) ↔ ∃ n, l (.middle n (a, toList main) la) := by
@@ -123,3 +124,5 @@ theorem derLB_star_right (a : α) (l base : Lang α) : ∀ (la : List α),
       obtain ⟨rfl, rfl⟩ : mc₁ = 0 ∧ mc₂ = 0 := by omega
       subst h₁
       exact star_help.inConcat (.left (a, []) [] la) (.left (a, []) [] la) _ hl (ih la h₂) ⟨[], [], rfl, rfl, rfl⟩
+
+end derLBLawsHelpers

@@ -9,8 +9,8 @@ def toList (l : NEList α) := l.fst :: l.snd
 -- Definition 3.1.1 (Structured words).
 
 inductive Word (α : Type) where
-  | left  (lb : NEList α) (main : List α) (la : List α)
-  | middle (matchCount : Nat) (main : NEList α) (la : List α)
+  | left (lb : NEList α) (main : List α) (la : List α)
+  | middle(matchCount : Nat) (main : NEList α) (la : List α)
   | right (matchCount : Nat) (laCount : Nat) (la : List α)
 
 def Word.word_to_list {α} : Word α → List α
@@ -41,16 +41,13 @@ def mk_word : List α → List α → List α → Word α
   | [], main, la => mk_mcount_word 0 main la
   | x :: xs, main, la => .left (x, xs) main la
 
-export Word (word_to_list)
+export Word (word_to_list word_steps)
 
 
 -- Languages over structured words --------------------------
 
 def Lang (α : Type) : Type := Word α → Prop
 
-def kLang (α : Type) (k : Nat) : Type := { l : Lang α // ∀ w, l w → w.word_steps ≤ k }
-
-instance : CoeFun (kLang α k) (fun _ => Word α → Prop) := ⟨Subtype.val⟩
 
 -- Subset and equality relations on Lang -------------------
 

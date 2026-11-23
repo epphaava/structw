@@ -1,4 +1,4 @@
-import Thesis.Semantics.«1_StructuredWords»
+import Thesis.Semantics.Lang.«1_StructuredWords»
 
 namespace Operators
 
@@ -91,14 +91,6 @@ def lookahead (l : Lang α) : Lang α := λ w =>
     | z :: zs => l (.middle lac (z, zs) [])
   | _ => False
 prefix:max "▷" => lookahead
-
-/- def lbStep (l : Lang α) : Lang α := λ w =>
-  match w with
-  | .left (.succ lbc) lb main la => l (.left lbc lb main la)
-  | .middle (.succ lbc) mc main la => l (.middle lbc mc main la)
-  | .right (.succ lbc) mc lac la => l (.right lbc mc lac la)
-  | _ => False
-prefix:max "↑₁" => lbStep -/
 
 def matchStep (l : Lang α) : Lang α := λ w =>
   match w with

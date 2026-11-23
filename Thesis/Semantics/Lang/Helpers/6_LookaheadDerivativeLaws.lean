@@ -1,12 +1,12 @@
-import Thesis.Semantics.«1_StructuredWords»
-import Thesis.Semantics.«2_Operators»
-import Thesis.Semantics.«3_Derivatives»
+import Thesis.Semantics.Lang.«1_StructuredWords»
+import Thesis.Semantics.Lang.«2_Operators»
+import Thesis.Semantics.Lang.«3_Derivatives»
 
 namespace derLALawsHelpers
 
 open StructuredWords
 open Operators
-
+open Derivatives
 
 
 theorem derLA_star_right (a : α) (l base : Lang α) : ∀ (mc lac : Nat) (la : List α),
@@ -31,3 +31,5 @@ theorem derLA_star_right (a : α) (l base : Lang α) : ∀ (mc lac : Nat) (la : 
       intro mc lac la rfl; obtain ⟨mc₁, mc₂, rfl, rfl, rfl⟩ := hwc;
       exact star_help.inConcat (.right mc₁ (mc₂ + lac) (a :: la)) (.right mc₂ lac (a :: la)) _
         hl (ih mc₂ lac la rfl) ⟨mc₁, mc₂, rfl, rfl, rfl⟩
+
+end derLALawsHelpers

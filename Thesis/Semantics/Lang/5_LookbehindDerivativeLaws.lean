@@ -1,12 +1,13 @@
-import Thesis.Semantics.«1_StructuredWords»
-import Thesis.Semantics.«2_Operators»
-import Thesis.Semantics.«3_Derivatives»
-import Thesis.Semantics.Helpers.«5_LookbehindDerivativeLaws»
+import Thesis.Semantics.Lang.«1_StructuredWords»
+import Thesis.Semantics.Lang.«2_Operators»
+import Thesis.Semantics.Lang.«3_Derivatives»
+import Thesis.Semantics.Lang.Helpers.«5_LookbehindDerivativeLaws»
 
 namespace derLBLaws
 
 open StructuredWords
 open Operators
+open Derivatives
 open derLBLawsHelpers
 
 -- Proposition 3.4.1 (Derivative laws for structured languages).
@@ -197,3 +198,5 @@ theorem derLB_LAStep (a : α) (l : Lang α) : derLB a (↑₃ l) ≐ ∅  := by
   | .left _ _ _   => simp [derLB, laStep, empty]
   | .middle mcount _ _  => cases mcount <;> simp [derLB, laStep, empty]
   | .right mcount lacount _ => cases mcount <;> cases lacount <;> simp [derLB, laStep, empty]
+
+end derLBLaws

@@ -1,6 +1,6 @@
-import Thesis.Semantics.«1_StructuredWords»
-import Thesis.Semantics.«2_Operators»
-import Thesis.Semantics.«3_Derivatives»
+import Thesis.Semantics.kLang.«1_StructuredWords»
+import Thesis.Semantics.kLang.«2_Operators»
+import Thesis.Semantics.kLang.«3_Derivatives»
 
 -- Results not numbered in the thesis: extra laws and experiments.
 

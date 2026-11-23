@@ -1,14 +1,15 @@
 import Thesis.Syntax.«1_Expressions»
 import Thesis.Syntax.«2_Derivatives»
-import Thesis.Syntax.Helpers.«4_DerivativeCorrectness»
-import Thesis.Syntax.«5_Nullability»
+import Thesis.Syntax.Helpers.«3_DerivativeCorrectness»
+import Thesis.Syntax.«4_Nullability»
 import Thesis.Syntax.«3_DerivativeCorrectness»
 import Thesis.Algorithm
 
 open Algorithm
 open SRegex
 open StructuredWords
-open Operators
+open kStructuredWords
+open kOperators
 open NullabilityLaws
 open DerCorrectHelpers
 open SRegexDerivatives
@@ -23,19 +24,21 @@ variable {α : Type} [DecidableEq α]
 
 -- Example 3.2.1
 
-def L_3_2_1 : Lang Char := λ w =>
-    w = .left 0 ('a', []) ['b']  ['c', 'd'] ∨
-    w = .middle 2 2 ('a', ['b']) ['c']
+def L_3_2_1 : kLang Char 2 :=
+  ⟨λ w =>
+    w = .left ('a', []) ['b'] ['c', 'd'] ∨
+    w = .middle 2 ('a', ['b']) ['c'],
+   by rintro w (rfl | rfl) <;> simp [word_steps]⟩
 
-example : der 'a' L_3_2_1 (.middle 2 3 ('b', []) ['c']) := by
-  simp [der, L_3_2_1]; trivial
+example : der 'a' L_3_2_1 (.middle 3 ('b', []) ['c']) := by
+  simp [der, L_3_2_1, toList]
 
 example (w : Word Char) : ¬ der 'b' L_3_2_1 w := by
   intro h
-  rcases w with ⟨⟩ | ⟨lbc, _ | mc, main, la⟩ | ⟨lbc, _ | mc, _ | lac, la⟩ <;>
+  rcases w with ⟨⟩ | ⟨_ | mc, main, la⟩ | ⟨_ | mc, _ | lac, la⟩ <;>
     simp [der, L_3_2_1, NEList, Prod.mk.injEq] at h
 
-example : derLB 'a' L_3_2_1 ((.middle 1 0 ('b', [])  ['c', 'd'] )) := by
+example : derLB 'a' L_3_2_1 (.middle 0 ('b', []) ['c', 'd']) := by
   simp [derLB, L_3_2_1, toList]
 
 
@@ -48,25 +51,26 @@ def r_4_1_1_exact : SRegex Char :=
 def r_4_1_1_prefix : SRegex Char :=
   regexToSRegex (#'a' • ▷(#'b' • T) : Regex Char)
 
-example : sem r_4_1_1_exact 0 (.middle 0 0 ('a', []) ['b']) := by
-  simp [r_4_1_1_exact, regexToSRegex, sem, sem.atom, sem.steps, Steps.zeroSteps, concat, wc, lookahead, union, empty]
-  exact ⟨.middle 0 0 ('a', []) ['b'], by simp, .left 0 ('a', []) [] ['b'], by simp, by simp⟩
+example : sem r_4_1_1_exact 0 (.middle 0 ('a', []) ['b']) := by
+  simp [r_4_1_1_exact, regexToSRegex, sem, sem.atom, sem.steps, Steps.zeroSteps, kOperators.concat, Operators.concat,
+    Operators.wc, kOperators.lookahead, Operators.lookahead, word_steps]
+  exact ⟨.middle 0 ('a', []) ['b'], by simp, .left ('a', []) [] ['b'], by simp, by simp⟩
 
-example : sem r_4_1_1_prefix 0 (.middle 0 0 ('a', []) ['b', 'c']) := by
-  simp [r_4_1_1_prefix, regexToSRegex, sem, sem.atom, sem.steps, Steps.zeroSteps,
-    concat, wc, lookahead, union, empty, top]
-  refine ⟨.middle 0 0 ('a', []) ['b', 'c'], ?_, .left 0 ('a', []) [] ['b', 'c'], ?_, ?_⟩
-  · simp [symb]
-  · exact ⟨.left 0 ('a', []) ['b'] ['c'], by simp, .left 0 ('a', ['b']) ['c'] [], by simp,
+example : sem r_4_1_1_prefix 0 (.middle 0 ('a', []) ['b', 'c']) := by
+  simp [r_4_1_1_prefix, regexToSRegex, sem, sem.atom, sem.steps, Steps.zeroSteps, kOperators.concat, Operators.concat,
+    Operators.wc, kOperators.lookahead, Operators.lookahead, Operators.top, word_steps]
+  refine ⟨.middle 0 ('a', []) ['b', 'c'], ?_, .left ('a', []) [] ['b', 'c'], ?_, ?_⟩
+  · simp [Operators.symb]
+  · exact ⟨.left ('a', []) ['b'] ['c'], by simp, .left ('a', ['b']) ['c'] [], by simp,
       ['b'], ['c'], by simp⟩
   · simp
 
-example : ¬ sem r_4_1_1_exact 0 (.middle 0 0 ('a', []) ['b', 'c']) := by
-  simp [r_4_1_1_exact, regexToSRegex, sem, sem.atom, sem.steps, Steps.zeroSteps,
-    concat, wc, lookahead, union, empty]
-  intro x hx y hy
-  constructor <;> rintro rfl rfl <;> simp at hx hy
-
+example : ¬ sem r_4_1_1_exact 0 (.middle 0 ('a', []) ['b', 'c']) := by
+  simp [r_4_1_1_exact, regexToSRegex, sem, sem.atom, sem.steps, Steps.zeroSteps, kOperators.concat, Operators.concat,
+    Operators.wc, kOperators.lookahead, Operators.lookahead, word_steps]
+  intro x _ hx y hy
+  constructor <;> rintro rfl rfl <;> simp at hy
+ 
 
 -- Example 4.2.1
 
@@ -74,19 +78,16 @@ def r_4_2_1 : Regex Char := #'a' • ▷#'b'
 
 theorem D_4_2_1 : D 'a' (regexToSRegex r_4_2_1) =
     SRegex.plus
-      (SRegex.mult
-        (SRegex.complement (I [⟨1, 0⟩]) (T [⟨0, 1⟩]))
-        (▷(SRegex.complement (#'b' [⟨0, 0⟩]) (SRegex.plus (#'b' [⟨1, 0⟩]) (#'b' [⟨0, 1⟩])))))
+      (SRegex.mult (I [⟨1, 0⟩]) (▷(#'b' [⟨0, 0⟩])))
       (SRegex.mult ∅ ∅) := by
-  simp [r_4_2_1, regexToSRegex, D, DLB, DLA, filterD, filterDLB, Steps.mStep, Steps.laStep,
-    Steps.mStepHelp, Steps.laStepHelp, Steps.zeroSteps]
+  simp [r_4_2_1, regexToSRegex, D, DLB, DLA, filterD, filterDLB, Steps.mStep, Steps.mStepHelp, Steps.zeroSteps]
 
 example : DLA 'a' (regexToSRegex r_4_2_1) = ∅ • DLA 'a' (regexToSRegex ▷ #'b') := by
   simp [r_4_2_1, regexToSRegex, DLA]
 
-example (n : Nat) : sem (DLA 'a' (regexToSRegex r_4_2_1)) n ≐ ∅ := by
+example (n : Nat) : sem (DLA 'a' (regexToSRegex r_4_2_1)) n ≐ (∅ : kLang Char n) := by
   intro w
-  simp [r_4_2_1, regexToSRegex, DLA, sem, concat, empty]
+  simp [r_4_2_1, regexToSRegex, DLA, sem, kOperators.concat, Operators.concat, kOperators.empty, Operators.empty]
 
 -- Example 5.3
 #eval findAllMatches (α := Char) ((Regex.star (#'a') I • ▷(Regex.star (#'a') I) : Regex Char)) ['a']

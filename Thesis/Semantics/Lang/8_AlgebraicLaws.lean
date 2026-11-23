@@ -1,5 +1,5 @@
-import Thesis.Semantics.«1_StructuredWords»
-import Thesis.Semantics.«2_Operators»
+import Thesis.Semantics.Lang.«1_StructuredWords»
+import Thesis.Semantics.Lang.«2_Operators»
 
 namespace AlgebraicLaws
 
@@ -9,42 +9,42 @@ open Operators
 -- Proposition 3.5.1 (Basic algebraic laws).
 
 -- Equation (3.1)
-theorem union_assoc (K L M : Lang α) : K ∪ (L ∪ M) ≐ (K ∪ L) ∪ M := by intro w; simp [union, or_assoc]
+theorem union_assoc (k l m : Lang α) : k ∪ (l ∪ m) ≐ (k ∪ l) ∪ m := by intro w; simp [union, or_assoc]
 
 -- Equation (3.2)
-theorem union_comm (K L : Lang α) : K ∪ L ≐ L ∪ K := by intro w; simp [union, or_comm]
+theorem union_comm (k l : Lang α) : k ∪ l ≐ l ∪ k := by intro w; simp [union, or_comm]
 
 -- Equation (3.3)
-theorem union_idempotent (L : Lang α) : L ∪ L ≐ L := by intro w; simp [union]
+theorem union_idempotent (l : Lang α) : l ∪ l ≐ l := by intro w; simp [union]
 
 -- Equation (3.4)
-theorem union_identity (L : Lang α) : L ∪ ∅ ≐ L := by intro w; simp [empty, union]
+theorem union_identity (l : Lang α) : l ∪ ∅ ≐ l := by intro w; simp [empty, union]
 
 -- Equation (3.5)
-theorem intersection_assoc (K L M : Lang α) : K ∩ (L ∩ M) ≐ (K ∩ L) ∩ M := by
+theorem intersection_assoc (k l m : Lang α) : k ∩ (l ∩ m) ≐ (k ∩ l) ∩ m := by
   intro w; simp [intersection, and_assoc]
 
 -- Equation (3.6)
-theorem intersection_comm (K L : Lang α) : K ∩ L ≐ L ∩ K := by
+theorem intersection_comm (k l : Lang α) : k ∩ l ≐ l ∩ k := by
   intro w; simp [intersection, and_comm]
 
 -- Equation (3.7)
-theorem intersection_idempotent (L : Lang α) : L ∩ L ≐ L := by intro w; simp [intersection]
+theorem intersection_idempotent (l : Lang α) : l ∩ l ≐ l := by intro w; simp [intersection]
 
 -- Equation (3.8)
-theorem intersection_top (L : Lang α) : T ∩ L ≐ L := by intro w; simp [top, intersection]
+theorem intersection_top (l : Lang α) : T ∩ l ≐ l := by intro w; simp [top, intersection]
 
 -- Equation (3.9)
-theorem complement_empty (L : Lang α) : (L - ∅) ≐ L := by intro w; simp [empty, complement]
+theorem complement_empty (l : Lang α) : (l - ∅) ≐ l := by intro w; simp [empty, complement]
 
 -- Equation (3.10)
-theorem complement_self (L : Lang α) : (L - L) ≐ ∅ := by intro w; simp [complement, empty]
+theorem complement_self (l : Lang α) : (l - l) ≐ ∅ := by intro w; simp [complement, empty]
 
 -- Equation (3.11)
-theorem complement_top (L : Lang α) : (L - T) ≐ ∅ := by intro w; simp [top, complement, empty]
+theorem complement_top (l : Lang α) : (l - T) ≐ ∅ := by intro w; simp [top, complement, empty]
 
 -- Equation (3.12)
-theorem concat_distrib_union_left (p q r : Lang α) : p • (q ∪ r) ≐ (p • q) ∪ (p • r) := by
+theorem concat_distrib_union_left (k l m : Lang α) : k • (l ∪ m) ≐ (k • l) ∪ (k • m) := by
   intro w
   match w with
   | .left lb main la =>
@@ -77,73 +77,73 @@ theorem concat_distrib_union_left (p q r : Lang α) : p • (q ∪ r) ≐ (p •
       | inr h => obtain ⟨x, y, hx, hy, hc⟩ := h; exact ⟨x, y, hx, Or.inr hy, hc⟩
   | .right mcount lacount la =>
     constructor
-    . intro ⟨w₁, w₂, hp, hqr, n₁, n₂, hn, hw₁, hw₂⟩
-      cases hqr with
-      | inl hq => left; exact ⟨w₁, w₂, hp, hq, n₁, n₂, hn, hw₁, hw₂⟩
-      | inr hr => right; exact ⟨w₁, w₂, hp, hr, n₁, n₂, hn, hw₁, hw₂⟩
+    . intro ⟨w₁, w₂, hk, hlm, n₁, n₂, hn, hw₁, hw₂⟩
+      cases hlm with
+      | inl hl => left; exact ⟨w₁, w₂, hk, hl, n₁, n₂, hn, hw₁, hw₂⟩
+      | inr hm => right; exact ⟨w₁, w₂, hk, hm, n₁, n₂, hn, hw₁, hw₂⟩
     . intro h
       cases h with
-      | inl h => obtain ⟨w₁, w₂, hp, hq, n₁, n₂, hn, hw₁, hw₂⟩ := h; refine ⟨w₁, w₂, hp, Or.inl hq, n₁, n₂, hn, hw₁, hw₂⟩
-      | inr h => obtain ⟨w₁, w₂, hp, hr, n₁, n₂, hn, hw₁, hw₂⟩ := h; refine ⟨w₁, w₂, hp, Or.inr hr, n₁, n₂, hn, hw₁, hw₂⟩
+      | inl h => obtain ⟨w₁, w₂, hk, hl, n₁, n₂, hn, hw₁, hw₂⟩ := h; refine ⟨w₁, w₂, hk, Or.inl hl, n₁, n₂, hn, hw₁, hw₂⟩
+      | inr h => obtain ⟨w₁, w₂, hk, hm, n₁, n₂, hn, hw₁, hw₂⟩ := h; refine ⟨w₁, w₂, hk, Or.inr hm, n₁, n₂, hn, hw₁, hw₂⟩
 
 
 -- Equation (3.13)
-theorem concat_distrib_union_right (p q r : Lang α) : (p ∪ q) • r ≐ (p • r) ∪ (q • r) := by
+theorem concat_distrib_union_right (k l m : Lang α) : (k ∪ l) • m ≐ (k • m) ∪ (l • m) := by
   intro w
   match w with
   | .left lb main la =>
     constructor
-    . intro ⟨w₁, w₂, hpq, hr, hc⟩
-      cases hpq with
-      | inl hp => left; refine ⟨w₁, w₂, hp, hr, hc⟩
-      | inr hq => right; exact ⟨w₁, w₂, hq, hr, hc⟩
+    . intro ⟨w₁, w₂, hkl, hm, hc⟩
+      cases hkl with
+      | inl hk => left; refine ⟨w₁, w₂, hk, hm, hc⟩
+      | inr hl => right; exact ⟨w₁, w₂, hl, hm, hc⟩
     . intro h
       cases h with
-      | inl h => obtain ⟨w₁, w₂, hp, hr, hc⟩ := h; exact ⟨w₁, w₂, Or.inl hp, hr, hc⟩
-      | inr h => obtain ⟨w₁, w₂, hq, hr, hc⟩ := h; exact ⟨w₁, w₂, Or.inr hq, hr, hc⟩
+      | inl h => obtain ⟨w₁, w₂, hk, hm, hc⟩ := h; exact ⟨w₁, w₂, Or.inl hk, hm, hc⟩
+      | inr h => obtain ⟨w₁, w₂, hl, hm, hc⟩ := h; exact ⟨w₁, w₂, Or.inr hl, hm, hc⟩
   | .middle mcount main la =>
     constructor
-    . intro ⟨w₁, w₂, hpq, hr, h⟩
-      cases hpq with
-      | inl hp =>
+    . intro ⟨w₁, w₂, hkl, hm, h⟩
+      cases hkl with
+      | inl hk =>
         cases h with
-        | inl h => obtain ⟨pref, suff, hmain, hw₁, hw₂⟩ := h; left; exact ⟨w₁, w₂, hp, hr, Or.inl ⟨pref, suff, hmain, hw₁, hw₂⟩⟩
-        | inr h => obtain ⟨mc₁, mc₂, hmcount, hw₁, hw₂⟩ := h; left; exact ⟨w₁, w₂, hp, hr, Or.inr ⟨mc₁, mc₂, hmcount, hw₁, hw₂⟩⟩
-      | inr hq =>
+        | inl h => obtain ⟨pref, suff, hmain, hw₁, hw₂⟩ := h; left; exact ⟨w₁, w₂, hk, hm, Or.inl ⟨pref, suff, hmain, hw₁, hw₂⟩⟩
+        | inr h => obtain ⟨mc₁, mc₂, hmcount, hw₁, hw₂⟩ := h; left; exact ⟨w₁, w₂, hk, hm, Or.inr ⟨mc₁, mc₂, hmcount, hw₁, hw₂⟩⟩
+      | inr hl =>
         cases h with
-        | inl h => right; obtain ⟨pref, suff, hmain, hw₁, hw₂⟩ := h; exact ⟨w₁, w₂, hq, hr, Or.inl ⟨pref, suff, hmain, hw₁, hw₂⟩⟩
-        | inr h => right; obtain ⟨mc₁, mc₂, hmcount, hw₁, hw₂⟩ := h; exact ⟨w₁, w₂, hq, hr, Or.inr ⟨mc₁, mc₂, hmcount, hw₁, hw₂⟩⟩
+        | inl h => right; obtain ⟨pref, suff, hmain, hw₁, hw₂⟩ := h; exact ⟨w₁, w₂, hl, hm, Or.inl ⟨pref, suff, hmain, hw₁, hw₂⟩⟩
+        | inr h => right; obtain ⟨mc₁, mc₂, hmcount, hw₁, hw₂⟩ := h; exact ⟨w₁, w₂, hl, hm, Or.inr ⟨mc₁, mc₂, hmcount, hw₁, hw₂⟩⟩
     . intro h
       cases h with
       | inl h =>
-        obtain ⟨x, y, hp, hr, h⟩ := h; cases h with
-        | inl h => obtain ⟨pref, suff, hmain, hx, hy⟩ := h; exact ⟨x, y, Or.inl hp, hr, Or.inl ⟨pref, suff, hmain, hx, hy⟩⟩
-        | inr h => obtain ⟨pref, suff, hmain, hx, hy⟩ := h; exact ⟨x, y, Or.inl hp, hr, Or.inr ⟨pref, suff, hmain, hx, hy⟩⟩
+        obtain ⟨x, y, hk, hm, h⟩ := h; cases h with
+        | inl h => obtain ⟨pref, suff, hmain, hx, hy⟩ := h; exact ⟨x, y, Or.inl hk, hm, Or.inl ⟨pref, suff, hmain, hx, hy⟩⟩
+        | inr h => obtain ⟨pref, suff, hmain, hx, hy⟩ := h; exact ⟨x, y, Or.inl hk, hm, Or.inr ⟨pref, suff, hmain, hx, hy⟩⟩
       | inr h =>
-        obtain ⟨x, y, hq, hr, h⟩ := h; cases h with
-        | inl h => obtain ⟨pref, suff, hmain, hx, hy⟩ := h; exact ⟨x, y, Or.inr hq, hr, Or.inl ⟨pref, suff, hmain, hx, hy⟩⟩
-        | inr h => obtain ⟨pref, suff, hmain, hx, hy⟩ := h; exact ⟨x, y, Or.inr hq, hr, Or.inr ⟨pref, suff, hmain, hx, hy⟩⟩
+        obtain ⟨x, y, hl, hm, h⟩ := h; cases h with
+        | inl h => obtain ⟨pref, suff, hmain, hx, hy⟩ := h; exact ⟨x, y, Or.inr hl, hm, Or.inl ⟨pref, suff, hmain, hx, hy⟩⟩
+        | inr h => obtain ⟨pref, suff, hmain, hx, hy⟩ := h; exact ⟨x, y, Or.inr hl, hm, Or.inr ⟨pref, suff, hmain, hx, hy⟩⟩
   | .right mcount lacount la =>
     constructor
-    . intro ⟨w₁, w₂, hpq, hr, n₁, n₂, hn, hw₁, hw₂⟩
-      cases hpq with
-      | inl hp => left; exact ⟨w₁, w₂, hp, hr, n₁, n₂, hn, hw₁, hw₂⟩
-      | inr hq => right; exact ⟨w₁, w₂, hq, hr, n₁, n₂, hn, hw₁, hw₂⟩
+    . intro ⟨w₁, w₂, hkl, hm, n₁, n₂, hn, hw₁, hw₂⟩
+      cases hkl with
+      | inl hk => left; exact ⟨w₁, w₂, hk, hm, n₁, n₂, hn, hw₁, hw₂⟩
+      | inr hl => right; exact ⟨w₁, w₂, hl, hm, n₁, n₂, hn, hw₁, hw₂⟩
     . intro h
       cases h with
-      | inl h => obtain ⟨w₁, w₂, hp, hr, n₁, n₂, hn, hw₁, hw₂⟩ := h; refine ⟨w₁, w₂, Or.inl hp, hr, n₁, n₂, hn, hw₁, hw₂⟩
-      | inr h => obtain ⟨w₁, w₂, hq, hr, n₁, n₂, hn, hw₁, hw₂⟩ := h; refine ⟨w₁, w₂, Or.inr hq, hr, n₁, n₂, hn, hw₁, hw₂⟩
+      | inl h => obtain ⟨w₁, w₂, hk, hm, n₁, n₂, hn, hw₁, hw₂⟩ := h; refine ⟨w₁, w₂, Or.inl hk, hm, n₁, n₂, hn, hw₁, hw₂⟩
+      | inr h => obtain ⟨w₁, w₂, hl, hm, n₁, n₂, hn, hw₁, hw₂⟩ := h; refine ⟨w₁, w₂, Or.inr hl, hm, n₁, n₂, hn, hw₁, hw₂⟩
 
 
 -- Equation (3.14)
-theorem empty_concat_left (L : Lang α) : ∅ • L ≐ ∅ := by
+theorem empty_concat_left (l : Lang α) : ∅ • l ≐ ∅ := by
   intro w
   match w with
   | .left _ _ _ => simp [concat, empty]
   | .middle _ _ _ => simp [concat, empty]
   | .right _ _ _ => simp [concat, empty]
 
-theorem empty_concat_right (L : Lang α) : L • ∅ ≐ ∅ := by
+theorem empty_concat_right (l : Lang α) : l • ∅ ≐ ∅ := by
   intro w
   match w with
   | .left _ _ _ => simp [concat, empty]
@@ -151,7 +151,7 @@ theorem empty_concat_right (L : Lang α) : L • ∅ ≐ ∅ := by
   | .right _ _ _ => simp [concat, empty]
 
 -- Equation (3.15)
-theorem star_unfold (base l : Lang α) : (star l base) ≐ base ∪ (l • (star l base)) := by
+theorem star_unfold (l base : Lang α) : (star l base) ≐ base ∪ (l • (star l base)) := by
   intro w; constructor
   . intro h
     cases h with
@@ -164,7 +164,7 @@ theorem star_unfold (base l : Lang α) : (star l base) ≐ base ∪ (l • (star
 
 
 -- Proposition 3.5.3 (Left identity).
-theorem concat_left_identity (L : Lang α) : I • L ≐ L  := by
+theorem concat_left_identity (l : Lang α) : I • l ≐ l  := by
   intro w
   match w with
   | .left (x, xs) main la =>
@@ -186,7 +186,7 @@ theorem concat_left_identity (L : Lang α) : I • L ≐ L  := by
     . intro h; exact ⟨.right 0 (mcount + lacount) la, .right mcount lacount la, by simp [unit], h, 0, mcount, by simp, rfl, rfl⟩
 
 -- Proposition 3.5.4 (Right identity).
-theorem concat_right_identity (L : Lang α) : L • I ≐ L := by
+theorem concat_right_identity (l : Lang α) : l • I ≐ l := by
   intro w
   match w with
   | .left (x, xs) main la =>

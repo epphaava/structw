@@ -1,7 +1,7 @@
 import Thesis.Syntax.«1_Expressions»
 import Thesis.Syntax.«2_Derivatives»
-import Thesis.Syntax.Helpers.«4_DerivativeCorrectness»
-import Thesis.Syntax.«5_Nullability»
+import Thesis.Syntax.Helpers.«3_DerivativeCorrectness»
+import Thesis.Syntax.«4_Nullability»
 import Thesis.Syntax.«3_DerivativeCorrectness»
 
 
@@ -9,7 +9,8 @@ namespace AlgorithmHelpers
 
 open SRegex
 open StructuredWords
-open Operators
+open kStructuredWords
+open kOperators
 open NullabilityLaws
 open DerCorrectHelpers
 open SRegexDerivatives
@@ -69,10 +70,10 @@ mutual
 theorem full_D [DecidableEq α] (a : α) (r : SRegex α) (n : Nat) (h: Full r n) : Full (D a r) (n + 1) := by
   match r, n, h  with
   | .empty, _, _ | .unit _, _, _ | .lb _, _, _ | .la _, _, _ => trivial
-  | .top _, _, h => exact ⟨eq_mStep (all_filter _ h), eq_laStep (all_filter _ h)⟩
+  | .top _, _, h => exact eq_mStep (all_filter _ h)
   | .symbol _ _, _, h =>
     simp only [D]; split
-    · exact ⟨eq_mStep (all_filter _ h), eq_laStep (all_filter _ h)⟩
+    · exact eq_mStep (all_filter _ h)
     · trivial
   | .plus r₁ r₂, n, h | .intersection r₁ r₂, n, h | .complement r₁ r₂, n, h => exact ⟨full_D a r₁ n h.1, full_D a r₂ n h.2⟩
   | .mult r₁ _, n, h => exact ⟨full_D a r₁ n h, full_DLA a r₁ n h⟩
@@ -101,10 +102,10 @@ mutual
 theorem wf_D [DecidableEq α] (a : α) (r : SRegex α) (n : Nat) (h: WF r n) : WF (D a r) (n + 1) := by
   match r, n, h with
   | .empty, _, _ | .unit _, _, _ | .lb _, _, _ | .la _, _, _ => trivial
-  | .top _, _, h => exact ⟨le_mStep (all_filter _ h), le_laStep (all_filter _ h)⟩
+  | .top _, _, h => exact le_mStep (all_filter _ h)
   | .symbol _ _, _, h =>
     simp only [D]; split
-    · exact ⟨le_mStep (all_filter _ h), le_laStep (all_filter _ h)⟩
+    · exact le_mStep (all_filter _ h)
     · trivial
   | .plus r₁ r₂, n, h | .intersection r₁ r₂, n, h | .complement r₁ r₂, n, h => exact ⟨wf_D a r₁ n h.1, wf_D a r₂ n h.2⟩
   | .mult r₁ r₂, n, h => exact ⟨⟨wf_D a r₁ n h.1, wf_DLB a r₂ n h.2⟩, ⟨wf_DLA a r₁ n h.1, wf_D a r₂ n h.2⟩⟩
@@ -113,8 +114,7 @@ theorem wf_D [DecidableEq α] (a : α) (r : SRegex α) (n : Nat) (h: WF r n) : W
 theorem wf_DLB [DecidableEq α] (a : α) (r : SRegex α) (n : Nat) (h: WF r n) : WF (DLB a r) (n + 1) := by
   match r, n, h with
   | .empty, _, _ => trivial
-  | .unit _, _, h => exact ⟨le_succ_all (all_filter _ h), le_laStep (all_filter _ h)⟩
-  | .top _, _, h | .symbol _ _, _, h => exact ⟨le_succ_all (all_filter _ h), le_mStep (all_filter _ h), le_laStep (all_filter _ h)⟩
+  | .unit _, _, h | .top _, _, h | .symbol _ _, _, h => exact le_succ_all (all_filter _ h)
   | .plus r₁ r₂, n, h | .intersection r₁ r₂, n, h | .complement r₁ r₂, n, h
   | .mult r₁ r₂, n, h | .star r₁ r₂, n, h => exact ⟨wf_DLB a r₁ n h.1, wf_DLB a r₂ n h.2⟩
   | .lb r, n, h => exact ⟨wf_D a r n h.1, full_D a r n h.2⟩

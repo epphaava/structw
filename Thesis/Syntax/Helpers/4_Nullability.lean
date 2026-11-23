@@ -1,14 +1,16 @@
 import Thesis.Syntax.«1_Expressions»
 import Thesis.Syntax.«2_Derivatives»
-import Thesis.Syntax.Helpers.«4_DerivativeCorrectness»
-import Thesis.Semantics.«9_NullabilityLaws»
+import Thesis.Syntax.Helpers.«3_DerivativeCorrectness»
+import Thesis.Semantics.kLang.«9_NullabilityLaws»
 
 
 namespace NullabilityHelpers
 
 open SRegex
 open StructuredWords
-open Operators
+open kStructuredWords
+open kOperators
+open Operators (star_help)
 open NullabilityLaws
 open DerCorrectHelpers
 open SRegexDerivatives
@@ -125,17 +127,15 @@ theorem starN_sum_le (nr nb : List Steps) (k : Nat) : ∀ t ∈ starN nr k nb, t
   · intro t ht; have := le_maxSum ht; omega
 
 
-def lbOf (n : Nat) (t : Steps) : Nat := n - t.stepsSum
-
-theorem star_N {α : Type} (l base : Lang α) (nr nb : List Steps) (n : Nat)
-    (hr : ∀ t : Steps, t.stepsSum ≤ n → (nullable l (lbOf n t) t.m t.la ↔ t ∈ nr))
-    (hb : ∀ t : Steps, t.stepsSum ≤ n → (nullable base (lbOf n t) t.m t.la ↔ t ∈ nb))
+theorem star_N {α : Type} (l base : kLang α n) (nr nb : List Steps)
+    (hr : ∀ t : Steps, t.stepsSum ≤ n → (nullable l t.m t.la ↔ t ∈ nr))
+    (hb : ∀ t : Steps, t.stepsSum ≤ n → (nullable base t.m t.la ↔ t ∈ nb))
     (hnr : ∀ t ∈ nr, t.stepsSum ≤ n) (t : Steps) (ht : t.stepsSum ≤ n) :
-    nullable (star l base) (lbOf n t) t.m t.la ↔
+    nullable (star l base) t.m t.la ↔
       t ∈ starN nr (max (Steps.maxSum nr) (Steps.maxSum nb) + 1) nb := by
   constructor
   · intro h
-    suffices key : ∀ w, star_help l base w → ∀ t : Steps, w = .right (lbOf n t) t.m t.la [] →
+    suffices key : ∀ w, star_help l.1 base.1 w → ∀ t : Steps, w = .right t.m t.la [] →
         t.stepsSum ≤ n → t ∈ starN nr t.m nb by
       have hm := key _ h t rfl ht
       have := starN_sum_le nr nb t.m t hm
@@ -149,37 +149,27 @@ theorem star_N {α : Type} (l base : Lang α) (nr nb : List Steps) (n : Nat)
       intro t hwt ht
       subst hwt
       obtain ⟨mc₁, mc₂, hmc, rfl, rfl⟩ := hwc
-      simp only [lbOf, Steps.stepsSum, Nat.add_eq] at ht h₁ ih
+      simp only [Steps.stepsSum, Nat.add_eq] at ht
       let s₁ : Steps := ⟨mc₁, mc₂ + t.la⟩
       let s₂ : Steps := ⟨mc₂, t.la⟩
       have hc : compose s₁ s₂ = some t := by
         rw [compose_eq]; obtain ⟨_, _⟩ := t; simp_all [s₁, s₂]
       have h₂ : s₂ ∈ starN nr s₂.m nb :=
-        ih s₂ (by simp [s₂]; omega) (by simp [s₂]; omega)
-      have hs₁ : s₁ ∈ nr := by
-        refine (hr s₁ (by simp [s₁, Steps.stepsSum]; omega)).mp ?_
-        have e : (n - (t.m + t.la)) = (n - (s₁.m + s₁.la)) := by simp [s₁]; omega
-        simp [nullable, lbOf, Steps.stepsSum, ←e]; exact h₁
+        ih s₂ rfl (by simp [s₂, Steps.stepsSum]; omega)
+      have hs₁ : s₁ ∈ nr := (hr s₁ (by simp [s₁, Steps.stepsSum]; omega)).mp h₁
       by_cases hz : mc₁ = 0
       · rw [compose_m_zero hc hz]; exact starN_mono nr (by simp [s₂]) nb h₂
       · exact starN_mono nr (by simp [s₂]; omega) nb (starN_compose nr _ nb hs₁ h₂ hc)
   · intro hmem
-    refine starN_induct nr (fun t => t.stepsSum ≤ n → nullable (star l base) (lbOf n t) t.m t.la) ?_ _ nb ?_ t hmem ht
+    refine starN_induct nr (fun t => t.stepsSum ≤ n → nullable (star l base) t.m t.la) ?_ _ nb ?_ t hmem ht
     · intro s₁ s₂ t h₁ h₂ hc ht
       have hs₁ := hnr s₁ h₁
       obtain ⟨e1, rfl⟩ := compose_eq.mp hc
       simp [Steps.stepsSum] at ht hs₁
       refine (nullable_star l base).mpr (.inr ⟨s₁.m, s₂.m, rfl, ?_, ?_⟩)
       · have := (hr s₁ (by simp [Steps.stepsSum]; omega)).mpr h₁
-        have e : lbOf n s₁ = (n - ((s₁.m + s₂.m) + s₂.la)) := by
-          simp [lbOf, Steps.stepsSum]; omega
-        simp [lbOf, Steps.stepsSum] at this e ⊢
-        rw [e, e1] at this; exact this
-      · have := h₂ (by simp [Steps.stepsSum]; omega)
-        have e : lbOf n s₂ = ((n - ((s₁.m + s₂.m) + s₂.la)) + s₁.m) := by
-          simp [lbOf, Steps.stepsSum]; omega
-        simp [lbOf, Steps.stepsSum] at this e ⊢
-        rw [e] at this; exact this
+        rw [e1] at this; exact this
+      · exact h₂ (by simp [Steps.stepsSum]; omega)
     · intro t ht hn; exact (nullable_star l base).mpr (.inl ((hb t hn).mpr ht))
 
 

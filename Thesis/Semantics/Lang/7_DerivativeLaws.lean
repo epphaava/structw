@@ -1,16 +1,17 @@
-import Thesis.Semantics.«1_StructuredWords»
-import Thesis.Semantics.«2_Operators»
-import Thesis.Semantics.«3_Derivatives»
-import Thesis.Semantics.«8_AlgebraicLaws»
-import Thesis.Semantics.«6_LookaheadDerivativeLaws»
-import Thesis.Semantics.«5_LookbehindDerivativeLaws»
-import Thesis.Semantics.Helpers.«7_DerivativeLaws»
+import Thesis.Semantics.Lang.«1_StructuredWords»
+import Thesis.Semantics.Lang.«2_Operators»
+import Thesis.Semantics.Lang.«3_Derivatives»
+import Thesis.Semantics.Lang.«8_AlgebraicLaws»
+import Thesis.Semantics.Lang.«6_LookaheadDerivativeLaws»
+import Thesis.Semantics.Lang.«5_LookbehindDerivativeLaws»
+import Thesis.Semantics.Lang.Helpers.«7_DerivativeLaws»
 
 
-namespace DerLaws
+namespace derLaws
 
 open StructuredWords
 open Operators
+open Derivatives
 open derLBLaws
 open derLALaws
 open DerLawsHelpers
@@ -240,3 +241,5 @@ theorem der_laStep (a : α) (l : Lang α) : der a (↑₃ l) ≐ ∅ := by
   | .left _ _ _ => simp [der, empty]
   | .middle mcount _ _ => cases mcount <;> simp [der, laStep, empty]
   | .right mcount lacount _ => cases mcount <;> cases lacount <;> simp [der, laStep, empty]
+
+end derLaws

@@ -1,10 +1,11 @@
-import Thesis.Semantics.«1_StructuredWords»
-import Thesis.Semantics.«2_Operators»
-import Thesis.Semantics.«3_Derivatives»
+import Thesis.Semantics.Lang.«1_StructuredWords»
+import Thesis.Semantics.Lang.«2_Operators»
+import Thesis.Semantics.Lang.«3_Derivatives»
 
 namespace DerAcceptHelpers
 
 open StructuredWords
+open Derivatives
 
 theorem exists_split_iff {α} (l : Lang α) (w : List α) (mc lac : Nat) :
     (∃ u, is_split w mc lac u ∧ l u) ↔

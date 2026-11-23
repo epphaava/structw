@@ -1,5 +1,7 @@
-import Thesis.Semantics.«1_StructuredWords»
-import Thesis.Semantics.«2_Operators»
+import Thesis.Semantics.Lang.«1_StructuredWords»
+import Thesis.Semantics.Lang.«2_Operators»
+
+namespace Derivatives
 
 open StructuredWords
 open Operators
@@ -42,14 +44,9 @@ def derLA_word (w : List α) (l : Lang α) : Lang α :=
   | [] => l
   | a :: w => derLA_word w (derLA a l)
 
-
-
- /-- Definition 3.2.4 (Indexed nullability). -/
-def nullable (l : kLang α k) (mcount lacount : Nat)  : Prop := l (.right mcount lacount [])
-
  /-- Existential nullability. -/
-def xnullable (l : kLang α k) : Prop :=
-  ∃ mcount lacount, nullable l mcount lacount
+def xnullable (l : Lang α) : Prop :=
+  ∃ mcount lacount, (l (.right mcount lacount []))
 
 
  -- Definition 3.2.5 (Existential derivative).
@@ -127,3 +124,5 @@ theorem xder_congr {α} (s : List α) (l₁ l₂ : Lang α) : l₁ ≐ l₂ → 
     have hunion : (derLB a l₁ ∪ der a l₁ ∪ derLA a l₁) ≐ (derLB a l₂ ∪ der a l₂ ∪ derLA a l₂) := by
       intro u; simp [union, hderLB u, hder u, hderLA u]
     exact ih (derLB a l₁ ∪ der a l₁ ∪ derLA a l₁) (derLB a l₂ ∪ der a l₂ ∪ derLA a l₂) hunion
+
+end Derivatives

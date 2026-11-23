@@ -2,7 +2,7 @@ import Thesis.Syntax.«1_Expressions»
 
 namespace SRegexDerivatives
 
-open SRegex
+open SRegex StructuredWords kStructuredWords kOperators
 
 def filterD (ss : List Steps) : List Steps := ss.filter (·.la = 0)
 def filterDLB (ss : List Steps) : List Steps := ss.filter (fun s => s.m = 0 ∧ s.la = 0)
@@ -12,8 +12,8 @@ mutual
 
 def D [DecidableEq α] (a : α) : SRegex α → SRegex α
   | .empty | .unit _ | .lb _ | .la _ => ∅
-  | .top ss => T ↑₂(filterD ss) - T ↑₃(filterD ss)
-  | .symbol b ss => if a = b then I ↑₂(filterD ss) - T ↑₃(filterD ss) else ∅
+  | .top ss => T ↑₂(filterD ss)
+  | .symbol b ss => if a = b then I ↑₂(filterD ss) else ∅
   | .plus r₁ r₂ => (D a r₁) + (D a r₂)
   | .intersection r₁ r₂ => (D a r₁) & (D a r₂)
   | .complement r₁ r₂ => (D a r₁) - (D a r₂)
@@ -22,9 +22,9 @@ def D [DecidableEq α] (a : α) : SRegex α → SRegex α
 
 def DLB [DecidableEq α] (a : α) : SRegex α → SRegex α
   | .empty => ∅
-  | .unit ss => I (filterDLB ss) - I ↑₃(filterDLB ss)
-  | .top ss => T (filterDLB ss) - (T ↑₂(filterDLB ss) + T ↑₃(filterDLB ss))
-  | .symbol b ss => #b (filterDLB ss) - (#b ↑₂(filterDLB ss) + #b ↑₃(filterDLB ss))
+  | .unit ss => I (filterDLB ss)
+  | .top ss => T (filterDLB ss)
+  | .symbol b ss => #b (filterDLB ss)
   | .plus r₁ r₂ => (DLB a r₁) + (DLB a r₂)
   | .intersection r₁ r₂ => (DLB a r₁) & (DLB a r₂)
   | .complement r₁ r₂ => (DLB a r₁) - (DLB a r₂)
@@ -68,5 +68,6 @@ def xD [DecidableEq α] (w : List α) (r : SRegex α) : SRegex α :=
   match w with
   | [] => r
   | hd :: tl => xD tl (.plus (.plus (DLB hd r) (D hd r)) (DLA hd r))
+
 
 end SRegexDerivatives

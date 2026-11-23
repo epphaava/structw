@@ -1,12 +1,13 @@
-import Thesis.Semantics.«1_StructuredWords»
-import Thesis.Semantics.«2_Operators»
-import Thesis.Semantics.«3_Derivatives»
-import Thesis.Semantics.Helpers.«6_LookaheadDerivativeLaws»
+import Thesis.Semantics.Lang.«1_StructuredWords»
+import Thesis.Semantics.Lang.«2_Operators»
+import Thesis.Semantics.Lang.«3_Derivatives»
+import Thesis.Semantics.Lang.Helpers.«6_LookaheadDerivativeLaws»
 
 namespace derLALaws
 
 open StructuredWords
 open Operators
+open Derivatives
 open derLALawsHelpers
 
 -- Proposition 3.4.1 (Derivative laws for structured languages).
@@ -132,14 +133,7 @@ theorem derLA_la (a : α) (l : Lang α) : derLA a (▷ l) ≐ ▷ (der a l)  := 
   | .left _ main _ => cases main <;> simp [derLA, lookahead, der]
   | .middle _ _ _ => simp [derLA, lookahead]
   | .right mcount lacount la => cases mcount <;> cases lacount <;> cases la <;> simp [derLA, lookahead, der, toList]
-
-/- theorem derLA_lbStep (a : α) (l : Lang α) : derLA a (↑₁ l) ≐ ↑₁ (derLA a l) := by
-  intro w
-  match w with
-  | .left lbc _ _ _ => cases lbc <;> simp [derLA, lbStep]
-  | .middle lbc mcount _ _ => cases lbc <;> cases mcount <;> simp [derLA, lbStep]
-  | .right lbc mcount lacount _ => cases lbc <;> cases mcount <;> cases lacount <;> simp [derLA, lbStep] -/
-
+  
 theorem derLA_matchStep (a : α) (l : Lang α) : derLA a (↑₂ l) ≐ ↑₂ (derLA a l) := by
   intro w
   match w with
@@ -153,3 +147,5 @@ theorem derLA_laStep (a : α) (l : Lang α) : derLA a (↑₃ l) ≐ ↑₃ (der
   | .left _ _ _ => simp [derLA, laStep]
   | .middle mcount _ _ => cases mcount <;> simp [derLA, laStep]
   | .right mcount lacount _ => rcases lacount with _ | _ | _ <;> cases mcount <;> simp [derLA, laStep]
+
+end derLALaws

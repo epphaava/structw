@@ -1,12 +1,13 @@
-import Thesis.Semantics.«1_StructuredWords»
-import Thesis.Semantics.«2_Operators»
-import Thesis.Semantics.«3_Derivatives»
-import Thesis.Semantics.Helpers.«4_DerivativeAcceptance»
+import Thesis.Semantics.Lang.«1_StructuredWords»
+import Thesis.Semantics.Lang.«2_Operators»
+import Thesis.Semantics.Lang.«3_Derivatives»
+import Thesis.Semantics.Lang.Helpers.«4_DerivativeAcceptance»
 
 namespace DerAccept
 
 open StructuredWords
 open DerAcceptHelpers
+open Derivatives
 
 
 -- (0, main, la) ∈ derLB w L ↔ (w, main, la) ∈ L
@@ -37,7 +38,7 @@ theorem derLA_word_iff {α} (L : Lang α) (mcount lacount : Nat) (la : List α) 
     have := ih (derLA z L) (mcount) (lacount.succ)
     simp [Nat.add_assoc, Nat.one_add, derLA] at ⊢ this
     exact this
-
+/-
 -- Theorem 3.2.1 (Derivative characterization of membership).
 theorem membership_left_iff_nullable (l : Lang α) (lb : NEList α) (main la : List α) :
     l (.left lb main la) ↔ nullable (derLA_word la (der_word main (derLB_word (toList lb) l))) main.length la.length := by
@@ -68,3 +69,4 @@ theorem membership_right_iff_nullable (L : Lang α) (mcount lacount : Nat) (la :
 theorem xder_nullable_iff {α} (l : Lang α) (w : List α) (mc lac : Nat) :
     nullable (xder w l) mc lac ↔ ∃ u, is_split w mc lac u ∧ l u :=
   (xder_right_iff l w mc lac).trans (exists_split_iff l w mc lac).symm
+ -/

@@ -1,10 +1,12 @@
-import Thesis.Semantics.«1_StructuredWords»
-import Thesis.Semantics.«2_Operators»
+import Thesis.Semantics.kLang.«1_StructuredWords»
+import Thesis.Semantics.kLang.«2_Operators»
 
 namespace SRegex
 
 open StructuredWords
-open Operators
+open kStructuredWords
+open kOperators
+
 
 -- Definition 4.1.1 (Regular Exprestepsion syntax).
 inductive Regex (α : Type) : Type
@@ -47,13 +49,13 @@ def addSteps (s₁ s₂ : Steps) : Steps := ⟨s₁.m + s₂.m, s₁.la + s₂.l
 
 
 
-def mStepHelp (s : Steps) : Steps := {s with m := s.m.succ}
-def mStep (ss : List Steps) : List Steps := ss.map mStepHelp
+def mStepSingle (s : Steps) : Steps := {s with m := s.m.succ}
+def mStep (ss : List Steps) : List Steps := ss.map mStepSingle
 prefix:max "↑₂" => mStep
 
 
-def laStepHelp (s : Steps) : Steps := {s with la := s.la.succ}
-def laStep (ss : List Steps) : List Steps := ss.map laStepHelp
+def laStepSingle (s : Steps) : Steps := {s with la := s.la.succ}
+def laStep (ss : List Steps) : List Steps := ss.map laStepSingle
 prefix:max "↑₃" => laStep
 
 def stepsSum (s : Steps) : Nat := .add s.m s.la
@@ -78,8 +80,6 @@ inductive SRegex (α : Type) : Type
 | star : SRegex α → SRegex α → SRegex α
 | lb : SRegex α → SRegex α
 | la : SRegex α → SRegex α
---deriving Repr, DecidableEq
-
 
 notation "∅" => SRegex.empty
 notation "I" => SRegex.unit
@@ -93,32 +93,31 @@ postfix:max "*" => SRegex.star
 prefix:max "◁" => SRegex.lb
 prefix:max "▷" => SRegex.la
 
-def sem [DecidableEq α] (r : SRegex α) (n : Nat) : Lang α :=
+def sem [DecidableEq α] (r : SRegex α) (n : Nat) : kLang α n :=
   match r with
   | .empty => ∅
-  | .unit ss => atom n ss I
-  | .top ss => atom n ss T
-  | .symbol a ss => atom n ss #a
-  | .plus r₁ r₂ => (sem r₁ n) ∪ (sem r₂ n)
-  | .intersection r₁ r₂ => (sem r₁ n) ∩ (sem r₂ n)
-  | .complement r₁ r₂ => (sem r₁ n) - (sem r₂ n)
-  | .mult r₁ r₂ => (sem r₁ n) • (sem r₂ n)
-  | .star r b => Operators.star (sem r n) (sem b n)
-  | .lb r => lookbehind (sem r n)
-  | .la r => lookahead (sem r n)
+  | .unit ss => atom n ss Operators.unit
+  | .top ss => atom n ss Operators.top
+  | .symbol a ss => atom n ss (Operators.symb a)
+  | .plus r₁ r₂ => sem r₁ n ∪ sem r₂ n
+  | .intersection r₁ r₂ => sem r₁ n ∩ sem r₂ n
+  | .complement r₁ r₂ => sem r₁ n - sem r₂ n
+  | .mult r₁ r₂ => sem r₁ n • sem r₂ n
+  | .star r b => star (sem r n) (sem b n)
+  | .lb r => ◁ (sem r n)
+  | .la r => ▷ (sem r n)
   where
-    steps (n : Nat) (s : Steps) (l : Lang α) : Lang α := fun w =>
-      let k := .sub n (.add s.m s.la)
+    steps (s : Steps) (l : Lang α) : Lang α := fun w =>
+      w.word_steps ≤ s.m + s.la ∧
       match w with
-      | .left lbc lb main la =>
-          s.m = 0 ∧ s.la = 0 ∧ k ≤ lbc ∧ l (.left (lbc - k) lb main la)
-      | .middle lbc mc main la =>
-          s.la = 0 ∧ k ≤ lbc ∧ s.m ≤ mc ∧ l (.middle (lbc - k) (mc - s.m) main la)
-      | .right lbc mc lac la =>
-          k ≤ lbc ∧ s.m ≤ mc ∧ s.la ≤ lac ∧ l (.right (lbc - k) (mc - s.m) (lac - s.la) la)
-    atom (n : Nat) : List Steps → Lang α → Lang α
-      | [], _ => ∅
-      | s :: rest, l => (steps n s l) ∪ (atom n rest l)
+      | .left lb main la =>
+          s.m = 0 ∧ s.la = 0 ∧ l (.left lb main la)
+      | .middle mc main la =>
+          s.la = 0 ∧ s.m ≤ mc ∧ l (.middle (mc - s.m) main la)
+      | .right mc lac la =>
+          s.m ≤ mc ∧ s.la ≤ lac ∧ l (.right (mc - s.m) (lac - s.la) la)
+    atom (n : Nat) (ss : List Steps) (l : Lang α) : kLang α n :=
+      ⟨fun w => w.word_steps ≤ n ∧ ∃ s ∈ ss, steps s l w, fun _ h => h.1⟩
 
 
 def regexToSRegex : Regex α → SRegex α
@@ -133,109 +132,5 @@ def regexToSRegex : Regex α → SRegex α
   | .star r b => .star (regexToSRegex r) (regexToSRegex b)
   | .lb r => ◁ (regexToSRegex r)
   | .la r => ▷ (regexToSRegex r)
-
-
-/-
-
-/-- Apply the counted steps to a language: `↑₁^lb ↑₂^m ↑₃^la l`. -/
-def shift (s : Steps) (l : Lang α) : Lang α :=
-  Nat.repeat lbStep s.lb (Nat.repeat matchStep s.m (Nat.repeat laStep s.la l))
-
-def shiftAll (steps : List Steps) (l : Lang α) : Lang α :=
-  match steps with
-  | [] => ∅
-  | s :: rest => shift s l ∪ shiftAll rest l
-
-
-
-abbrev Expr (α : Type) := List (Regex α × List Steps)
-
-
-def insert [DecidableEq α] (r : Regex α) (steps : List Steps) : Expr α → Expr α
-  | [] => [(r, steps)]
-  | (r', ts) :: rest =>
-    if r' = r then (r', ts ++ steps) :: rest else (r', ts) :: insert r steps rest
-
-/-- Union of two stepped exprestepsions, keeping each regular exprestepsion once. -/
-def merge [DecidableEq α] (e₁ e₂ : Expr α) : Expr α :=
-  e₁.foldr (fun (r, steps) acc => insert r steps acc) e₂
-
-def sem [DecidableEq α] : Expr α → Lang α
-  | [] => ∅
-  | (r, steps) :: rest => shiftAll steps (Regex.sem r) ∪ sem rest
-
-end Expr
-
-def sem [DecidableEq α] : SRegex α → Lang α
-  | .empty => ∅
-  | .unit steps => atom steps Operators.unit
-  | .top steps => atom steps Operators.top
-  | .symbol x steps => atom steps (symb x)
-  | .plus r₁ r₂ => (sem r₁) ∪ (sem r₂)
-  | .intersection r₁ r₂ => (sem r₁) ∩ (sem r₂)
-  | .complement r₁ r₂ => (sem r₁) - (sem r₂)
-  | .mult r₁ r₂ => (sem r₁) • (sem r₂)
-  | .star r b => Operators.star (sem r) (sem b)
-  | .lb r => lookbehind (sem r)
-  | .la r => lookahead (sem r)
-where
-  steps (s : Steps) (l : Lang α) : Lang α := Nat.repeat Operators.lbStep s.lb (Nat.repeat Operators.matchStep s.m (Nat.repeat Operators.laStep s.la l))
-  later (s : Steps) : Lang α :=
-    if s.lb > 0 then ↑₂ T ∪ ↑₃ T
-    else if s.m > 0 then ↑₃ T
-    else ∅
-  atom : List Steps → Lang α → Lang α
-  | [], _ => Operators.empty
-  | s :: rest, l => Operators.union (steps s (Operators.complement l (later s))) (atom rest l)
-
-end SRegex
-
-theorem shift_zero {α : Type} (l : Lang α) : shift Steps.zero l = l := rfl
-
-theorem shiftAll_append {α : Type} (steps ts : List Steps) (l : Lang α) (w : Word α) : shiftAll (steps ++ ts) l w ↔ shiftAll steps l w ∨ shiftAll ts l w := by
-  induction steps with
-  | nil => simp [shiftAll, empty]
-  | cons s rest ih => simp [shiftAll, union] at *; rw [ih]; exact or_assoc.symm
-
-variable {α : Type} [DecidableEq α]
-
-theorem Expr.sem_toExpr (r : Regex α) : Expr.sem (Expr.toExpr r) ≐ Regex.sem r := by
-  intro w
-  simp [toExpr, sem, shiftAll, shift_zero, union, empty]
-
-theorem Expr.sem_append (e₁ e₂ : Expr α) : Expr.sem (e₁ ++ e₂) ≐ Expr.sem e₁ ∪ Expr.sem e₂ := by
-  intro w
-  induction e₁ with
-  | nil => simp [sem, union, empty]
-  | cons p rest ih => simp [sem, union] at *; rw [ih]; exact or_assoc.symm
-
-theorem Expr.sem_insert (r : Regex α) (steps : List Steps) (e : Expr α) : sem (insert r steps e) ≐ shiftAll steps (Regex.sem r) ∪ Expr.sem e := by
-  intro w
-  induction e with
-  | nil => simp [Expr.insert, Expr.sem, union, empty]
-  | cons p rest ih =>
-    obtain ⟨r', ts⟩ := p
-    by_cases h : r' = r
-    · subst h
-      simp [insert, sem, union] at *; rw [shiftAll_append]
-      constructor
-      · rintro ((h1 | h2) | h3) <;> simp_all
-      · rintro (h1 | h2 | h3) <;> simp_all
-    · simp [insert, if_neg h, sem, union] at *; rw [ih]
-      constructor
-      · rintro (h1 | h2 | h3) <;> simp_all
-      · rintro (h1 | h2 | h3) <;> simp_all
-
-theorem Expr.sem_merge (e₁ e₂ : Expr α) : sem (merge e₁ e₂) ≐ sem e₁ ∪ sem e₂ := by
-  intro w
-  induction e₁ with
-  | nil => simp [merge, sem, union, empty]
-  | cons p rest ih =>
-    obtain ⟨r, steps⟩ := p
-    simp [merge, List.foldr_cons] at *
-    rw [Expr.sem_insert]
-    simp [sem, union] at *
-    rw [ih]; exact or_assoc.symm -/
-
 
 end SRegex

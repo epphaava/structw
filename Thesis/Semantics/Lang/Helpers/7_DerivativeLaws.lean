@@ -1,15 +1,16 @@
-import Thesis.Semantics.«1_StructuredWords»
-import Thesis.Semantics.«2_Operators»
-import Thesis.Semantics.«3_Derivatives»
-import Thesis.Semantics.«8_AlgebraicLaws»
-import Thesis.Semantics.«6_LookaheadDerivativeLaws»
-import Thesis.Semantics.«5_LookbehindDerivativeLaws»
+import Thesis.Semantics.Lang.«1_StructuredWords»
+import Thesis.Semantics.Lang.«2_Operators»
+import Thesis.Semantics.Lang.«3_Derivatives»
+import Thesis.Semantics.Lang.«8_AlgebraicLaws»
+import Thesis.Semantics.Lang.«6_LookaheadDerivativeLaws»
+import Thesis.Semantics.Lang.«5_LookbehindDerivativeLaws»
 
 
 namespace DerLawsHelpers
 
 open StructuredWords
 open Operators
+open Derivatives
 open derLBLaws
 open derLALaws
 
