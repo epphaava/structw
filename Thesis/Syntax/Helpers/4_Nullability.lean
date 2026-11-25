@@ -10,8 +10,9 @@ open SRegex
 open StructuredWords
 open kStructuredWords
 open kOperators
-open Operators (star_help)
-open NullabilityLaws
+open Operators
+open kDerivatives
+open kNullabilityLaws
 open DerCorrectHelpers
 open SRegexDerivatives
 open Steps
@@ -27,34 +28,6 @@ def starStep (nr acc : List Steps) : List Steps := (acc ++ concatN nr acc).erase
 def starN (nr : List Steps) : Nat → List Steps → List Steps
   | 0, acc => acc
   | k + 1, acc => starN nr k (starStep nr acc)
-
-
-mutual
-def Full {α} : SRegex α → Nat → Prop
-  | .empty, _ => True
-  | .unit ss, n | .top ss, n | .symbol _ ss, n => ∀ s ∈ ss, s.stepsSum = n
-  | .plus r₁ r₂, n | .intersection r₁ r₂, n | .complement r₁ r₂, n => Full r₁ n ∧ Full r₂ n
-  | .mult r₁ _, n => Full r₁ n
-  | .star r b, n => Full r n ∧ Full b n
-  | .lb r, n => LAOnly r n
-  | .la r, n => Full r n
-
-def LAOnly {α} : SRegex α → Nat → Prop
-  | .empty, _ => True
-  | .unit ss, n | .top ss, n | .symbol _ ss, n => ∀ s ∈ ss, s.m = 0 ∧ s.la = n
-  | .plus r₁ r₂, n | .intersection r₁ r₂, n | .complement r₁ r₂, n
-  | .mult r₁ r₂, n | .star r₁ r₂, n => LAOnly r₁ n ∧ LAOnly r₂ n
-  | .lb r, n => LAOnly r n
-  | .la r, n => Full r n
-end
-
-def WF {α} : SRegex α → Nat → Prop
-  | .empty, _ => True
-  | .unit ss, n | .top ss, n | .symbol _ ss, n => ∀ s ∈ ss, s.stepsSum ≤ n
-  | .plus r₁ r₂, n | .intersection r₁ r₂, n | .complement r₁ r₂, n
-  | .mult r₁ r₂, n | .star r₁ r₂, n => WF r₁ n ∧ WF r₂ n
-  | .lb r, n => WF r n ∧ Full r n
-  | .la r, n => WF r n
 
 
 theorem compose_eq {s₁ s₂ t : Steps} :
@@ -97,9 +70,9 @@ theorem starN_compose (nr : List Steps) (k : Nat) (acc : List Steps) {s₁ s₂ 
   | zero => exact subset_starN nr 0 _ (mem_starStep.mpr (.inr (mem_concatN.mpr ⟨s₁, h₁, s₂, h₂, h⟩)))
   | succ k ih => exact ih _ h₂
 
-theorem starN_induct (nr : List Steps) (P : Steps → Prop)
-    (hc : ∀ s₁ s₂ t, s₁ ∈ nr → P s₂ → compose s₁ s₂ = some t → P t) (k : Nat) (acc : List Steps)
-    (h : ∀ t ∈ acc, P t) : ∀ t ∈ starN nr k acc, P t := by
+theorem starN_induct (nr : List Steps) (p : Steps → Prop)
+    (hc : ∀ s₁ s₂ t, s₁ ∈ nr → p s₂ → compose s₁ s₂ = some t → p t) (k : Nat) (acc : List Steps)
+    (h : ∀ t ∈ acc, p t) : ∀ t ∈ starN nr k acc, p t := by
   induction k generalizing acc with
   | zero => exact h
   | succ k ih =>
@@ -171,6 +144,74 @@ theorem star_N {α : Type} (l base : kLang α n) (nr nb : List Steps)
         rw [e1] at this; exact this
       · exact h₂ (by simp [Steps.stepsSum]; omega)
     · intro t ht hn; exact (nullable_star l base).mpr (.inl ((hb t hn).mpr ht))
+
+def WF {α} : SRegex α → Nat → Prop
+  | .empty, _ => True
+  | .unit ss, n | .top ss, n | .symbol _ ss, n => ∀ s ∈ ss, s.stepsSum ≤ n
+  | .plus r₁ r₂, n | .intersection r₁ r₂, n | .complement r₁ r₂, n
+  | .mult r₁ r₂, n => WF r₁ n ∧ WF r₂ n
+  | .star r b, n => WF r n ∧ WF b n
+  | .lb r, n | .la r, n => WF r n
+
+
+theorem wf_lbStep {ss : List Steps} {n : Nat} (h : ∀ s ∈ ss, s.stepsSum ≤ n) :
+    ∀ s ∈ ↑₁ss, s.stepsSum ≤ n + 1 :=
+  λ s hs => Nat.le_succ_of_le (h s (List.mem_filter.mp hs).1)
+
+theorem wf_mStep {ss : List Steps} {n : Nat} (h : ∀ s ∈ ss, s.stepsSum ≤ n) :
+    ∀ s ∈ ↑₂ss, s.stepsSum ≤ n + 1 := by
+  intro s hs
+  obtain ⟨s', hs', rfl⟩ := List.mem_map.mp hs
+  have := h s' (List.mem_filter.mp hs').1
+  simp [mStepSingle, stepsSum] at *; omega
+
+theorem wf_laStep {ss : List Steps} {n : Nat} (h : ∀ s ∈ ss, s.stepsSum ≤ n) :
+    ∀ s ∈ ↑₃ss, s.stepsSum ≤ n + 1 := by
+  intro s hs
+  obtain ⟨s', hs', rfl⟩ := List.mem_map.mp hs
+  have := h s' hs'
+  simp [laStepSingle, stepsSum] at *; omega
+
+mutual
+theorem wf_D [DecidableEq α] (a : α) (r : SRegex α) (n : Nat) (h : WF r n) : WF (D a r) (n.succ) := by
+  match r, n, h with
+  | .empty, _, _ | .unit _, _, _ | .lb _, _, _ | .la _, _, _ => trivial
+  | .top _, _, h => exact wf_mStep h
+  | .symbol _ _, _, h =>
+    simp only [D]; split
+    · exact wf_mStep h
+    · trivial
+  | .plus r₁ r₂, n, h | .intersection r₁ r₂, n, h | .complement r₁ r₂, n, h => exact ⟨wf_D a r₁ n h.1, wf_D a r₂ n h.2⟩
+  | .mult r₁ r₂, n, h => exact ⟨⟨wf_D a r₁ n h.1, wf_DLB a r₂ n h.2⟩, ⟨wf_DLA a r₁ n h.1, wf_D a r₂ n h.2⟩⟩
+  | .star r b, n, h => exact ⟨wf_DLA a r n h.1, wf_D a b n h.2, wf_D a r n h.1, wf_DLB a r n h.1, wf_DLB a b n h.2⟩
+
+theorem wf_DLB [DecidableEq α] (a : α) (r : SRegex α) (n : Nat) (h : WF r n) : WF (DLB a r) (n.succ) := by
+  match r, n, h with
+  | .empty, _, _ => trivial
+  | .unit _, _, h | .top _, _, h | .symbol _ _, _, h => exact wf_lbStep h
+  | .plus r₁ r₂, n, h | .intersection r₁ r₂, n, h | .complement r₁ r₂, n, h
+  | .mult r₁ r₂, n, h | .star r₁ r₂, n, h => exact ⟨wf_DLB a r₁ n h.1, wf_DLB a r₂ n h.2⟩
+  | .lb r, n, h => exact wf_D a r n h
+  | .la r, n, h => exact wf_DLB a r n h
+
+theorem wf_DLA [DecidableEq α] (a : α) (r : SRegex α) (n : Nat) (h : WF r n) : WF (DLA a r) (n.succ) := by
+  match r, n, h with
+  | .empty, _, _ | .symbol _ _, _, _ => trivial
+  | .unit _, _, h | .top _, _, h => exact wf_laStep h
+  | .plus r₁ r₂, n, h | .intersection r₁ r₂, n, h | .complement r₁ r₂, n, h
+  | .mult r₁ r₂, n, h | .star r₁ r₂, n, h => exact ⟨wf_DLA a r₁ n h.1, wf_DLA a r₂ n h.2⟩
+  | .lb r, n, h => exact wf_DLA a r n h
+  | .la r, n, h => exact wf_D a r n h
+end
+
+theorem wf_xD [DecidableEq α] (w : List α) (r : SRegex α) (n : Nat) (h : WF r n) : WF (xD w r) (n + w.length) := by
+  induction w generalizing r n with
+  | nil => exact h
+  | cons a w ih =>
+    have := ih (((DLB a r) + (D a r)) + (DLA a r)) (n.succ) ⟨⟨wf_DLB a r n h, wf_D a r n h⟩, wf_DLA a r n h⟩
+    rw [Nat.succ_add] at this
+    exact this
+
 
 
 end NullabilityHelpers

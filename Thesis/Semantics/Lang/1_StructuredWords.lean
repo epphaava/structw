@@ -10,7 +10,7 @@ def toList (l : NEList α) := l.fst :: l.snd
 
 inductive Word (α : Type) where
   | left (lb : NEList α) (main : List α) (la : List α)
-  | middle(matchCount : Nat) (main : NEList α) (la : List α)
+  | middle (matchCount : Nat) (main : NEList α) (la : List α)
   | right (matchCount : Nat) (laCount : Nat) (la : List α)
 
 def Word.word_to_list {α} : Word α → List α
@@ -23,13 +23,11 @@ def Word.word_steps : Word α → Nat
   | .middle mc _ _ => mc
   | .right mc lac _ => mc + lac
 
--- The (match, lookahead) counts a word ends with once all of its letters are read.
 def Word.final_counts : Word α → Nat × Nat
   | .left _ main la => (main.length, la.length)
   | .middle mc main la => (mc + (toList main).length, la.length)
   | .right mc lac la => (mc, lac + la.length)
 
--- `u` splits the plain word `w` and ends with counts `mc`, `lac`.
 def is_split (w : List α) (mc lac : Nat) (u : Word α) : Prop :=
   u.word_to_list = w ∧ u.final_counts = (mc, lac)
 
@@ -41,7 +39,7 @@ def mk_word : List α → List α → List α → Word α
   | [], main, la => mk_mcount_word 0 main la
   | x :: xs, main, la => .left (x, xs) main la
 
-export Word (word_to_list word_steps)
+export Word (word_to_list word_steps final_counts)
 
 
 -- Languages over structured words --------------------------

@@ -1,8 +1,29 @@
+import Thesis.Semantics.Lang.«1_StructuredWords»
+import Thesis.Semantics.Lang.«2_Operators»
+import Thesis.Semantics.Lang.«3_Derivatives»
+import Thesis.Semantics.Lang.«4_DerivativeAcceptance»
+import Thesis.Semantics.Lang.«5_LookbehindDerivativeLaws»
+import Thesis.Semantics.Lang.«6_LookaheadDerivativeLaws»
+import Thesis.Semantics.Lang.«7_DerivativeLaws»
+import Thesis.Semantics.Lang.«8_AlgebraicLaws»
+import Thesis.Semantics.Lang.«9_NullabilityLaws»
+import Thesis.Semantics.kLang.«1_StructuredWords»
+import Thesis.Semantics.kLang.«2_Operators»
+import Thesis.Semantics.kLang.«3_Derivatives»
+import Thesis.Semantics.kLang.«4_DerivativeAcceptance»
+import Thesis.Semantics.kLang.«5_LookbehindDerivativeLaws»
+import Thesis.Semantics.kLang.«6_LookaheadDerivativeLaws»
+import Thesis.Semantics.kLang.«7_DerivativeLaws»
+import Thesis.Semantics.kLang.«8_AlgebraicLaws»
+import Thesis.Semantics.kLang.«9_NullabilityLaws»
+import Thesis.Semantics.kLang.«10_Decomposition»
 import Thesis.Syntax.«1_Expressions»
 import Thesis.Syntax.«2_Derivatives»
 import Thesis.Syntax.Helpers.«3_DerivativeCorrectness»
-import Thesis.Syntax.«4_Nullability»
 import Thesis.Syntax.«3_DerivativeCorrectness»
+import Thesis.Syntax.Helpers.«4_Nullability»
+import Thesis.Syntax.«4_Nullability»
+import Thesis.AlgorithmHelpers
 import Thesis.Algorithm
 
 open Algorithm
@@ -10,6 +31,7 @@ open SRegex
 open StructuredWords
 open kStructuredWords
 open kOperators
+open kDerivatives
 open NullabilityLaws
 open DerCorrectHelpers
 open SRegexDerivatives
@@ -18,6 +40,7 @@ open Nullability
 open NullabilityHelpers
 open DerCorrect
 open SRegexDerivatives
+open Steps
 
 variable {α : Type} [DecidableEq α]
 
@@ -31,15 +54,15 @@ def L_3_2_1 : kLang Char 2 :=
    by rintro w (rfl | rfl) <;> simp [word_steps]⟩
 
 example : der 'a' L_3_2_1 (.middle 3 ('b', []) ['c']) := by
-  simp [der, L_3_2_1, toList]
+  simp [der, L_3_2_1, Derivatives.der, toList]
 
 example (w : Word Char) : ¬ der 'b' L_3_2_1 w := by
   intro h
   rcases w with ⟨⟩ | ⟨_ | mc, main, la⟩ | ⟨_ | mc, _ | lac, la⟩ <;>
-    simp [der, L_3_2_1, NEList, Prod.mk.injEq] at h
+    simp [der, L_3_2_1,  Derivatives.der, NEList] at h
 
 example : derLB 'a' L_3_2_1 (.middle 0 ('b', []) ['c', 'd']) := by
-  simp [derLB, L_3_2_1, toList]
+  simp [derLB, L_3_2_1, Derivatives.derLB, toList]
 
 
 
@@ -70,7 +93,7 @@ example : ¬ sem r_4_1_1_exact 0 (.middle 0 ('a', []) ['b', 'c']) := by
     Operators.wc, kOperators.lookahead, Operators.lookahead, word_steps]
   intro x _ hx y hy
   constructor <;> rintro rfl rfl <;> simp at hy
- 
+
 
 -- Example 4.2.1
 
@@ -80,7 +103,7 @@ theorem D_4_2_1 : D 'a' (regexToSRegex r_4_2_1) =
     SRegex.plus
       (SRegex.mult (I [⟨1, 0⟩]) (▷(#'b' [⟨0, 0⟩])))
       (SRegex.mult ∅ ∅) := by
-  simp [r_4_2_1, regexToSRegex, D, DLB, DLA, filterD, filterDLB, Steps.mStep, Steps.mStepHelp, Steps.zeroSteps]
+  simp [r_4_2_1, regexToSRegex, D, DLB, DLA, mStep, mStepSingle, zeroSteps, lbStep]
 
 example : DLA 'a' (regexToSRegex r_4_2_1) = ∅ • DLA 'a' (regexToSRegex ▷ #'b') := by
   simp [r_4_2_1, regexToSRegex, DLA]

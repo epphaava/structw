@@ -4,6 +4,7 @@ import Thesis.Semantics.Lang.«3_Derivatives»
 
 open StructuredWords
 open Operators
+open Derivatives
 
 variable {α : Type}
 

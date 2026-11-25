@@ -47,10 +47,11 @@ def zeroSteps : Steps := {}
 
 def addSteps (s₁ s₂ : Steps) : Steps := ⟨s₁.m + s₂.m, s₁.la + s₂.la⟩
 
-
+def lbStep (ss : List Steps) : List Steps := ss.filter (λ s => s.m = 0 ∧ s.la = 0)
+prefix:max "↑₁" => lbStep
 
 def mStepSingle (s : Steps) : Steps := {s with m := s.m.succ}
-def mStep (ss : List Steps) : List Steps := ss.map mStepSingle
+def mStep (ss : List Steps) : List Steps := (ss.filter (·.la = 0)).map mStepSingle
 prefix:max "↑₂" => mStep
 
 

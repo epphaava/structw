@@ -30,7 +30,7 @@ theorem der_correct {α} [DecidableEq α] (a : α) (r : SRegex α) (n : Nat) : d
   | .unit ss => rcases w with ⟨⟩ | ⟨_ | _, _, _⟩ | ⟨_ | _, _ | _, _⟩ <;> simp [D, sem, der, Derivatives.der, atom_iff, sem.steps, Operators.unit, kOperators.empty, Operators.empty,  word_steps]
   | .top ss =>
     simp [D, sem, Steps.mStep, atom_map_iff]
-    rcases w with ⟨⟩ | ⟨_ | mc, main, la⟩ | ⟨_ | mc, _ | lac, la⟩ <;> simp [der, Derivatives.der, atom_iff, filterD, sem.steps,  mStepSingle, Operators.top, word_steps]
+    rcases w with ⟨⟩ | ⟨_ | mc, main, la⟩ | ⟨_ | mc, _ | lac, la⟩ <;> simp [der, Derivatives.der, atom_iff, sem.steps,  mStepSingle, Operators.top, word_steps]
     . intro _; constructor
       . intro ⟨s, hs, _, hla, hm⟩; exact ⟨s, ⟨hs, hla⟩, by omega, hla, hm⟩
       . intro ⟨s, ⟨hs, hla⟩, _, _, hm⟩; exact ⟨s, hs, by omega, hla, hm⟩
@@ -42,7 +42,7 @@ theorem der_correct {α} [DecidableEq α] (a : α) (r : SRegex α) (n : Nat) : d
     by_cases h : a = b
     · subst h
       simp [D, sem, Steps.mStep, atom_map_iff]
-      rcases w with ⟨⟩ | ⟨_ | mc, main, la⟩ | ⟨_ | mc, _ | lac, la⟩ <;> simp [der, Derivatives.der, atom_iff, filterD, sem.steps, mStepSingle, Operators.unit, toList, word_steps]
+      rcases w with ⟨⟩ | ⟨_ | mc, main, la⟩ | ⟨_ | mc, _ | lac, la⟩ <;> simp [der, Derivatives.der, atom_iff, sem.steps, mStepSingle, Operators.unit, toList, word_steps]
       . intro _; constructor
         . intro ⟨s, hs, _, hla, hm, hmc⟩; exact ⟨s, ⟨hs, hla⟩, by omega, hm, hla, hmc⟩
         . intro ⟨s, ⟨hs, hla⟩, _, hm, _, hmc⟩; exact ⟨s, hs, by omega, hla, hm, hmc⟩
@@ -75,7 +75,7 @@ theorem derLB_correct {α} [DecidableEq α] (a : α) (r : SRegex α) (n : Nat) :
   match r with
   | .empty => exact derLB_empty a w
   | .unit ss =>
-    rcases w with ⟨lb, main, la⟩ | ⟨_ | mc, main, la⟩ | ⟨_ | mc, _ | lac, la⟩ <;> simp [DLB, sem, derLB, Derivatives.derLB, atom_iff, filterDLB, sem.steps, Operators.unit, toList, Word.word_steps]
+    rcases w with ⟨lb, main, la⟩ | ⟨_ | mc, main, la⟩ | ⟨_ | mc, _ | lac, la⟩ <;> simp [DLB, sem, derLB, Derivatives.derLB, atom_iff, Steps.lbStep, sem.steps, Operators.unit, toList, Word.word_steps]
     . constructor
       . intro ⟨s, hs, hm, hla, hmain⟩; exact ⟨s, ⟨hs, hm, hla⟩, hm, hla, hmain⟩
       . intro ⟨s, ⟨hs, hm, hla⟩, _, _, hmain⟩; exact ⟨s, hs, hm, hla, hmain⟩
@@ -83,7 +83,7 @@ theorem derLB_correct {α} [DecidableEq α] (a : α) (r : SRegex α) (n : Nat) :
     . intros; omega
     . intros; omega
   | .top ss =>
-    rcases w with ⟨lb, main, la⟩ | ⟨_ | mc, main, la⟩ | ⟨_ | mc, _ | lac, la⟩ <;> simp [DLB, sem, derLB, Derivatives.derLB, atom_iff, filterDLB, sem.steps, Operators.top, Word.word_steps]
+    rcases w with ⟨lb, main, la⟩ | ⟨_ | mc, main, la⟩ | ⟨_ | mc, _ | lac, la⟩ <;> simp [DLB, sem, derLB, Derivatives.derLB, atom_iff, Steps.lbStep, sem.steps, Operators.top, Word.word_steps]
     . constructor
       . intro ⟨s, hs, hm, hla⟩; exact ⟨s, ⟨hs, hm, hla⟩, hla, hm⟩
       . intro ⟨s, ⟨hs, hm, hla⟩, _⟩; exact ⟨s, hs, hm, hla⟩
@@ -92,7 +92,7 @@ theorem derLB_correct {α} [DecidableEq α] (a : α) (r : SRegex α) (n : Nat) :
     . intros; omega
     . intros; omega
   | .symbol b ss =>
-    rcases w with ⟨lb, main, la⟩ | ⟨_ | mc, ⟨y, l⟩, la⟩ | ⟨_ | mc, _ | lac, la⟩ <;> simp [DLB, sem, derLB, Derivatives.derLB, atom_iff, filterDLB, sem.steps, toList, Word.word_steps]
+    rcases w with ⟨lb, main, la⟩ | ⟨_ | mc, ⟨y, l⟩, la⟩ | ⟨_ | mc, _ | lac, la⟩ <;> simp [DLB, sem, derLB, Derivatives.derLB, atom_iff, Steps.lbStep, sem.steps, toList, Word.word_steps]
     . constructor
       . intro ⟨s, hs, hm, hla, hmain⟩; exact ⟨s, ⟨hs, hm, hla⟩, hm, hla, hmain⟩
       . intro ⟨s, ⟨hs, hm, hla⟩, _, _, hmain⟩; exact ⟨s, hs, hm, hla, hmain⟩
